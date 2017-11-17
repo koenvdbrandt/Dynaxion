@@ -40,7 +40,7 @@ if [ ${COMPILER_TYPE} == "gcc" ]; then
     COMPILER_VERSION="gcc7"
 fi
 if [ ${COMPILER_TYPE} == "llvm" ]; then
-    COMPILER_VERSION="llvm40"
+    COMPILER_VERSION="llvm5"
 fi
 
 # Choose build type
