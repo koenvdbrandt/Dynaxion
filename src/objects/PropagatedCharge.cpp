@@ -35,5 +35,3 @@ const DepositedCharge* PropagatedCharge::getDepositedCharge() const {
     }
     return deposited_charge;
 }
-
-ClassImp(PropagatedCharge)

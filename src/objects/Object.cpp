@@ -16,5 +16,3 @@ Object& Object::operator=(const Object&) = default;
 
 Object::Object(Object&&) = default;
 Object& Object::operator=(Object&&) = default;
-
-ClassImp(Object)

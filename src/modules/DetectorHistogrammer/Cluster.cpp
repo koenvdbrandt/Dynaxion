@@ -61,5 +61,3 @@ void Cluster::eatCluster(Cluster* otherCluster) {
         addPixelHit(pixelHit);
     }
 }
-
-ClassImp(PixelHit)

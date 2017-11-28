@@ -50,5 +50,3 @@ const MCParticle* MCParticle::getParent() const {
 void MCParticle::setParent(const MCParticle* mc_particle) {
     parent_ = const_cast<MCParticle*>(mc_particle); // NOLINT
 }
-
-ClassImp(MCParticle)

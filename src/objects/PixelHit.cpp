@@ -64,5 +64,3 @@ std::vector<const MCParticle*> PixelHit::getMCParticles() const {
     // Return as a vector of mc particles
     return std::vector<const MCParticle*>(unique_particles.begin(), unique_particles.end());
 }
-
-ClassImp(PixelHit)

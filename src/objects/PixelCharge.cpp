@@ -48,5 +48,3 @@ std::vector<const PropagatedCharge*> PixelCharge::getPropagatedCharges() const {
     }
     return propagated_charges;
 }
-
-ClassImp(PixelCharge)
