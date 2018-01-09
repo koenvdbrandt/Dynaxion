@@ -54,7 +54,7 @@ export DYLD_LIBRARY_PATH="${PYTHONDIR}/lib:$DYLD_LIBRARY_PATH"
 #     ROOT
 #--------------------------------------------------------------------------------
 
-export ROOTSYS=${CLICREPO}/software/ROOT/6.10.08/${BUILD_FLAVOUR}
+export ROOTSYS=${CLICREPO}/software/ROOT/6.12.04/${BUILD_FLAVOUR}
 export PYTHONPATH="$ROOTSYS/lib:$PYTHONPATH"
 export PATH="$ROOTSYS/bin:$PATH"
 export DYLD_LIBRARY_PATH="$ROOTSYS/lib:$DYLD_LIBRARY_PATH"
@@ -73,7 +73,7 @@ export DYLD_LIBRARY_PATH="$XercesC_HOME/lib:$DYLD_LIBRARY_PATH"
 #--------------------------------------------------------------------------------
 
 export G4INSTALL=${CLICREPO}/software/Geant4/10.03.p03/${BUILD_FLAVOUR}
-export G4LIB=$G4INSTALL/lib/Geant4-10.2.2/
+export G4LIB=$G4INSTALL/lib/Geant4-10.3.3/
 export G4ENV_INIT="${G4INSTALL}/bin/geant4.sh"
 export G4SYSTEM="Linux-g++"
 
