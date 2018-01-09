@@ -68,7 +68,7 @@ fi
 #     CMake
 #--------------------------------------------------------------------------------
 
-export CMAKE_HOME=${CLICREPO}/software/CMake/3.9.5/${BUILD_FLAVOUR}
+export CMAKE_HOME=${CLICREPO}/software/CMake/3.8.1/${BUILD_FLAVOUR}
 export PATH=${CMAKE_HOME}/bin:$PATH
 
 #--------------------------------------------------------------------------------
