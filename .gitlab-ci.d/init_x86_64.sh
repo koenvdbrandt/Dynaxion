@@ -75,7 +75,7 @@ export PATH=${CMAKE_HOME}/bin:$PATH
 #     ROOT
 #--------------------------------------------------------------------------------
 
-export ROOTSYS=${CLICREPO}/software/ROOT/6.10.08/${BUILD_FLAVOUR}
+export ROOTSYS=${CLICREPO}/software/ROOT/6.12.04/${BUILD_FLAVOUR}
 export PYTHONPATH="$ROOTSYS/lib:$PYTHONPATH"
 export PATH="$ROOTSYS/bin:$PATH"
 export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH"
@@ -86,7 +86,7 @@ export CMAKE_PREFIX_PATH="$ROOTSYS:$CMAKE_PREFIX_PATH"
 #--------------------------------------------------------------------------------
 
 export G4INSTALL=${CLICREPO}/software/Geant4/10.03.p03/${BUILD_FLAVOUR}
-export G4LIB=$G4INSTALL/lib64/Geant4-10.3.1/
+export G4LIB=$G4INSTALL/lib64/Geant4-10.3.3/
 export G4ENV_INIT="${G4INSTALL}/bin/geant4.sh"
 export G4SYSTEM="Linux-g++"
 export CMAKE_PREFIX_PATH="$G4INSTALL:$CMAKE_PREFIX_PATH"
