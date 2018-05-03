@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Executable running the framework
+ */
+
 #include <atomic>
 #include <csignal>
 #include <cstdlib>
@@ -10,10 +15,6 @@
 #include "core/config/ConfigManager.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/utils/exceptions.h"
-/**
- * @file
- * @brief Executable running the framework
- */
 
 #include "core/utils/log.h"
 
@@ -89,6 +90,16 @@ int main(int argc, const char* argv[]) {
     for(int i = 1; i < argc; i++) {
         if(strcmp(argv[i], "-h") == 0) {
             print_help = true;
+        } else if(strcmp(argv[i], "--version") == 0) {
+            std::cout << "Allpix Squared version " << ALLPIX_PROJECT_VERSION << std::endl;
+            std::cout << "               built on " << ALLPIX_BUILD_TIME << std::endl;
+            std::cout << std::endl;
+            std::cout << "Copyright (c) 2017 CERN and the Allpix Squared authors." << std::endl << std::endl;
+            std::cout << "This software is distributed under the terms of the MIT License." << std::endl;
+            std::cout << "In applying this license, CERN does not waive the privileges and immunities" << std::endl;
+            std::cout << "granted to it by virtue of its status as an Intergovernmental Organization" << std::endl;
+            std::cout << "or submit itself to any jurisdiction." << std::endl;
+            return 0;
         } else if(strcmp(argv[i], "-v") == 0 && (i + 1 < argc)) {
             try {
                 LogLevel log_level = Log::getLevelFromString(std::string(argv[++i]));
@@ -119,6 +130,7 @@ int main(int argc, const char* argv[]) {
         std::cout << "  -l <file>    file to log to besides standard output" << std::endl;
         std::cout << "  -o <option>  extra configuration option(s) to pass" << std::endl;
         std::cout << "  -v <level>   verbosity level, overwriting the global level" << std::endl;
+        std::cout << "  --version    print version information and quit" << std::endl;
         std::cout << std::endl;
         std::cout << "For more help, please see <https://cern.ch/allpix-squared>" << std::endl;
         clean();

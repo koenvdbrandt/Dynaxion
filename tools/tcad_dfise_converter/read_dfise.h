@@ -1,6 +1,7 @@
 #ifndef DFISE_READ_H
 #define DFISE_READ_H
 
+#include <iostream>
 #include <map>
 #include <vector>
 
@@ -35,10 +36,15 @@ namespace mesh_converter {
         Point(double px, double py, double pz) : x(px), y(py), z(pz) {}
 
         double x{0}, y{0}, z{0};
+
+        friend std::ostream& operator<<(std::ostream& out, const Point& pt) {
+            out << "(" << pt.x << "," << pt.y << "," << pt.z << ")";
+            return out;
+        }
     };
 
     // Read the grid
-    std::map<std::string, std::vector<Point>> read_grid(const std::string& file_name);
+    std::map<std::string, std::vector<Point>> read_grid(const std::string& file_name, bool mesh_tree);
 
     // Read the electric field
     std::map<std::string, std::map<std::string, std::vector<Point>>> read_electric_field(const std::string& file_name);

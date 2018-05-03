@@ -25,6 +25,7 @@
 #include "core/module/exceptions.h"
 #include "core/utils/file.h"
 #include "core/utils/log.h"
+#include "core/utils/unit.h"
 #include "exceptions.h"
 #include "tools/ROOT.h"
 
@@ -37,23 +38,17 @@ using namespace ROOT::Math;
 GeometryManager::GeometryManager() : closed_{false} {}
 
 /**
- * Loads the geometry by parsing the configuration file
+ * Loads the geometry by looping over all defined detectors
  */
-void GeometryManager::load(const Configuration& global_config, std::mt19937_64& seeder) {
-    LOG(TRACE) << "Reading geometry";
-
+void GeometryManager::load(ConfigManager* conf_manager, std::mt19937_64& seeder) {
     // Set up a random number generator and seed it with the global seed:
     std::mt19937_64 random_generator;
     random_generator.seed(seeder());
 
-    std::string detector_file_name = global_config.getPath("detectors_file", true);
-    std::fstream file(detector_file_name);
-    ConfigReader reader(file, detector_file_name);
-
     // Loop over all defined detectors
-    LOG(DEBUG) << "Loading all detectors:";
-    for(auto& detector_section : reader.getConfigurations()) {
-        LOG(DEBUG) << "Detector " << detector_section.getName() << "...";
+    LOG(DEBUG) << "Loading detectors";
+    for(auto& detector_section : conf_manager->getDetectorConfigurations()) {
+        LOG(DEBUG) << "Detector " << detector_section.getName() << ":";
 
         // Calculate possible detector misalignment to be added
         auto misalignment = [&](auto residuals) {
@@ -65,15 +60,15 @@ void GeometryManager::load(const Configuration& global_config, std::mt19937_64& 
 
         // Get the position and apply potenial misalignment
         auto position = detector_section.get<XYZPoint>("position", XYZPoint());
-        LOG(DEBUG) << "Position:    " << display_vector(position, {"mm", "um"});
+        LOG(DEBUG) << "Position:    " << Units::display(position, {"mm", "um"});
         position += misalignment(detector_section.get<XYZPoint>("alignment_precision_position", XYZPoint()));
-        LOG(DEBUG) << " misaligned: " << display_vector(position, {"mm", "um"});
+        LOG(DEBUG) << " misaligned: " << Units::display(position, {"mm", "um"});
 
         // Get the orientation and apply misalignment to the individual angles before combining them
         auto orient_vec = detector_section.get<XYZVector>("orientation", XYZVector());
-        LOG(DEBUG) << "Orientation: " << display_vector(orient_vec, {"deg"});
+        LOG(DEBUG) << "Orientation: " << Units::display(orient_vec, {"deg"});
         orient_vec += misalignment(detector_section.get<XYZVector>("alignment_precision_orientation", XYZVector()));
-        LOG(DEBUG) << " misaligned: " << display_vector(orient_vec, {"deg"});
+        LOG(DEBUG) << " misaligned: " << Units::display(orient_vec, {"deg"});
 
         auto orientation_mode = detector_section.get<std::string>("orientation_mode", "xyz");
         Rotation3D orientation;
@@ -105,12 +100,15 @@ void GeometryManager::load(const Configuration& global_config, std::mt19937_64& 
     }
 
     // Load the list of standard model paths
+    Configuration& global_config = conf_manager->getGlobalConfiguration();
     if(global_config.has("model_paths")) {
         auto extra_paths = global_config.getPathArray("model_paths", true);
         model_paths_.insert(model_paths_.end(), extra_paths.begin(), extra_paths.end());
+        LOG(TRACE) << "Registered model paths from configuration.";
     }
     if(path_is_directory(ALLPIX_MODEL_DIRECTORY)) {
         model_paths_.emplace_back(ALLPIX_MODEL_DIRECTORY);
+        LOG(TRACE) << "Registered model path: " << ALLPIX_MODEL_DIRECTORY;
     }
     const char* data_dirs_env = std::getenv("XDG_DATA_DIRS");
     if(data_dirs_env == nullptr || strlen(data_dirs_env) == 0) {
@@ -122,9 +120,10 @@ void GeometryManager::load(const Configuration& global_config, std::mt19937_64& 
             data_dir += "/";
         }
 
-        data_dir += ALLPIX_PROJECT_NAME;
+        data_dir += std::string(ALLPIX_PROJECT_NAME) + std::string("/models");
         if(path_is_directory(data_dir)) {
             model_paths_.emplace_back(data_dir);
+            LOG(TRACE) << "Registered global model path: " << data_dir;
         }
     }
 }
@@ -283,6 +282,7 @@ std::shared_ptr<DetectorModel> GeometryManager::getModel(const std::string& name
 /**
  * @throws InvalidModuleActionException If the passed detector is a null pointer
  * @throws ModuleError If the geometry is already closed before calling this function
+ * @throws DetectorInvalidNameError If the detector name is invalid
  * @throws DetectorNameExistsError If the detector name is already registered before
  */
 void GeometryManager::addDetector(std::shared_ptr<Detector> detector) {
@@ -294,6 +294,12 @@ void GeometryManager::addDetector(std::shared_ptr<Detector> detector) {
     }
 
     LOG(TRACE) << "Registering new detector " << detector->getName();
+
+    // The name global is used for objects not assigned to any detector, hence it shouldn't be used as a detector name
+    if(detector->getName() == "global") {
+        throw DetectorInvalidNameError(detector->getName());
+    }
+
     if(detector_names_.find(detector->getName()) != detector_names_.end()) {
         throw DetectorExistsError(detector->getName());
     }
@@ -374,7 +380,7 @@ void GeometryManager::load_models() {
 
                 // Add the sub directory path to the reader
                 LOG(TRACE) << "Reading model " << sub_path;
-                std::fstream file(sub_path);
+                std::ifstream file(sub_path);
 
                 ConfigReader reader(file, sub_path);
                 readers.emplace_back(name_ext.first, reader);
@@ -382,7 +388,7 @@ void GeometryManager::load_models() {
         } else {
             // Always a file because paths are already checked
             LOG(TRACE) << "Reading model " << path;
-            std::fstream file(path);
+            std::ifstream file(path);
 
             ConfigReader reader(file, path);
             auto name_ext = allpix::get_file_name_extension(path);
@@ -484,4 +490,21 @@ void GeometryManager::close_geometry() {
 
     closed_ = true;
     LOG(TRACE) << "Closed geometry";
+}
+
+bool GeometryManager::hasMagneticField() const {
+    return (magnetic_field_type_ != MagneticFieldType::NONE);
+}
+
+void GeometryManager::setMagneticFieldFunction(MagneticFieldFunction function, MagneticFieldType type) {
+    magnetic_field_function_ = std::move(function);
+    magnetic_field_type_ = type;
+}
+
+MagneticFieldType GeometryManager::getMagneticFieldType() const {
+    return magnetic_field_type_;
+}
+
+ROOT::Math::XYZVector GeometryManager::getMagneticField(const ROOT::Math::XYZPoint& position) const {
+    return magnetic_field_function_(position);
 }

@@ -26,6 +26,10 @@ ROOT_GENERATE_DICTIONARY(CorryvreckanObjectsDictionary
     ${CMAKE_CURRENT_SOURCE_DIR}/corryvreckan/MCParticle.h
     LINKDEF
     ${CMAKE_CURRENT_SOURCE_DIR}/corryvreckan/Linkdef.h
+    OPTIONS
+    -Wno-inconsistent-missing-override
+    -inlineInputHeader
+    -I${CMAKE_CURRENT_SOURCE_DIR}/corryvreckan
     MODULE
     CorryvreckanObjects
 )
@@ -54,6 +58,7 @@ TARGET_LINK_LIBRARIES(CorryvreckanObjects ${ALLPIX_DEPS_LIBRARIES})
 
 # Specify install for the messages
 INSTALL(TARGETS CorryvreckanObjects
+    COMPONENT modules
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib)
 
@@ -61,6 +66,7 @@ INSTALL(TARGETS CorryvreckanObjects
 INSTALL(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/libCorryvreckanObjects_rdict.pcm
     ${CMAKE_CURRENT_BINARY_DIR}/libCorryvreckanObjects.rootmap
+    COMPONENT modules
     DESTINATION lib)
 
 # Add source files to module library
