@@ -25,7 +25,7 @@ cmp:slc6-gcc:
         - source .gitlab-ci.d/load_deps.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
@@ -45,7 +45,7 @@ cmp:slc6-llvm:
         - source .gitlab-ci.d/init_x86_64.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
@@ -66,7 +66,7 @@ cmp:lxplus-gcc:
         - source etc/scripts/setup_lxplus.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
@@ -87,7 +87,7 @@ cmp:cc7-gcc:
         - source .gitlab-ci.d/load_deps.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
@@ -107,7 +107,7 @@ cmp:cc7-llvm:
         - source .gitlab-ci.d/init_x86_64.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
@@ -126,7 +126,7 @@ cmp:mac1013-clang:
         - source .gitlab-ci.d/load_deps.sh
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_USE_RELATIVE_PATHS=TRUE ..
+        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE -DGeant4_DIR=$G4LIB -DROOT_DIR=$ROOTSYS -DEigen3_DIR=$Eigen3_DIR -DCMAKE_USE_RELATIVE_PATHS=TRUE -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" ..
         - ninja
         - ninja install
     artifacts:
