@@ -43,47 +43,22 @@ export CMAKE_HOME=${CLICREPO}/software/CMake/3.9.5/${BUILD_FLAVOUR}
 export PATH=${CMAKE_HOME}/bin:$PATH
 
 #--------------------------------------------------------------------------------
-#     Python
-#--------------------------------------------------------------------------------
-
-export PYTHONDIR=${CLICREPO}/software/Python/2.7.14/${BUILD_FLAVOUR}
-export PATH=${PYTHONDIR}/bin:$PATH
-export DYLD_LIBRARY_PATH="${PYTHONDIR}/lib:$DYLD_LIBRARY_PATH"
-
-#--------------------------------------------------------------------------------
 #     ROOT
 #--------------------------------------------------------------------------------
 
-export ROOTSYS=${CLICREPO}/software/ROOT/6.10.08/${BUILD_FLAVOUR}
+export ROOTSYS=${CLICREPO}/software/ROOT/6.12.04/${BUILD_FLAVOUR}
 export PYTHONPATH="$ROOTSYS/lib:$PYTHONPATH"
 export PATH="$ROOTSYS/bin:$PATH"
 export DYLD_LIBRARY_PATH="$ROOTSYS/lib:$DYLD_LIBRARY_PATH"
-
-#--------------------------------------------------------------------------------
-#     XercesC
-#--------------------------------------------------------------------------------
-
-export XercesC_HOME=${CLICREPO}/software/Xerces-C/3.2.0/${BUILD_FLAVOUR}
-export PATH="$XercesC_HOME/bin:$PATH"
-export DYLD_LIBRARY_PATH="$XercesC_HOME/lib:$DYLD_LIBRARY_PATH"
-
 
 #--------------------------------------------------------------------------------
 #     Geant4
 #--------------------------------------------------------------------------------
 
 export G4INSTALL=${CLICREPO}/software/Geant4/10.03.p03/${BUILD_FLAVOUR}
-export G4LIB=$G4INSTALL/lib/Geant4-10.2.2/
+export G4LIB=$G4INSTALL/lib/Geant4-10.3.3/
 export G4ENV_INIT="${G4INSTALL}/bin/geant4.sh"
 export G4SYSTEM="Linux-g++"
-
-
-#--------------------------------------------------------------------------------
-#     Boost
-#--------------------------------------------------------------------------------
-
-export BOOST_ROOT=${CLICREPO}/software/Boost/1.65.1/${BUILD_FLAVOUR}
-export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib:$DYLD_LIBRARY_PATH"
 
 #--------------------------------------------------------------------------------
 #     Ninja
