@@ -64,7 +64,7 @@ fi
 #--------------------------------------------------------------------------------
 #     Python
 #--------------------------------------------------------------------------------
-export PYTHONDIR=${CLICREPO}/software/Python/2.7.13/${BUILD_FLAVOUR}
+export PYTHONDIR=${CLICREPO}/software/Python/2.7.15/${BUILD_FLAVOUR}
 export PATH=${PYTHONDIR}/bin:$PATH
 export LD_LIBRARY_PATH=${PYTHONDIR}/lib:${LD_LIBRARY_PATH}
 
