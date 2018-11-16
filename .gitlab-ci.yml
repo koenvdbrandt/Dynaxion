@@ -170,12 +170,13 @@ fmt:cc7-llvm-lint:
 
 core:coverage:
     extends: .test
-    image: cern/cc7-base
+    image: clicdp/cc7-base
     dependencies: []
     script:
         - export COMPILER_TYPE="gcc"
         - source .gitlab-ci.d/init_x86_64.sh
         - source .gitlab-ci.d/load_deps.sh
+        - yum install -y openssl-devel
         - pip install --trusted-host=pypi.org --user gcovr
         - mkdir build
         - cd build
