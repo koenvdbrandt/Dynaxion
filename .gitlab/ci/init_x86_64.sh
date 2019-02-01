@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source ./build_flavor.sh
+ABSOLUTE_PATH=`dirname $(readlink -f ${BASH_SOURCE[0]})`
+source ${ABSOLUTE_PATH}/build_flavor.sh
 
 # Determine is you have CVMFS installed
 if [ ! -d "/cvmfs" ]; then
