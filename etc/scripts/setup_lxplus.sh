@@ -14,9 +14,9 @@ SFTREPO=/cvmfs/sft.cern.ch/lcg/releases
 
 # FIXME: This should not be a fixed directory
 if [ ${BUILD_FLAVOUR} == "x86_64-slc6-gcc7-opt" ]; then
-    export G4INSTALL=$SFTREPO/Geant4/10.04.p02-fd180/x86_64-slc6-gcc7-opt/
+    export G4INSTALL=$SFTREPO/Geant4/10.04.p02-0be30/x86_64-slc6-gcc7-opt/
 elif [ ${BUILD_FLAVOUR} == "x86_64-centos7-gcc7-opt" ]; then
-    export G4INSTALL=$SFTREPO/Geant4/10.04.p02-e3c30/x86_64-centos7-gcc7-opt/
+    export G4INSTALL=$SFTREPO/Geant4/10.04.p02-09680/x86_64-centos7-gcc7-opt/
 fi
 
 source $G4INSTALL/bin/geant4.sh
