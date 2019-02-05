@@ -54,6 +54,7 @@ cmp:lxplus-gcc:
     image: clicdp/slc6-base
     before_script:
         - export COMPILER_TYPE="gcc"
+        - yum install -y libgfortran
         - source etc/scripts/setup_lxplus.sh
     script:
         - mkdir build
