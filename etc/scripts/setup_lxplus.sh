@@ -10,5 +10,5 @@ ABSOLUTE_PATH=`dirname $(readlink -f ${BASH_SOURCE[0]})`
 source $ABSOLUTE_PATH/../../.gitlab/ci/build_flavor.sh
 
 # Load different Geant for the moment, because CLICdp version does not have QT
-SFTREPO=/cvmfs/sft.cern.ch/lcg/views/LCG_95rc2
+SFTREPO=/cvmfs/sft.cern.ch/lcg/views/LCG_95
 source ${SFTREPO}/${BUILD_FLAVOUR}/setup.sh
