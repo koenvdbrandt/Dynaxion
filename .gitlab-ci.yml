@@ -59,7 +59,7 @@ cmp:lxplus-gcc:
     script:
         - mkdir build
         - cd build
-        - cmake -GNinja -DBUILD_ALL_MODULES=ON -DCMAKE_BUILD_TYPE=RELEASE ..
+        - cmake -GNinja -DBUILD_LCIOWriter=OFF -DCMAKE_BUILD_TYPE=RELEASE ..
         - ninja
         - ninja install
 
