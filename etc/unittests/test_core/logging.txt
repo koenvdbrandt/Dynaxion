@@ -1,0 +1,31 @@
+|12:09:23.142|   (TRACE) Global log level is set to TRACE
+|12:09:23.142|   (TRACE) Global log format is set to DEFAULT
+|12:09:23.142|   (TRACE) Loading Allpix
+|12:09:23.142|  (STATUS) Welcome to Allpix^2 v1.3+347^ge49fec3c
+|12:09:23.142|  (STATUS) Initialized PRNG with configured seed 0
+|12:09:23.143|   (DEBUG) Creating output directory /user/kbrandt/allpix-squared/etc/unittests/output/test_core/test_01-5_globalconfig_log_file.conf/output
+|12:09:23.147|   (TRACE) Adding physical units
+|12:09:23.147|   (TRACE) Setting ROOT plotting style
+|12:09:23.487|   (DEBUG) Loading detectors
+|12:09:23.487|   (DEBUG) Detector mydetector:
+|12:09:23.488|   (DEBUG) Position:    (0mm,0mm,0mm)
+|12:09:23.488|   (DEBUG)  misaligned: (0mm,0mm,0mm)
+|12:09:23.488|   (DEBUG) Orientation: (0deg,0deg,0deg)
+|12:09:23.488|   (DEBUG)  misaligned: (0deg,0deg,0deg)
+|12:09:23.488|   (DEBUG) Interpreting Euler angles as XYZ rotation
+|12:09:23.488|   (TRACE) Registering new detector mydetector
+|12:09:23.488|   (TRACE) Registered model path: /user/kbrandt/allpix-squared/models
+|12:09:23.491|  (STATUS) Loaded 0 modules
+|12:09:23.491|   (TRACE) Initializing Allpix
+|12:09:23.491|  (STATUS) Initializing 0 module instantiations
+|12:09:23.491|  (STATUS) Initialized 0 module instantiations 
+|12:09:23.491|   (TRACE) Running Allpix
+|12:09:23.491|   (DEBUG) Initializing thread pool with 0 additional thread(s)
+|12:09:23.492|  (STATUS) Running event 1 of 1
+|12:09:23.492|  (STATUS) Finished run of 1 events
+|12:09:23.492|   (TRACE) Destroying thread pool
+|12:09:23.492|   (TRACE) Finalizing Allpix
+|12:09:23.492|   (TRACE) Finalizing module instantiations
+|12:09:23.493|  (STATUS) Finalization completed        
+|12:09:23.493|  (STATUS) Executed 0 instantiations in 0 seconds, spending 0% of time in slowest instantiation 
+|12:09:23.493|  (STATUS) Average processing time is 2 ms/event, event generation at 495 Hz

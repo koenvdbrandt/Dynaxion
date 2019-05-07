@@ -1,0 +1,16 @@
+geometry = "/user/kbrandt/allpix-squared/etc/unittests/output/test_modules/test_08-2_writer_rce.conf/output/RCEWriter/geometry.toml"
+
+[sensor_types.test_raw]
+cols = 5
+rows = 5
+value_max = 32768
+pitch_col = 0.220000
+pitch_row = 0.440000
+thickness = 0.400000
+x_x0 = 0.0107450
+measurement = "pixel_binary"
+
+[[sensors]]
+name = "mydetector"
+type = "test_raw"
+

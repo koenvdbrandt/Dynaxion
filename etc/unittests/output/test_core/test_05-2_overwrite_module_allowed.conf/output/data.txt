@@ -1,0 +1,4 @@
+# Allpix Squared ASCII data - https://cern.ch/allpix-squared
+
+=== 1 ===
+# 0 objects from 0 messages
