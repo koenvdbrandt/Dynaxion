@@ -164,7 +164,7 @@ void VisualizationGeant4Module::init() {
     set_visualization_settings();
 
     // Set the displayListLimit to 1 million instead of the standard 50k
-    //UI->ApplyCommand("/vis/ogl/set/displayListLimit 10000");
+    // UI->ApplyCommand("/vis/ogl/set/displayListLimit 10000");
     std::string display_limit = config_.get<std::string>("display_limit", "11000");
     UI->ApplyCommand("/vis/ogl/set/displayListLimit 10000");
     UI->ApplyCommand("/vis/ogl/set/displayListLimit " + display_limit);
