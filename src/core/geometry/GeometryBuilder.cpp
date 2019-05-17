@@ -27,4 +27,3 @@ void GeometryBuilder::build(void* world, void* materials) {
     (void)world;
     (void)materials;
 }
-
