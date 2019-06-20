@@ -116,7 +116,7 @@ void DetectorConstructionG4::build(G4LogicalVolume* world_log, std::map<std::str
         // Create the sensor box and logical volume
         ROOT::Math::XYZVector sensor_size = model->getSensorSize();
         std::string sensor_material = "silicon";
-        if(geo_manager_->getType() == "active") {
+        if(model->isActive() == true) {
             sensor_material = model->getActiveMaterial();
             sensor_size = model->getSize();
         }

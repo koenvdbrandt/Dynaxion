@@ -209,8 +209,6 @@ namespace allpix {
 
         std::vector<std::shared_ptr<BaseBuilder>> getBuilders();
 
-        std::string getType() const { return type_; };
-
     private:
         /**
          * @brief Load all standard framework models (automatically done when the geometry is closed)
@@ -230,7 +228,6 @@ namespace allpix {
          */
         void close_geometry();
         std::atomic_bool closed_;
-        std::string type_;
         std::vector<ROOT::Math::XYZPoint> points_;
 
         std::vector<std::string> model_paths_;

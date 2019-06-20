@@ -424,16 +424,16 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(!config.has("type")) {
         LOG(ERROR) << "Model file " << config.getFilePath() << " does not provide a type parameter";
     }
-    type_ = config.get<std::string>("type");
+    auto type = config.get<std::string>("type");
 
     // Instantiate the correct detector model
-    if(type_ == "hybrid") {
+    if(type == "hybrid") {
         return std::make_shared<HybridPixelDetectorModel>(name, reader);
     }
-    if(type_ == "monolithic") {
+    if(type == "monolithic") {
         return std::make_shared<MonolithicPixelDetectorModel>(name, reader);
     }
-    if(type_ == "active") {
+    if(type == "active") {
         return std::make_shared<ActiveMaterialModel>(name, reader);
     }
 
