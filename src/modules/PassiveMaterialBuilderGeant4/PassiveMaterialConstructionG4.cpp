@@ -157,60 +157,60 @@ std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {
         ROOT::Math::XYVector box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
         auto box_thickness = config_.get<double>("thickness", 0);
 
-        points_.emplace_back({passive_material_location.x() + box_size.x() / 2,
-                           passive_material_location.y() + box_size.y() / 2,
-                           passive_material_location.z() + box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() + box_size.x() / 2,
-                           passive_material_location.y() + box_size.y() / 2,
-                           passive_material_location.z() - box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() + box_size.x() / 2,
-                           passive_material_location.y() - box_size.y() / 2,
-                           passive_material_location.z() + box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() + box_size.x() / 2,
-                           passive_material_location.y() - box_size.y() / 2,
-                           passive_material_location.z() - box_thickness});
-        points_.emplace_back({passive_material_location.x() - box_size.x() / 2,
-                           passive_material_location.y() + box_size.y() / 2,
-                           passive_material_location.z() + box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() - box_size.x() / 2,
-                           passive_material_location.y() + box_size.y() / 2,
-                           passive_material_location.z() - box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() - box_size.x() / 2,
-                           passive_material_location.y() - box_size.y() / 2,
-                           passive_material_location.z() + box_thickness / 2});
-        points_.emplace_back({passive_material_location.x() - box_size.x() / 2,
-                           passive_material_location.y() - box_size.y() / 2,
-                           passive_material_location.z() - box_thickness / 2});
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
+                                                  passive_material_location.y() + box_size.y() / 2,
+                                                  passive_material_location.z() + box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
+                                                  passive_material_location.y() + box_size.y() / 2,
+                                                  passive_material_location.z() - box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
+                                                  passive_material_location.y() - box_size.y() / 2,
+                                                  passive_material_location.z() + box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
+                                                  passive_material_location.y() - box_size.y() / 2,
+                                                  passive_material_location.z() - box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
+                                                  passive_material_location.y() + box_size.y() / 2,
+                                                  passive_material_location.z() + box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
+                                                  passive_material_location.y() + box_size.y() / 2,
+                                                  passive_material_location.z() - box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
+                                                  passive_material_location.y() - box_size.y() / 2,
+                                                  passive_material_location.z() + box_thickness / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
+                                                  passive_material_location.y() - box_size.y() / 2,
+                                                  passive_material_location.z() - box_thickness / 2));
     }
 
     if(config_.get<std::string>("type") == "cylinder") {
         auto cylinder_outer_radius = config_.get<double>("outer_radius", 0);
         auto cylinder_height = config_.get<double>("height", 0);
 
-        points_.emplace_back({passive_material_location.x() + cylinder_outer_radius,
-                           passive_material_location.y() + cylinder_outer_radius,
-                           passive_material_location.z() + cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() + cylinder_outer_radius,
-                           passive_material_location.y() + cylinder_outer_radius,
-                           passive_material_location.z() - cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() + cylinder_outer_radius,
-                           passive_material_location.y() - cylinder_outer_radius,
-                           passive_material_location.z() + cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() + cylinder_outer_radius,
-                           passive_material_location.y() - cylinder_outer_radius,
-                           passive_material_location.z() - cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() - cylinder_outer_radius,
-                           passive_material_location.y() + cylinder_outer_radius,
-                           passive_material_location.z() + cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() - cylinder_outer_radius,
-                           passive_material_location.y() + cylinder_outer_radius,
-                           passive_material_location.z() - cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() - cylinder_outer_radius,
-                           passive_material_location.y() - cylinder_outer_radius,
-                           passive_material_location.z() + cylinder_height / 2});
-        points_.emplace_back({passive_material_location.x() - cylinder_outer_radius,
-                           passive_material_location.y() - cylinder_outer_radius,
-                           passive_material_location.z() - cylinder_height / 2});
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
+                                                  passive_material_location.y() + cylinder_outer_radius,
+                                                  passive_material_location.z() + cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
+                                                  passive_material_location.y() + cylinder_outer_radius,
+                                                  passive_material_location.z() - cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
+                                                  passive_material_location.y() - cylinder_outer_radius,
+                                                  passive_material_location.z() + cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
+                                                  passive_material_location.y() - cylinder_outer_radius,
+                                                  passive_material_location.z() - cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
+                                                  passive_material_location.y() + cylinder_outer_radius,
+                                                  passive_material_location.z() + cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
+                                                  passive_material_location.y() + cylinder_outer_radius,
+                                                  passive_material_location.z() - cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
+                                                  passive_material_location.y() - cylinder_outer_radius,
+                                                  passive_material_location.z() + cylinder_height / 2));
+        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
+                                                  passive_material_location.y() - cylinder_outer_radius,
+                                                  passive_material_location.z() - cylinder_height / 2));
     }
 
     return points_;
