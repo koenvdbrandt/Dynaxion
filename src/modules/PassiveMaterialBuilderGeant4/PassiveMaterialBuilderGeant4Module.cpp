@@ -73,8 +73,8 @@ void PassiveMaterialBuilderGeant4Module::init() {
     }
 
     // Run the geometry construct function in GeometryConstructionG4
-    //LOG(TRACE) << "Building Geant4 geometry";
-    //run_manager_g4_->InitializeGeometry();
+    // LOG(TRACE) << "Building Geant4 geometry";
+    // run_manager_g4_->InitializeGeometry();
 
     // Release output from G4
     RELEASE_STREAM(G4cout);

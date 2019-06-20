@@ -36,9 +36,8 @@ namespace allpix {
          * @param reader Configuration reader with description of the model
          */
         explicit ActiveMaterialModel(std::string type, const ConfigReader& reader)
-            : DetectorModel(std::move(type), reader) {}         
-
-	};
+            : DetectorModel(std::move(type), reader) {}
+    };
 } // namespace allpix
 
 #endif /* ALLPIX_ACTIVE_MATERIAL_H */

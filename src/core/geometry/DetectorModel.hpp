@@ -262,7 +262,7 @@ namespace allpix {
                                                    sensor_thickness_);
             return getGridSize() + excess_thickness;
         }
-	
+
         /**
          * @brief Get center of the sensor in local coordinates
          * @return Center of the sensor
@@ -369,13 +369,13 @@ namespace allpix {
                                                    std::move(hole_offset)));
         }
 
+        bool isActive();
+        std::string getActiveMaterial();
 
-	bool isActive();
-	std::string getActiveMaterial();
     protected:
         std::string type_;
-	bool active_material{false};
-	std::string active_material_;
+        bool active_material{false};
+        std::string active_material_;
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;

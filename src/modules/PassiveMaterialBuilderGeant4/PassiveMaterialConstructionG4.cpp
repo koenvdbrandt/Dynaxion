@@ -20,13 +20,13 @@
 #include <Math/Vector3D.h>
 
 #include <G4Box.hh>
+#include <G4IntersectionSolid.hh>
+#include <G4RotationMatrix.hh>
 #include <G4Sphere.hh>
 #include <G4SubtractionSolid.hh>
-#include <G4UnionSolid.hh>
-#include <G4IntersectionSolid.hh>
 #include <G4Tubs.hh>
+#include <G4UnionSolid.hh>
 #include "CLHEP/Vector/Rotation.h"
-#include <G4RotationMatrix.hh>
 
 #include <G4LogicalVolume.hh>
 #include <G4LogicalVolumeStore.hh>
@@ -74,14 +74,14 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
     auto passive_material_location = config_.get<ROOT::Math::XYZPoint>("position", {0., 0., 0.});
     auto passive_material_pos = toG4Vector(passive_material_location);
     auto passive_material = config_.get<std::string>("material", world_material);
-    
+
     std::transform(passive_material.begin(), passive_material.end(), passive_material.begin(), ::tolower);
 
-    G4RotationMatrix* orientation = new G4RotationMatrix;  // Rotates X and Z axes only
-    auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0.,0.,0.});
-    orientation->rotateX(orientation_vector.x()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
-    orientation->rotateY(orientation_vector.y()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
-    orientation->rotateZ(orientation_vector.z()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
+    G4RotationMatrix* orientation = new G4RotationMatrix; // Rotates X and Z axes only
+    auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0., 0., 0.});
+    orientation->rotateX(orientation_vector.x() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
+    orientation->rotateY(orientation_vector.y() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
+    orientation->rotateZ(orientation_vector.z() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
 
     if(config_.get<std::string>("type") == "box") {
         auto box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
@@ -148,7 +148,6 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
             // else{ throw ModuleError("Cylinder '" + name + "' is not closed! Can't fill it with material");}
         }
     }
-    
 }
 
 std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {

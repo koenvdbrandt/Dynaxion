@@ -354,19 +354,6 @@ void VisualizationGeant4Module::set_visualization_attributes() {
     G4VisAttributes BoxVisAtt = G4VisAttributes(sensorColor);
     BoxVisAtt.SetForceSolid(false);
 
-     // The conveyer
-    G4VisAttributes conveyerVisAtt = G4VisAttributes(sensorColor);
-    conveyerVisAtt.SetForceSolid(false);
-
-   // The dynaxion_cross
-    auto dynaxion = G4Color::Gray(); // Blackish       
-    G4VisAttributes dynaxionVisAtt = G4VisAttributes(dynaxion);
-
-    // The luggage
-    auto luggage = G4Color::Brown(); // Blackish       
-    G4VisAttributes luggageVisAtt = G4VisAttributes(luggage);
-    luggageVisAtt.SetForceSolid(false);
-
     // In default simple view mode, pixels and bumps are set to invisible, not to be displayed.
     // The logical volumes holding them are instead displayed.
     auto simple_view = config_.get<bool>("simple_view");
@@ -383,19 +370,16 @@ void VisualizationGeant4Module::set_visualization_attributes() {
     }
 
     // Apply the visualization attributes to all detectors that exist
-        LOG(INFO) << "Starting getting attributes";
+    LOG(INFO) << "Starting getting attributes";
     for(auto& detector : geo_manager_->getDetectors()) {
-        LOG(INFO) << "Starting getting attributes1";
         auto wrapper_log = detector->getExternalObject<G4LogicalVolume>("wrapper_log");
         if(wrapper_log != nullptr) {
             wrapper_log->SetVisAttributes(wrapperVisAtt);
         }
-        LOG(INFO) << "Starting getting attributes2";	
         auto sensor_log = detector->getExternalObject<G4LogicalVolume>("sensor_log");
         if(sensor_log != nullptr) {
             sensor_log->SetVisAttributes(BoxVisAtt);
         }
-        LOG(INFO) << "Starting getting attributes3";
         auto pixel_log = detector->getExternalObject<G4LogicalVolume>("pixel_log");
         if(pixel_log != nullptr) {
             pixel_log->SetVisAttributes(SensorVisAtt);
@@ -410,50 +394,25 @@ void VisualizationGeant4Module::set_visualization_attributes() {
         if(bumps_cell_log != nullptr) {
             bumps_cell_log->SetVisAttributes(BumpVisAtt);
         }
-        LOG(INFO) << "Starting getting attributes4";
         auto chip_log = detector->getExternalObject<G4LogicalVolume>("chip_log");
         if(chip_log != nullptr) {
             chip_log->SetVisAttributes(ChipVisAtt);
         }
-        LOG(INFO) << "Starting getting attributes5";
-	auto skip_detectors = config_.get<bool>("skip_detectors", false);
-	if(!skip_detectors){
-        auto supports_log = detector->getExternalObject<std::vector<std::shared_ptr<G4LogicalVolume>>>("supports_log");
-        for(auto& support_log : *supports_log) {
-        LOG(INFO) << "Starting getting attributes6";
-            support_log->SetVisAttributes(supportVisAtt);
-        LOG(INFO) << "Starting getting attributes7";
-        }}
-        LOG(INFO) << "Starting getting attributes6";
+        auto skip_detectors = config_.get<bool>("skip_detectors", false);
+        if(!skip_detectors) {
+            auto supports_log = detector->getExternalObject<std::vector<std::shared_ptr<G4LogicalVolume>>>("supports_log");
+            for(auto& support_log : *supports_log) {
+                support_log->SetVisAttributes(supportVisAtt);
+            }
+        }
         auto support_log = detector->getExternalObject<G4LogicalVolume>("support_log");
         if(support_log != nullptr) {
             support_log->SetVisAttributes(supportVisAtt);
         }
     }
-
-    auto store = G4LogicalVolumeStore::GetInstance();
-    auto dynaxion_log2 = store->GetVolume("dynaxion_tube_large_log");
-        if(dynaxion_log2 != nullptr){
-            dynaxion_log2->SetVisAttributes(dynaxionVisAtt);
-        }
-    auto dynaxion_log1 = store->GetVolume("dynaxion_tube_small_log");
-        if(dynaxion_log1 != nullptr){
-            dynaxion_log1->SetVisAttributes(dynaxionVisAtt);
-        }
-    auto conveyer_belt_log = store->GetVolume("conveyer_belt_log");
-        if(conveyer_belt_log != nullptr){
-            conveyer_belt_log->SetVisAttributes(conveyerVisAtt);
-        }
-    auto luggage_log = store->GetVolume("luggage_log");
-        if(luggage_log != nullptr){
-            luggage_log->SetVisAttributes(luggageVisAtt);
-        }       
-
-        LOG(INFO) << "Starting getting attributes7";
 }
 
 void VisualizationGeant4Module::run(unsigned int) {
-        LOG(INFO) << "Starting getting attributes8";
     if(!config_.get<bool>("accumulate")) {
         vis_manager_g4_->GetCurrentViewer()->ShowView();
         std::this_thread::sleep_for(
@@ -480,7 +439,7 @@ static void interrupt_handler(int signal) {
 }
 
 void VisualizationGeant4Module::add_visualization_volumes() {
-            LOG(INFO) << "add_visualization_volume";
+    LOG(INFO) << "add_visualization_volume";
     // Only place the pixel matrix for the visualization if we have no simple view
     if(!config_.get<bool>("simple_view")) {
         // Loop through detectors

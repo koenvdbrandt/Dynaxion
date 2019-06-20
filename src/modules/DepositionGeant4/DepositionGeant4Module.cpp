@@ -304,7 +304,6 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         if(config_.get<bool>("output_plots")) {
             double charge = static_cast<double>(Units::convert(sensor->getDepositedCharge(), "ke"));
             charge_per_event_[sensor->getName()]->Fill(charge);
-
         }
     }
 
@@ -322,7 +321,7 @@ void DepositionGeant4Module::finalize() {
         // Write histograms
         LOG(INFO) << "Writing output plots to file";
         for(auto& plot : charge_per_event_) {
-	plot.second->Write();
+            plot.second->Write();
         }
     }
 
