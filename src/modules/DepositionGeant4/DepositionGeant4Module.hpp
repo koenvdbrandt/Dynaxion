@@ -20,6 +20,9 @@
 
 #include "SensitiveDetectorActionG4.hpp"
 #include "TrackInfoManager.hpp"
+#include "globals.hh"
+#include "G4VUserPhysicsList.hh"
+
 
 #include <TH1D.h>
 

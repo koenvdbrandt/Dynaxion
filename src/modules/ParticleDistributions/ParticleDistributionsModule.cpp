@@ -43,39 +43,86 @@ void ParticleDistributionsModule::init() {
 
     config_.setDefault<bool>("store_particles", false);
     store_particles_ = config_.get<bool>("store_particles");
-
+    neutrons_ = 0;
+    (void) neutrons_;
     simple_tree_ = new TTree("neutrons", "neutrons");
-    simple_tree_->Branch("energy", &energy_);
+    simple_tree_->Branch("initial_energy", &initial_energy_);
+    simple_tree_->Branch("final_energy", &final_energy_);
     simple_tree_->Branch("particle_id", &particle_id_);
     simple_tree_->Branch("start_position_x", &start_position_x_);
     simple_tree_->Branch("start_position_y", &start_position_y_);
     simple_tree_->Branch("start_position_z", &start_position_z_);
-    simple_tree_->Branch("momentum_x", &momentum_x_);
-    simple_tree_->Branch("momentum_y", &momentum_y_);
-    simple_tree_->Branch("momentum_z", &momentum_z_);
+    simple_tree_->Branch("end_position_x", &end_position_x_);
+    simple_tree_->Branch("end_position_y", &end_position_y_);
+    simple_tree_->Branch("end_position_z", &end_position_z_);
+    simple_tree_->Branch("initial_momentum_x", &initial_momentum_x_);
+    simple_tree_->Branch("initial_momentum_y", &initial_momentum_y_);
+    simple_tree_->Branch("initial_momentum_z", &initial_momentum_z_);
+    simple_tree_->Branch("final_momentum_x", &final_momentum_x_);
+    simple_tree_->Branch("final_momentum_y", &final_momentum_y_);
+    simple_tree_->Branch("final_momentum_z", &final_momentum_z_);    
+    //simple_tree_->Branch("#neutrons", &neutrons_);
 }
 
 void ParticleDistributionsModule::run(unsigned int) {
 
     // Make a store for desired MC tracks
     std::vector<MCTrack> saved_tracks;
+    std::vector<MCTrack> neutron_track;
+    std::vector<MCTrack> alpha_track;
+    std::vector<MCTrack> alpha_track2;
+    std::vector<MCTrack> proton_track;
+    std::vector<MCTrack> deuteron_track;
+    std::vector<MCTrack> random;
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() != 2112) {
-            continue;
-        }
+        if(particle.getParticleID() == 2112) {
+            neutron_track.insert(neutron_track.end() , particle); 
+	}
+        else if(particle.getParticleID() == 2212) {
+            proton_track.insert(proton_track.end() , particle);
+	}
+        else if(particle.getParticleID() == 1000020040) {
+            alpha_track.insert(alpha_track.end() , particle);
+	}
+	else if(particle.getParticleID() == 1000060120){
+            deuteron_track.insert(deuteron_track.end() , particle);
+	}
+	else if(particle.getParticleID() > 30){
+            random.insert(random.end() , particle);
+	}
+    }
+    if(neutron_track.size() != 1) {
+            alpha_track.clear();
+	}
+    
+    /*else if(proton_track.size() == 1) {
+            neutron_track.clear();
+	}*/
+    else if(alpha_track.size() != 2) {
+            alpha_track.clear();
+	}
+    
 
-        ROOT::Math::XYZVector momentum = particle.getMomentum();
-        double magnitude = sqrt(momentum.Mag2());
-        double energy = particle.getKineticEnergyInitial();
+    for(auto& neutron : neutron_track) 
+	{
+	
+	//else {
+	//    std::cout << neutron_track.size() <<std::endl;      	
+    	//}
+        ROOT::Math::XYZVector initial_momentum = neutron.getInitialMomentum();
+        ROOT::Math::XYZVector final_momentum = neutron.getFinalMomentum();
+        double magnitude = sqrt(initial_momentum.Mag2());
+        //double magnitude_final = sqrt(final_momentum.Mag2());
+        double energy = neutron.getKineticEnergyInitial();
 
         ROOT::Math::XYZVector directionVector, energyWeightedDirection;
-        directionVector.SetX(momentum.X() / magnitude);
-        directionVector.SetY(momentum.Y() / magnitude);
-        directionVector.SetZ(momentum.Z() / magnitude);
+        directionVector.SetX(initial_momentum.X() / magnitude);
+        directionVector.SetY(initial_momentum.Y() / magnitude);
+        directionVector.SetZ(initial_momentum.Z() / magnitude);
 
-        energyWeightedDirection.SetX(energy * momentum.X() / magnitude);
-        energyWeightedDirection.SetY(energy * momentum.Y() / magnitude);
-        energyWeightedDirection.SetZ(energy * momentum.Z() / magnitude);
+        energyWeightedDirection.SetX(energy * initial_momentum.X() / magnitude);
+        energyWeightedDirection.SetY(energy * initial_momentum.Y() / magnitude);
+        energyWeightedDirection.SetZ(energy * initial_momentum.Z() / magnitude);
 
         energy_distribution_->Fill(energy);
         zx_distribution_->Fill(directionVector.Z(), directionVector.X());
@@ -84,19 +131,29 @@ void ParticleDistributionsModule::run(unsigned int) {
         xyz_energy_distribution_->Fill(
             energyWeightedDirection.X(), energyWeightedDirection.Y(), energyWeightedDirection.Z());
 
-        energy_ = particle.getKineticEnergyInitial();
-        particle_id_ = particle.getParticleID();
-        start_position_x_ = particle.getStartPoint().X();
-        start_position_y_ = particle.getStartPoint().Y();
-        start_position_z_ = particle.getStartPoint().Z();
-        momentum_x_ = momentum.X();
-        momentum_y_ = momentum.Y();
-        momentum_z_ = momentum.Z();
+        initial_energy_ = neutron.getKineticEnergyInitial();
+        final_energy_ = neutron.getKineticEnergyFinal();
+
+        particle_id_ = neutron.getParticleID();
+        start_position_x_ = neutron.getStartPoint().X();
+        start_position_y_ = neutron.getStartPoint().Y();
+        start_position_z_ = neutron.getStartPoint().Z();
+        end_position_x_ = neutron.getEndPoint().X();
+        end_position_y_ = neutron.getEndPoint().Y();
+        end_position_z_ = neutron.getEndPoint().Z();
+        initial_momentum_x_ = initial_momentum.X();
+        initial_momentum_y_ = initial_momentum.Y();
+        initial_momentum_z_ = initial_momentum.Z();
+        final_momentum_x_ = final_momentum.X();
+        final_momentum_y_ = final_momentum.Y();
+        final_momentum_z_ = final_momentum.Z();
         simple_tree_->Fill();
 
         if(store_particles_) {
-            saved_tracks.push_back(particle);
+            saved_tracks.push_back(neutron);
         }
+    
+
     }
 
     // Dispatch message of pixel charges
@@ -104,6 +161,8 @@ void ParticleDistributionsModule::run(unsigned int) {
         auto mcparticle_message = std::make_shared<MCTrackMessage>(saved_tracks);
         messenger_->dispatchMessage(this, mcparticle_message);
     }
+
+    neutron_track.clear();   
 }
 
 void ParticleDistributionsModule::finalize() {

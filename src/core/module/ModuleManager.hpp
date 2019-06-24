@@ -127,6 +127,15 @@ namespace allpix {
         std::vector<std::pair<ModuleIdentifier, Module*>>
         create_detector_modules(void*, Configuration&, Messenger*, GeometryManager*, std::mt19937_64& seeder);
 
+
+//!!!!!!
+/*
+        std::vector<std::pair<ModuleIdentifier, Module*>>
+        create_target_modules(void*, Configuration&, Messenger*, GeometryManager*, std::mt19937_64& seeder);
+*/
+///!!!!!!!!!!!!!!!!!!!!!!
+
+
         /**
          * @brief Set module specific log setting before running init/run/finalize
          */

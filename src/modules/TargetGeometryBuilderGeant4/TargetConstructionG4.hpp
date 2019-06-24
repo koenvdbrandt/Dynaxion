@@ -36,7 +36,7 @@ namespace allpix {
          * @return Physical volume representing the world
          */
         void Build(void* world, void* materials) override;
-
+//	virtual void Bias();
     private:
         Configuration& config_;
 

@@ -19,7 +19,7 @@
 #include <G4NistManager.hh>
 #include <G4PVDivision.hh>
 #include <G4PVPlacement.hh>
-#include <G4PhysicalVolumeStore.hh>
+#include <G4LogicalVolumeStore.hh>
 #include <G4Sphere.hh>
 #include <G4StepLimiterPhysics.hh>
 #include <G4SubtractionSolid.hh>
@@ -35,6 +35,7 @@
 #include "core/utils/log.h"
 #include "tools/ROOT.h"
 #include "tools/geant4.h"
+#include "modules/DepositionGeant4/GB01BOptrMultiParticleChangeCrossSection.hpp"
 
 using namespace allpix;
 
@@ -59,6 +60,9 @@ void TargetConstructionG4::Build(void* world, void* materials) {
 
     G4LogicalVolume* world_log = reinterpret_cast<G4LogicalVolume*>(world);
     std::map<std::string, G4Material*>* materials_ = reinterpret_cast<std::map<std::string, G4Material*>*>(materials);
+    //(void) world;
+    //auto world_log = G4LogicalVolumeStore::GetInstance()->GetVolume("World");
+	
 
     std::string world_material = config_.get<std::string>("world_material", "air");
     world_material_ = (*materials_)[world_material];
@@ -84,3 +88,20 @@ void TargetConstructionG4::Build(void* world, void* materials) {
     auto target_phys_ = make_shared_no_delete<G4PVPlacement>(
         nullptr, target_pos, target_log.get(), "sensor_phys", world_log, false, 0, true);
 }
+/*
+void TargetConstructionG4::Bias() {
+
+         	// -- Fetch volume for biasing:
+	G4LogicalVolume* logicTest = G4LogicalVolumeStore::GetInstance()->GetVolume("target_log");
+  	
+  	// ----------------------------------------------
+	// -- operator creation and attachment to volume:
+	// ----------------------------------------------
+	GB01BOptrMultiParticleChangeCrossSection* testMany = new GB01BOptrMultiParticleChangeCrossSection();
+	//testMany->AddParticle("gamma");
+   	testMany->AddParticle("deuteron");
+  	testMany->AttachTo(logicTest);
+  	G4cout << " Attaching biasing operator " << testMany->GetName()
+        << " to logical volume " << logicTest->GetName()
+        << G4endl;
+}*/

@@ -99,8 +99,8 @@ void GeometryBuilderGeant4Module::init() {
     run_manager_g4_->SetUserInitialization(geometry_construction);
 
     // Run the geometry construct function in GeometryConstructionG4
-    LOG(TRACE) << "Building Geant4 geometry";
-    run_manager_g4_->InitializeGeometry();
+    //LOG(TRACE) << "Building Geant4 geometry";
+    //run_manager_g4_->InitializeGeometry();
 
     // Export geometry in GDML if requested (and GDML support is available in Geant4)
     if(config_.has("GDML_output_file")) {

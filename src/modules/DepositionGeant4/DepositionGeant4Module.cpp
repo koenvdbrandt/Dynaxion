@@ -17,16 +17,24 @@
 #include <G4EmParameters.hh>
 #include <G4HadronicProcessStore.hh>
 #include <G4LogicalVolume.hh>
+#include <G4LogicalVolumeStore.hh>
 #include <G4PhysListFactory.hh>
 #include <G4RadioactiveDecayPhysics.hh>
 #include <G4RunManager.hh>
 #include <G4StepLimiterPhysics.hh>
 #include <G4UImanager.hh>
 #include <G4UserLimits.hh>
+#include <G4GenericBiasingPhysics.hh>
 
 #include "G4FieldManager.hh"
 #include "G4TransportationManager.hh"
 #include "G4UniformMagField.hh"
+#include "G4BiasingHelper.hh"
+#include "G4ParticleTable.hh"
+#include "G4Decay.hh"
+#include "G4ProcessManager.hh"
+#include "G4DeuteronInelasticProcess.hh"
+
 
 #include "core/config/exceptions.h"
 #include "core/geometry/GeometryManager.hpp"
@@ -39,6 +47,8 @@
 #include "GeneratorActionG4.hpp"
 #include "SensitiveDetectorActionG4.hpp"
 #include "SetTrackInfoUserHookG4.hpp"
+#include "GB01BOptrMultiParticleChangeCrossSection.hpp"
+
 
 #define G4_NUM_SEEDS 10
 
@@ -147,6 +157,89 @@ void DepositionGeant4Module::init() {
 
     // Register radioactive decay physics lists
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
+
+/*
+    G4ProcessManager* pManager;
+    G4DeuteronInelasticProcess* neutron_reaction;// = new G4DeuteronInelasticProcess;
+    //G4LEDeuteronInelastic neutron_reaction;
+    G4HadronCaptureProcess  neutron_process;
+    neutron_process.RegisterMe(neutron_reaction);
+    neutron_process.BiasCrossSectionByFactor(100);
+  
+    pManager->AddDiscreteProcess(&neutron_process); 
+    
+
+    BDSBOptnChangeCrossSection vent("neutron", "ChangeXS");
+    //vent->G4BOptnChangeCrossSection;
+    vent.SetBias("all", 100);
+    //vent.getBiasedCrossSection(100.0);
+    //vent.Sample();
+    
+*/
+//!!!!!!!!!!!!!!!!!!!!!!!!!1
+/*    //Bias for neutrons
+    G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();  
+    biasingPhysics->BeVerbose();
+    biasingPhysics->PhysicsBias("neutron");
+    physicsList->RegisterPhysics(biasingPhysics);
+*///!!!!!!!!!!!!!!!!!!!!!!!!!!
+/*
+    // Fetch the logical volume pointer by name (it is an example, not a mandatory way):
+    G4LogicalVolume* biasingVolume = G4LogicalVolumeStore::GetInstance()->GetVolume();
+    // Create the biasing operator:
+    MyBiasingOperator* myBiasingOperator = new MyBiasingOperator("ExampleOperator");
+    // Attach it to the volume:
+    myBiasingOperator->AttachTo(biasingVolume);
+    G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
+    // Tell what particle types have to be biased:
+    biasingPhysics->Bias("gamma");
+    biasingPhysics->Bias("neutron");
+    // Register the physics constructor to the physics list:
+    physicsList->RegisterPhysics(biasingPhysics);
+*/
+ /*  		auto theParticleTable = G4ParticleTable::GetParticleTable();
+	  	auto theParticleIterator = theParticleTable->GetIterator();
+
+		// Get physics list helper:
+		G4PhysicsListHelper* ph = G4PhysicsListHelper::GetPhysicsListHelper();
+		// Assume "particle" is a pointer on a G4ParticleDefinition object
+		theParticleIterator->reset();
+		while( (*theParticleIterator)() ){
+			G4ParticleDefinition* particle = theParticleIterator->value();
+			G4ProcessManager* pmanager = particle->GetProcessManager();
+			auto particleName = particle->GetParticleName();
+			if (particleName == "deuteron")
+			{
+				//ph->RegisterProcess(new G4DeuteronInelasticProcess, particle);
+				ph->RegisterProcess(new G4HadronicProcess , particle);
+			//ph->RegisterProcess(new G4ComptonScattering ,   particle);
+			//ph->RegisterProcess(new G4GammaConversion ,     particle);
+
+				//G4BiasingHelper::ActivatePhysicsBiasing(pmanager, "Decay");
+				//G4BiasingHelper::ActivatePhysicsBiasing(pmanager, "dInelastic");
+				G4BiasingHelper::ActivatePhysicsBiasing(pmanager, "Hadronic");
+			//G4BiasingHelper::ActivatePhysicsBiasing(pmanager, "compt");
+			//G4BiasingHelper::ActivatePhysicsBiasing(pmanager, "conv");
+				G4BiasingHelper::ActivateNonPhysicsBiasing(pmanager);
+			}
+			else continue;
+		}
+
+
+  	G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
+      	biasingPhysics->Bias("neutron");
+      	biasingPhysics->Bias("deuteron");
+      	physicsList->RegisterPhysics(biasingPhysics);
+
+ 
+
+ */
+
+
+
+
+
+
 
     // Set the range-cut off threshold for secondary production:
     double production_cut;

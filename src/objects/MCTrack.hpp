@@ -37,7 +37,9 @@ namespace allpix {
          */
         MCTrack(ROOT::Math::XYZPoint start_point,
                 ROOT::Math::XYZPoint end_point,
-                ROOT::Math::XYZVector momentum,
+                ROOT::Math::XYZVector initial_momentum,
+                ROOT::Math::XYZVector final_momentum,
+               
                 std::string g4_volume,
                 std::string g4_prod_process_name,
                 int g4_prod_process_type,
@@ -55,7 +57,8 @@ namespace allpix {
 
         */
 
-        ROOT::Math::XYZVector getMomentum() const;
+        ROOT::Math::XYZVector getInitialMomentum() const;
+        ROOT::Math::XYZVector getFinalMomentum() const;
 
         /**
          * @brief Get the point of where the track originated
@@ -156,7 +159,9 @@ namespace allpix {
     private:
         ROOT::Math::XYZPoint start_point_{};
         ROOT::Math::XYZPoint end_point_{};
-        ROOT::Math::XYZVector momentum_{};
+        ROOT::Math::XYZVector initial_momentum_{};
+        ROOT::Math::XYZVector final_momentum_{};
+       
 
         std::string origin_g4_vol_name_{};
         std::string origin_g4_process_name_{};

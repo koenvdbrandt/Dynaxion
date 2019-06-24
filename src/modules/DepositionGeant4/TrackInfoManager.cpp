@@ -74,7 +74,8 @@ void TrackInfoManager::createMCTracks() {
     for(auto& track_info : stored_track_infos_) {
         stored_tracks_.emplace_back(track_info->getStartPoint(),
                                     track_info->getEndPoint(),
-                                    track_info->getMomentum(),
+                                    track_info->getInitialMomentum(),
+                                    track_info->getFinalMomentum(),                                   
                                     track_info->getOriginatingVolumeName(),
                                     track_info->getCreationProcessName(),
                                     track_info->getCreationProcessType(),

@@ -67,15 +67,23 @@ namespace allpix {
 
         // ntuple variables
         TTree* simple_tree_;
-        double energy_;
+        double initial_energy_;
+        double final_energy_;
+       
         double particle_id_;
         double start_position_x_;
         double start_position_y_;
         double start_position_z_;
-        double momentum_x_;
-        double momentum_y_;
-        double momentum_z_;
-
+        double end_position_x_;
+        double end_position_y_;
+        double end_position_z_;
+        double initial_momentum_x_;
+        double initial_momentum_y_;
+        double initial_momentum_z_;
+        double final_momentum_x_;
+        double final_momentum_y_;
+        double final_momentum_z_;
+ 	int neutrons_;
         bool store_particles_;
     };
 } // namespace allpix

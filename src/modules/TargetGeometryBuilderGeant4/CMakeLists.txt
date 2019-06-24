@@ -32,6 +32,8 @@ ENDIF()
 ALLPIX_MODULE_SOURCES(${MODULE_NAME}
     TargetGeometryBuilderGeant4Module.cpp
     TargetConstructionG4.cpp
+    GB01BOptrChangeCrossSection.cpp
+    GB01BOptrMultiParticleChangeCrossSection.cpp       
 
 )
 

@@ -37,7 +37,9 @@ namespace allpix {
              * @brief Get the momentum of the track in global coordiantes
              * @return Momentum vector
              */
-        ROOT::Math::XYZVector getMomentum() const;
+        ROOT::Math::XYZVector getInitialMomentum() const;
+        ROOT::Math::XYZVector getFinalMomentum() const;
+       
 
         /**
          * @brief Getter for custom id of track
@@ -140,7 +142,9 @@ namespace allpix {
         // End point of track (in mm)
         ROOT::Math::XYZPoint end_point_{};
         // Momentum vector at production
-        ROOT::Math::XYZVector momentum_{};
+        ROOT::Math::XYZVector initial_momentum_{};
+        ROOT::Math::XYZVector final_momentum_{};
+
         // Geant4 volume in which the track was created
         std::string origin_g4_vol_name_{};
         // Name of Geant4 process which created this track
