@@ -58,7 +58,7 @@ void ParticleDistributionsModule::init() {
     simple_tree_->Branch("initial_momentum_z", &initial_momentum_z_);
     simple_tree_->Branch("final_momentum_x", &final_momentum_x_);
     simple_tree_->Branch("final_momentum_y", &final_momentum_y_);
-    simple_tree_->Branch("final_momentum_z", &final_momentum_z_);    
+    simple_tree_->Branch("final_momentum_z", &final_momentum_z_);
 }
 
 void ParticleDistributionsModule::run(unsigned int) {
@@ -68,18 +68,16 @@ void ParticleDistributionsModule::run(unsigned int) {
     std::vector<MCTrack> proton_track;
     for(auto& particle : message_->getData()) {
         if(particle.getParticleID() == 2212) {
-            proton_track.insert(proton_track.end() , particle);
-	}
+            proton_track.insert(proton_track.end(), particle);
+        }
     }
-       
 
-    for(auto& proton : proton_track) 
-	{
-	
+    for(auto& proton : proton_track) {
+
         ROOT::Math::XYZVector initial_momentum = proton.getInitialMomentum();
         ROOT::Math::XYZVector final_momentum = proton.getFinalMomentum();
         double magnitude = sqrt(initial_momentum.Mag2());
-        //double magnitude_final = sqrt(final_momentum.Mag2());
+        // double magnitude_final = sqrt(final_momentum.Mag2());
         double energy = proton.getKineticEnergyInitial();
 
         ROOT::Math::XYZVector directionVector, energyWeightedDirection;
@@ -119,8 +117,6 @@ void ParticleDistributionsModule::run(unsigned int) {
         if(store_particles_) {
             saved_tracks.push_back(proton);
         }
-    
-
     }
 
     // Dispatch message of pixel charges
@@ -129,7 +125,7 @@ void ParticleDistributionsModule::run(unsigned int) {
         messenger_->dispatchMessage(this, mcparticle_message);
     }
 
-    //proton_track.clear();   
+    proton_track.clear();
 }
 
 void ParticleDistributionsModule::finalize() {

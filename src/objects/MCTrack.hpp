@@ -48,12 +48,8 @@ namespace allpix {
                 double initial_tot_E,
                 double final_tot_E);
 
-
-
         ROOT::Math::XYZVector getInitialMomentum() const;
         ROOT::Math::XYZVector getFinalMomentum() const;
-
-
 
         /**
          * @brief Get the point of where the track originated

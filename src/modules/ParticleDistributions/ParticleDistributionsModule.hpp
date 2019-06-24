@@ -69,7 +69,7 @@ namespace allpix {
         TTree* simple_tree_;
         double initial_energy_;
         double final_energy_;
-       
+
         double particle_id_;
         double start_position_x_;
         double start_position_y_;

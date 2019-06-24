@@ -14,7 +14,6 @@ TrackInfoG4::TrackInfoG4(int custom_track_id, int parent_track_id, const G4Track
     initial_kin_E_ = aTrack->GetKineticEnergy();
     initial_tot_E_ = aTrack->GetTotalEnergy();
     initial_momentum_ = static_cast<ROOT::Math::XYZVector>(aTrack->GetMomentum());
-
 }
 
 void TrackInfoG4::finalizeInfo(const G4Track* const aTrack) {
@@ -23,9 +22,7 @@ void TrackInfoG4::finalizeInfo(const G4Track* const aTrack) {
     n_steps_ = aTrack->GetCurrentStepNumber();
     end_point_ = static_cast<ROOT::Math::XYZPoint>(aTrack->GetPosition());
     final_momentum_ = static_cast<ROOT::Math::XYZVector>(aTrack->GetMomentum());
-
 }
-
 
 ROOT::Math::XYZVector TrackInfoG4::getInitialMomentum() const {
     return initial_momentum_;
