@@ -31,6 +31,7 @@
 
 #include "core/geometry/HybridPixelDetectorModel.hpp"
 #include "core/geometry/MonolithicPixelDetectorModel.hpp"
+#include "core/geometry/ActiveMaterialModel.hpp"
 
 using namespace allpix;
 using namespace ROOT::Math;
@@ -72,7 +73,7 @@ void GeometryManager::load(ConfigManager* conf_manager, std::mt19937_64& seeder)
 
         auto orientation_mode = detector_section.get<std::string>("orientation_mode", "xyz");
         Rotation3D orientation;
-
+	
         if(orientation_mode == "zyx") {
             // First angle given in the configuration file is around z, second around y, last around x:
             LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
@@ -97,6 +98,7 @@ void GeometryManager::load(ConfigManager* conf_manager, std::mt19937_64& seeder)
 
         // Add a link to the detector to add the model later
         nonresolved_models_[detector_section.get<std::string>("type")].emplace_back(detector_section, detector.get());
+
     }
 
     // Load the list of standard model paths
@@ -423,14 +425,17 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(!config.has("type")) {
         LOG(ERROR) << "Model file " << config.getFilePath() << " does not provide a type parameter";
     }
-    auto type = config.get<std::string>("type");
+    type_ = config.get<std::string>("type");
 
     // Instantiate the correct detector model
-    if(type == "hybrid") {
+    if(type_ == "hybrid") {
         return std::make_shared<HybridPixelDetectorModel>(name, reader);
     }
-    if(type == "monolithic") {
+    if(type_ == "monolithic") {
         return std::make_shared<MonolithicPixelDetectorModel>(name, reader);
+    }
+    if(type_ == "active") {
+        return std::make_shared<ActiveMaterialModel>(name, reader);
     }
 
     LOG(ERROR) << "Model file " << config.getFilePath() << " type parameter is not valid";

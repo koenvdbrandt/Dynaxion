@@ -53,7 +53,7 @@ void TrackInfoManager::resetTrackInfoManager() {
 void TrackInfoManager::dispatchMessage(Module* module, Messenger* messenger) {
     setAllTrackParents();
     IFLOG(DEBUG) {
-        LOG(DEBUG) << "Dispatching " << stored_tracks_.size() << " MCTrack(s) from TrackInfoManager::dispatchMessage()";
+        LOG(INFO) << "Dispatching " << stored_tracks_.size() << " MCTrack(s) from TrackInfoManager::dispatchMessage()";
         for(auto const& mc_track : stored_tracks_) {
             LOG(DEBUG) << "MCTrack originates at: " << Units::display(mc_track.getStartPoint(), {"mm", "um"})
                        << " and terminates at: " << Units::display(mc_track.getEndPoint(), {"mm", "um"});

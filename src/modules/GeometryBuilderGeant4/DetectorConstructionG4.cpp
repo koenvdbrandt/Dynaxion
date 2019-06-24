@@ -114,13 +114,20 @@ void DetectorConstructionG4::build(G4LogicalVolume* world_log, std::map<std::str
         */
 
         // Create the sensor box and logical volume
+	ROOT::Math::XYZVector sensor_size = model->getSensorSize();
+	std::string sensor_material =  "silicon";
+	if(geo_manager_->getType() == "active"){
+	    sensor_material = model->getActiveMaterial();
+	    sensor_size = model->getSize();	
+	}
+	
         auto sensor_box = std::make_shared<G4Box>("sensor_" + name,
-                                                  model->getSensorSize().x() / 2.0,
-                                                  model->getSensorSize().y() / 2.0,
-                                                  model->getSensorSize().z() / 2.0);
+                                                  sensor_size.x() / 2.0,
+                                                  sensor_size.y() / 2.0,
+                                                  sensor_size.z() / 2.0);
         solids_.push_back(sensor_box);
         auto sensor_log =
-            make_shared_no_delete<G4LogicalVolume>(sensor_box.get(), materials_["silicon"], "sensor_" + name + "_log");
+            make_shared_no_delete<G4LogicalVolume>(sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
         detector->setExternalObject("sensor_log", sensor_log);
 
         // Place the sensor box
