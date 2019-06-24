@@ -117,8 +117,10 @@ namespace allpix {
          * @return The process name, or "none" if no such process exists
          */
         std::string getCreationProcessName() const;
+	ROOT::Math::XYZVector getInitialMomentum() const; 
 
-    private:
+	ROOT::Math::XYZVector getFinalMomentum() const; 
+   private:
         // Assigned track id to track
         int custom_track_id_{};
         // Parent's track id
@@ -145,6 +147,8 @@ namespace allpix {
         double final_kin_E_{};
         // Final total energy (MeV)
         double final_tot_E_{};
+	ROOT::Math::XYZVector initial_momentum_;
+	ROOT::Math::XYZVector final_momentum_;	
     };
 } // namespace allpix
 #endif

@@ -14,6 +14,8 @@ using namespace allpix;
 
 MCTrack::MCTrack(ROOT::Math::XYZPoint start_point,
                  ROOT::Math::XYZPoint end_point,
+                 ROOT::Math::XYZVector initial_momentum,
+                 ROOT::Math::XYZVector final_momentum,
                  std::string g4_volume,
                  std::string g4_prod_process_name,
                  int g4_prod_process_type,
@@ -22,12 +24,21 @@ MCTrack::MCTrack(ROOT::Math::XYZPoint start_point,
                  double final_kin_E,
                  double initial_tot_E,
                  double final_tot_E)
-    : start_point_(std::move(start_point)), end_point_(std::move(end_point)), origin_g4_vol_name_(std::move(g4_volume)),
-      origin_g4_process_name_(std::move(g4_prod_process_name)), origin_g4_process_type_(g4_prod_process_type),
-      particle_id_(particle_id), initial_kin_E_(initial_kin_E), final_kin_E_(final_kin_E), initial_tot_E_(initial_tot_E),
-      final_tot_E_(final_tot_E) {
+    : start_point_(std::move(start_point)), end_point_(std::move(end_point)), initial_momentum_(std::move(initial_momentum)), final_momentum_(std::move(final_momentum)),
+      origin_g4_vol_name_(std::move(g4_volume)), origin_g4_process_name_(std::move(g4_prod_process_name)),
+      origin_g4_process_type_(g4_prod_process_type), particle_id_(particle_id), initial_kin_E_(initial_kin_E),
+      final_kin_E_(final_kin_E), initial_tot_E_(initial_tot_E), final_tot_E_(final_tot_E) {
     setParent(nullptr);
 }
+
+ROOT::Math::XYZVector MCTrack::getInitialMomentum() const {
+    return initial_momentum_;
+}
+
+ROOT::Math::XYZVector MCTrack::getFinalMomentum() const {
+    return final_momentum_;
+}
+
 
 ROOT::Math::XYZPoint MCTrack::getStartPoint() const {
     return start_point_;
