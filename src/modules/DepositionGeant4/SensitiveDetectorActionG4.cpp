@@ -82,8 +82,6 @@ G4bool SensitiveDetectorActionG4::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto deposit_position_g4loc = ROOT::Math::XYZPoint(deposit_position_g4.x() + sensor_center.x(),
                                                        deposit_position_g4.y() + sensor_center.y(),
                                                        deposit_position_g4.z() + sensor_center.z());
-    std::cout << deposit_position_g4loc.x() << " " << deposit_position_g4loc.y() << " " << deposit_position_g4loc.z() << " "
-              << std::endl;
     const auto userTrackInfo = dynamic_cast<TrackInfoG4*>(step->GetTrack()->GetUserInformation());
     if(userTrackInfo == nullptr) {
         throw ModuleError("No track information attached to track.");
