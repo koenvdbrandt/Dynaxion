@@ -1,0 +1,40 @@
+geometry = "/project/bfys/kbrandt/Dynaxion/examples/output/RCEWriter/geometry.toml"
+
+[sensor_types.ibl_planar_raw]
+cols = 80
+rows = 336
+value_max = 32768
+pitch_col = 0.250000
+pitch_row = 0.0500000
+thickness = 0.200000
+x_x0 = 0.00376895
+measurement = "pixel_binary"
+
+[[sensors]]
+name = "Plane1"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "Plane2"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "Plane3"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "Plane4"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "Plane5"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "Plane6"
+type = "ibl_planar_raw"
+
+[[sensors]]
+name = "dut"
+type = "ibl_planar_raw"
+

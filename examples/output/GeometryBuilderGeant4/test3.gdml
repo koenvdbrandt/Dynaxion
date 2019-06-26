@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gdml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://service-spi.web.cern.ch/service-spi/app/releases/GDML/schema/gdml.xsd">
+
+  <define/>
+
+  <materials>
+    <isotope N="28" Z="14" name="Si280x36ec8b0">
+      <atom unit="g/mole" value="27.9769"/>
+    </isotope>
+    <isotope N="29" Z="14" name="Si290x36ea100">
+      <atom unit="g/mole" value="28.9765"/>
+    </isotope>
+    <isotope N="30" Z="14" name="Si300x36eaf50">
+      <atom unit="g/mole" value="29.9738"/>
+    </isotope>
+    <element name="Si0x36f8fd0">
+      <fraction n="0.922296077703922" ref="Si280x36ec8b0"/>
+      <fraction n="0.0468319531680468" ref="Si290x36ea100"/>
+      <fraction n="0.0308719691280309" ref="Si300x36eaf50"/>
+    </element>
+    <material name="G4_Si0x36f8eb0" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="173"/>
+      <D unit="g/cm3" value="2.33"/>
+      <fraction n="1" ref="Si0x36f8fd0"/>
+    </material>
+    <isotope N="16" Z="8" name="O160x3700fb0">
+      <atom unit="g/mole" value="15.9949"/>
+    </isotope>
+    <isotope N="17" Z="8" name="O170x3700c00">
+      <atom unit="g/mole" value="16.9991"/>
+    </isotope>
+    <isotope N="18" Z="8" name="O180x3700af0">
+      <atom unit="g/mole" value="17.9992"/>
+    </isotope>
+    <element name="O0x3700da0">
+      <fraction n="0.99757" ref="O160x3700fb0"/>
+      <fraction n="0.00038" ref="O170x3700c00"/>
+      <fraction n="0.00205" ref="O180x3700af0"/>
+    </element>
+    <isotope N="1" Z="1" name="H10x370b4d0">
+      <atom unit="g/mole" value="1.00782503081372"/>
+    </isotope>
+    <isotope N="2" Z="1" name="H20x370b520">
+      <atom unit="g/mole" value="2.01410199966617"/>
+    </isotope>
+    <element name="Hydrogen0x370b1c0">
+      <fraction n="0.999885" ref="H10x370b4d0"/>
+      <fraction n="0.000115" ref="H20x370b520"/>
+    </element>
+    <isotope N="12" Z="6" name="C120x370b780">
+      <atom unit="g/mole" value="12"/>
+    </isotope>
+    <isotope N="13" Z="6" name="C130x36feeb0">
+      <atom unit="g/mole" value="13.0034"/>
+    </isotope>
+    <element name="Carbon0x370b360">
+      <fraction n="0.9893" ref="C120x370b780"/>
+      <fraction n="0.0107" ref="C130x36feeb0"/>
+    </element>
+    <isotope N="16" Z="8" name="O160x370b6c0">
+      <atom unit="g/mole" value="15.9949"/>
+    </isotope>
+    <isotope N="17" Z="8" name="O170x370b710">
+      <atom unit="g/mole" value="16.9991"/>
+    </isotope>
+    <isotope N="18" Z="8" name="O180x370a460">
+      <atom unit="g/mole" value="17.9992"/>
+    </isotope>
+    <element name="Oxygen0x370b570">
+      <fraction n="0.99757" ref="O160x370b6c0"/>
+      <fraction n="0.00038" ref="O170x370b710"/>
+      <fraction n="0.00205" ref="O180x370a460"/>
+    </element>
+    <isotope N="35" Z="17" name="Cl350x370bdd0">
+      <atom unit="g/mole" value="34.9689"/>
+    </isotope>
+    <isotope N="37" Z="17" name="Cl370x370be20">
+      <atom unit="g/mole" value="36.9659"/>
+    </isotope>
+    <element name="Chlorine0x370ba60">
+      <fraction n="0.7578" ref="Cl350x370bdd0"/>
+      <fraction n="0.2422" ref="Cl370x370be20"/>
+    </element>
+    <material name="G100x370e190" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="114.381609513507"/>
+      <D unit="g/cm3" value="1.7"/>
+      <fraction n="0.36132635970485" ref="Si0x36f8fd0"/>
+      <fraction n="0.41167364029515" ref="O0x3700da0"/>
+      <fraction n="0.0194084197391485" ref="Hydrogen0x370b1c0"/>
+      <fraction n="0.0786774711072819" ref="Carbon0x370b360"/>
+      <fraction n="0.0489141091535696" ref="Oxygen0x370b570"/>
+      <fraction n="0.08" ref="Chlorine0x370ba60"/>
+    </material>
+    <isotope N="12" Z="6" name="C120x3700a50">
+      <atom unit="g/mole" value="12"/>
+    </isotope>
+    <isotope N="13" Z="6" name="C130x3700aa0">
+      <atom unit="g/mole" value="13.0034"/>
+    </isotope>
+    <element name="C0x3700840">
+      <fraction n="0.9893" ref="C120x3700a50"/>
+      <fraction n="0.0107" ref="C130x3700aa0"/>
+    </element>
+    <isotope N="14" Z="7" name="N140x3701bf0">
+      <atom unit="g/mole" value="14.0031"/>
+    </isotope>
+    <isotope N="15" Z="7" name="N150x3700ce0">
+      <atom unit="g/mole" value="15.0001"/>
+    </isotope>
+    <element name="N0x37019e0">
+      <fraction n="0.99632" ref="N140x3701bf0"/>
+      <fraction n="0.00368" ref="N150x3700ce0"/>
+    </element>
+    <isotope N="36" Z="18" name="Ar360x3707120">
+      <atom unit="g/mole" value="35.9675"/>
+    </isotope>
+    <isotope N="38" Z="18" name="Ar380x36fee60">
+      <atom unit="g/mole" value="37.9627"/>
+    </isotope>
+    <isotope N="40" Z="18" name="Ar400x3700c50">
+      <atom unit="g/mole" value="39.9624"/>
+    </isotope>
+    <element name="Ar0x3707820">
+      <fraction n="0.003365" ref="Ar360x3707120"/>
+      <fraction n="0.000632" ref="Ar380x36fee60"/>
+      <fraction n="0.996003" ref="Ar400x3700c50"/>
+    </element>
+    <material name="G4_AIR0x37076a0" state="gas">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="85.7"/>
+      <D unit="g/cm3" value="0.00120479"/>
+      <fraction n="0.000124000124000124" ref="C0x3700840"/>
+      <fraction n="0.755267755267755" ref="N0x37019e0"/>
+      <fraction n="0.231781231781232" ref="O0x3700da0"/>
+      <fraction n="0.0128270128270128" ref="Ar0x3707820"/>
+    </material>
+  </materials>
+
+  <solids>
+    <box lunit="mm" name="sensor_detector10x3715e10" x="10.5" y="10.5" z="0.3"/>
+    <box lunit="mm" name="chip_detector10x371bc70" x="10.5" y="10.5" z="0.005"/>
+    <box lunit="mm" name="support_detector1_00x37162c0" x="40" y="40" z="1.6"/>
+    <box lunit="mm" name="wrapper_detector10x3718eb0" x="40" y="40" z="1.905"/>
+    <box lunit="mm" name="World0x371bf60" x="44" y="44" z="440"/>
+  </solids>
+
+  <structure>
+    <volume name="sensor_detector1_log0x3715f30">
+      <materialref ref="G4_Si0x36f8eb0"/>
+      <solidref ref="sensor_detector10x3715e10"/>
+    </volume>
+    <volume name="chip_detector1_log0x371bd70">
+      <materialref ref="G4_Si0x36f8eb0"/>
+      <solidref ref="chip_detector10x371bc70"/>
+    </volume>
+    <volume name="support_detector1_log_00x3716490">
+      <materialref ref="G100x370e190"/>
+      <solidref ref="support_detector1_00x37162c0"/>
+    </volume>
+    <volume name="wrapper_detector1_log0x37192a0">
+      <materialref ref="G4_AIR0x37076a0"/>
+      <solidref ref="wrapper_detector10x3718eb0"/>
+      <physvol name="sensor_detector1_phys0x371b780">
+        <volumeref ref="sensor_detector1_log0x3715f30"/>
+        <position name="sensor_detector1_phys0x371b780_pos" unit="mm" x="0" y="0" z="-0.8025"/>
+      </physvol>
+      <physvol name="chip_detector1_phys0x371bee0">
+        <volumeref ref="chip_detector1_log0x371bd70"/>
+        <position name="chip_detector1_phys0x371bee0_pos" unit="mm" x="0" y="0" z="-0.65"/>
+      </physvol>
+      <physvol name="support_detector1_phys_00x37165a0">
+        <volumeref ref="support_detector1_log_00x3716490"/>
+        <position name="support_detector1_phys_00x37165a0_pos" unit="mm" x="0" y="0" z="0.1525"/>
+      </physvol>
+    </volume>
+    <volume name="World0x3719910">
+      <materialref ref="G4_AIR0x37076a0"/>
+      <solidref ref="World0x371bf60"/>
+      <physvol name="wrapper_detector1_phys0x37194a0">
+        <volumeref ref="wrapper_detector1_log0x37192a0"/>
+        <position name="wrapper_detector1_phys0x37194a0_pos" unit="mm" x="0" y="0" z="20.8025"/>
+      </physvol>
+    </volume>
+  </structure>
+
+  <userinfo>
+    <auxiliary auxtype="Region" auxvalue="DefaultRegionForTheWorld0x36b2360">
+      <auxiliary auxtype="volume" auxvalue="World0x3719910"/>
+      <auxiliary auxtype="gamcut" auxunit="mm" auxvalue="0"/>
+      <auxiliary auxtype="ecut" auxunit="mm" auxvalue="0"/>
+      <auxiliary auxtype="poscut" auxunit="mm" auxvalue="0"/>
+      <auxiliary auxtype="pcut" auxunit="mm" auxvalue="0"/>
+    </auxiliary>
+  </userinfo>
+
+  <setup name="Default" version="1.0">
+    <world ref="World0x3719910"/>
+  </setup>
+
+</gdml>
