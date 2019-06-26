@@ -25,15 +25,13 @@ namespace allpix {
     /**
      * @brief Constructs the Geant4 geometry during Geant4 initialization
      */
-
     class PassiveMaterialConstructionG4 : public GeometryBuilder<G4LogicalVolume, G4Material> {
-
     public:
         /**
          * @brief Constructs geometry construction module
          * @param config Configuration object of the geometry builder module
          */
-
+        // TargetConstructionG4(ConfigReader& reader);
         PassiveMaterialConstructionG4(Configuration& config);
 
         /**
@@ -41,11 +39,9 @@ namespace allpix {
          * @return Physical volume representing the world
          */
         void build(G4LogicalVolume* world_log, std::map<std::string, G4Material*> materials_) override;
-        std::vector<ROOT::Math::XYZPoint> addPoints();
 
     private:
         Configuration& config_;
-        std::vector<ROOT::Math::XYZPoint> points_;
         // Storage of internal objects
         std::vector<std::shared_ptr<G4VSolid>> solids_;
     };

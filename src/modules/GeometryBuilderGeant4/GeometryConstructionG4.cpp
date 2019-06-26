@@ -114,7 +114,7 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     world_phys_ =
         std::make_unique<G4PVPlacement>(nullptr, G4ThreeVector(0., 0., 0.), world_log_.get(), "World", nullptr, false, 0);
 
-    // Build all the geometries that have been added to the GeometryBuilder vector, including Detectors and Passive Materials
+    // Build all the geometries that have been added to the GeometryBuilder vector, including Detectors and Targets
 
     auto builders = geo_manager_->getBuilders();
 

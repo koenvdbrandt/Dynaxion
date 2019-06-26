@@ -173,15 +173,11 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand("/run/setCut " + std::to_string(production_cut));
 
     // Initialize the physics list
-    LOG(TRACE) << "Initializing geometry";
-    run_manager_g4_->InitializeGeometry();
-    LOG(TRACE) << "Initializing physics list";
-    run_manager_g4_->SetUserInitialization(physicsList);
     LOG(TRACE) << "Initializing physics processes";
+    run_manager_g4_->SetUserInitialization(physicsList);
     run_manager_g4_->InitializePhysics();
 
     // Initialize the full run manager to ensure correct state flags
-    LOG(TRACE) << "Initializing all";
     run_manager_g4_->Initialize();
 
     // Build particle generator
@@ -263,7 +259,6 @@ void DepositionGeant4Module::init() {
             std::string plot_name = "deposited_charge_" + sensitive_detector_action->getName();
             charge_per_event_[sensitive_detector_action->getName()] =
                 new TH1D(plot_name.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
-		vent = new TH1D("charges", "deposited charge per event;deposited charge [ke];events", 1, 0, maximum);
         }
     }
 
@@ -307,10 +302,8 @@ void DepositionGeant4Module::run(unsigned int event_num) {
 
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
-            int charge = static_cast<int>(Units::convert(sensor->getDepositedCharge(), "ke"));
+            double charge = static_cast<double>(Units::convert(sensor->getDepositedCharge(), "ke"));
             charge_per_event_[sensor->getName()]->Fill(charge);
-	    vent->Fill(charge);
-
         }
     }
 
@@ -326,10 +319,9 @@ void DepositionGeant4Module::finalize() {
 
     if(config_.get<bool>("output_plots")) {
         // Write histograms
-	vent->Write();
-        LOG(INFO) << "Writing output plots to file";
+        LOG(TRACE) << "Writing output plots to file";
         for(auto& plot : charge_per_event_) {
-	plot.second->Write();
+            plot.second->Write();
         }
     }
 

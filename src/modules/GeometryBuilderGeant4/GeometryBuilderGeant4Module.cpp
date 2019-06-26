@@ -88,10 +88,9 @@ void GeometryBuilderGeant4Module::init() {
     // Set the geometry construction to use
     auto geometry_construction = new GeometryConstructionG4(geo_manager_, config_);
 
-    std::shared_ptr<DetectorConstructionG4> detector_builder =
-        std::make_shared<DetectorConstructionG4>(geo_manager_, config_);
-    //(void) detector_builder;
-    geo_manager_->addBuilder(detector_builder);
+    std::shared_ptr<DetectorConstructionG4> detBuilder = std::make_shared<DetectorConstructionG4>(geo_manager_, config_);
+
+    geo_manager_->addBuilder(detBuilder);
     run_manager_g4_->SetUserInitialization(geometry_construction);
 
     // Comment out this initialization because the code becomes unstable when you doulbe initialize the geometry
@@ -99,9 +98,8 @@ void GeometryBuilderGeant4Module::init() {
     // FIXME: Something has to be found to make the initialization independant of the number of modules
 
     // Run the geometry construct function in GeometryConstructionG4
-     LOG(TRACE) << "Building Geant4 geometry";
-
-     //run_manager_g4_->InitializeGeometry();
+    LOG(TRACE) << "Building Geant4 geometry";
+    run_manager_g4_->InitializeGeometry();
 
     // Release output from G4
     RELEASE_STREAM(G4cout);
