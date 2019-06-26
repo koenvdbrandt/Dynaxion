@@ -77,33 +77,31 @@ void ParticleDistributionsModule::run(unsigned int) {
     for(auto& particle : message_->getData()) {
         if(particle.getParticleID() == 2112) {
             neutron_track.insert(neutron_track.end() , particle); 
-	}
-        else if(particle.getParticleID() == 2212) {
+	    }
+        else if(particle.getParticleID() == 2212 && particle.getStartPoint().Z() < -190) {
             proton_track.insert(proton_track.end() , particle);
-	}
+	    }
         else if(particle.getParticleID() == 1000020040) {
             alpha_track.insert(alpha_track.end() , particle);
-	}
+	    }
 	else if(particle.getParticleID() == 1000060120){
             deuteron_track.insert(deuteron_track.end() , particle);
-	}
+	    }
 	else if(particle.getParticleID() > 30){
             random.insert(random.end() , particle);
-	}
+	    }
     }
-    if(neutron_track.size() != 1) {
-            alpha_track.clear();
-	}
+   
     
     /*else if(proton_track.size() == 1) {
             neutron_track.clear();
-	}*/
+	}
     else if(alpha_track.size() != 2) {
             alpha_track.clear();
-	}
+	}*/
     
 
-    for(auto& neutron : neutron_track) 
+    for(auto& neutron : proton_track) 
 	{
 	
 	//else {
