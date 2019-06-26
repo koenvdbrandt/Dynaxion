@@ -45,7 +45,7 @@ namespace allpix {
              * @brief Empty Build function with 2 inputs
              */
 
-        virtual void build(WorldVolume* world_log, std::map<std::string, Materials*> materials_);
+        virtual void build(WorldVolume*, std::map<std::string, Materials*>);
 
         /*
              * @brief Essential virtual destructor
