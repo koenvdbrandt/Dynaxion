@@ -28,7 +28,7 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
         throw InvalidValueError(config, "implant_size", "implant size cannot be larger than pixel pitch");
     }
     setImplantSize(implant_size);
-    
+
     // Sensor thickness
     setSensorThickness(config.get<double>("sensor_thickness"));
     // Excess around the sensor from the pixel grid
@@ -123,9 +123,9 @@ ROOT::Math::XYZVector DetectorModel::getSize() const {
     size.SetZ((max.z() - getCenter().z()) +
               (getCenter().z() - min.z())); // max.z() is positive (chip side) and min.z() is negative (sensor side)
 
-    if(config.get<bool>("active_material", false)){
-	auto active_material_size = config.get<ROOT::Math::XYZVector>("size");
-	size =active_material_size/2;
+    if(config.get<bool>("active_material", false)) {
+        auto active_material_size = config.get<ROOT::Math::XYZVector>("size");
+        size = active_material_size / 2;
     }
     return size;
 }
@@ -150,18 +150,17 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
 
     return ret_layers;
 }
-//for the active materials
-bool DetectorModel::isActive(){
-    auto config = reader_.getHeaderConfiguration();    
-    if(config.get<std::string>("type", "") == "active"){
-	return true;
-    }
-    else{
-	return false;
+// for the active materials
+bool DetectorModel::isActive() {
+    auto config = reader_.getHeaderConfiguration();
+    if(config.get<std::string>("type", "") == "active") {
+        return true;
+    } else {
+        return false;
     }
 }
 
-std::string DetectorModel::getActiveMaterial(){
-	auto config = reader_.getHeaderConfiguration();    
-	return active_material_ = config.get<std::string>("material");
+std::string DetectorModel::getActiveMaterial() {
+    auto config = reader_.getHeaderConfiguration();
+    return active_material_ = config.get<std::string>("material");
 }

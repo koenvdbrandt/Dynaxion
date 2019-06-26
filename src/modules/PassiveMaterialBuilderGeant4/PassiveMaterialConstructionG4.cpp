@@ -20,13 +20,13 @@
 #include <Math/Vector3D.h>
 
 #include <G4Box.hh>
+#include <G4IntersectionSolid.hh>
+#include <G4RotationMatrix.hh>
 #include <G4Sphere.hh>
 #include <G4SubtractionSolid.hh>
-#include <G4UnionSolid.hh>
-#include <G4IntersectionSolid.hh>
 #include <G4Tubs.hh>
+#include <G4UnionSolid.hh>
 #include "CLHEP/Vector/Rotation.h"
-#include <G4RotationMatrix.hh>
 
 #include <G4LogicalVolume.hh>
 #include <G4LogicalVolumeStore.hh>
@@ -74,14 +74,14 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
     auto passive_material_location = config_.get<ROOT::Math::XYZPoint>("position", {0., 0., 0.});
     auto passive_material_pos = toG4Vector(passive_material_location);
     auto passive_material = config_.get<std::string>("material", world_material);
-    
+
     std::transform(passive_material.begin(), passive_material.end(), passive_material.begin(), ::tolower);
 
-    G4RotationMatrix* orientation = new G4RotationMatrix;  // Rotates X and Z axes only
-    auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0.,0.,0.});
-    orientation->rotateX(orientation_vector.x()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
-    orientation->rotateY(orientation_vector.y()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
-    orientation->rotateZ(orientation_vector.z()*CLHEP::pi*CLHEP::rad);                     // Rotates 45 degrees
+    G4RotationMatrix* orientation = new G4RotationMatrix; // Rotates X and Z axes only
+    auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0., 0., 0.});
+    orientation->rotateX(orientation_vector.x() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
+    orientation->rotateY(orientation_vector.y() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
+    orientation->rotateZ(orientation_vector.z() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
 
     if(config_.get<std::string>("type") == "box") {
         auto box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
@@ -230,8 +230,14 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
                 sphere_filling_volume.get(), materials_[filling_material], name + "_filling_log");
 
             // Place the physical volume of the filling material
-            auto sphere_filling_phys_ = make_shared_no_delete<G4PVPlacement>(
-                orientation, passive_material_pos, sphere_filling_log.get(), name + "_filling_phys", world_log, false, 0, true);
+            auto sphere_filling_phys_ = make_shared_no_delete<G4PVPlacement>(orientation,
+                                                                             passive_material_pos,
+                                                                             sphere_filling_log.get(),
+                                                                             name + "_filling_phys",
+                                                                             world_log,
+                                                                             false,
+                                                                             0,
+                                                                             true);
         }
     }
     if(config_.get<std::string>("type") == "dynaxion_tube") {
@@ -240,67 +246,67 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
         auto large_tube_outer_radius = config_.get<double>("large_tube_outer_radius", 0);
         auto large_tube_lenght = config_.get<double>("large_tube_lenght", 0);
         auto large_tube_volume = new G4Tubs(name + "large_tube_volume",
-                                                        large_tube_inner_radius,
-                                                        large_tube_outer_radius,
-                                                        large_tube_lenght,
-                                                        0,
-                                                        2* CLHEP::pi);
-                                                            
-        auto large_tube_inner_volume = new G4Tubs(name + "large_tube_inner_volume",
-                                                        0,
-                                                        large_tube_inner_radius,
-                                                        large_tube_lenght,
-                                                        0,
-                                                        2* CLHEP::pi);
+                                            large_tube_inner_radius,
+                                            large_tube_outer_radius,
+                                            large_tube_lenght,
+                                            0,
+                                            2 * CLHEP::pi);
+
+        auto large_tube_inner_volume =
+            new G4Tubs(name + "large_tube_inner_volume", 0, large_tube_inner_radius, large_tube_lenght, 0, 2 * CLHEP::pi);
 
         auto small_tube_inner_radius = config_.get<double>("small_tube_inner_radius", 0);
         auto small_tube_outer_radius = config_.get<double>("small_tube_outer_radius", 0);
         auto small_tube_lenght = config_.get<double>("small_tube_lenght", 0);
         auto small_tube_volume = new G4Tubs(name + "small_tube_volume",
-                                                        small_tube_inner_radius,
-                                                        small_tube_outer_radius,
-                                                        small_tube_lenght,
-                                                        0,
-                                                        2* CLHEP::pi);
+                                            small_tube_inner_radius,
+                                            small_tube_outer_radius,
+                                            small_tube_lenght,
+                                            0,
+                                            2 * CLHEP::pi);
 
-        auto small_tube_outer_volume = new G4Tubs(name + "small_tube_inner_volume",
-                                                        0,
-                                                        small_tube_outer_radius,
-                                                        small_tube_lenght,
-                                                        0,
-                                                        2* CLHEP::pi);
+        auto small_tube_outer_volume =
+            new G4Tubs(name + "small_tube_inner_volume", 0, small_tube_outer_radius, small_tube_lenght, 0, 2 * CLHEP::pi);
 
-        G4RotationMatrix* yRot = new G4RotationMatrix;  // Rotates X and Z axes only
-        //yRot = orientation;
-        yRot->rotateY(CLHEP::pi/2.*CLHEP::rad);                     // Rotates 45 degrees
-        //yRot *= *orientation;
-        auto dynaxion_tube_large_volume = 
-            std::make_shared<G4SubtractionSolid>(name +"large_volume", large_tube_volume, small_tube_outer_volume, yRot, G4ThreeVector(0,0,0));
-            solids_.push_back(dynaxion_tube_large_volume);
-        
+        G4RotationMatrix* yRot = new G4RotationMatrix; // Rotates X and Z axes only
+        // yRot = orientation;
+        yRot->rotateY(CLHEP::pi / 2. * CLHEP::rad); // Rotates 45 degrees
+        // yRot *= *orientation;
+        auto dynaxion_tube_large_volume = std::make_shared<G4SubtractionSolid>(
+            name + "large_volume", large_tube_volume, small_tube_outer_volume, yRot, G4ThreeVector(0, 0, 0));
+        solids_.push_back(dynaxion_tube_large_volume);
+
         // Place the logical volume of the dynaxion large tube
-                auto dynaxion_large_volume_log =
-            make_shared_no_delete<G4LogicalVolume>(dynaxion_tube_large_volume.get(), materials_[passive_material], name + "large_log");
+        auto dynaxion_large_volume_log = make_shared_no_delete<G4LogicalVolume>(
+            dynaxion_tube_large_volume.get(), materials_[passive_material], name + "large_log");
 
         // Place the physical volume of the dynaxion large tube
         auto dynaxion_large_volume_phys = make_shared_no_delete<G4PVPlacement>(
-            yRot, passive_material_pos, dynaxion_large_volume_log.get(), name + "large_phys", world_log, false, 0, true);  
- 	    
-        auto dynaxion_tube_small_volume_final = 
-            std::make_shared<G4SubtractionSolid>(name +"small_volume_final", small_tube_volume, large_tube_inner_volume, yRot, G4ThreeVector(0,0,0.5*small_tube_lenght));
-            solids_.push_back(dynaxion_tube_small_volume_final);
+            yRot, passive_material_pos, dynaxion_large_volume_log.get(), name + "large_phys", world_log, false, 0, true);
+
+        auto dynaxion_tube_small_volume_final =
+            std::make_shared<G4SubtractionSolid>(name + "small_volume_final",
+                                                 small_tube_volume,
+                                                 large_tube_inner_volume,
+                                                 yRot,
+                                                 G4ThreeVector(0, 0, 0.5 * small_tube_lenght));
+        solids_.push_back(dynaxion_tube_small_volume_final);
 
         // Place the logical volume of the dynaxion large tube
-                auto dynaxion_small_volume_log =
-            make_shared_no_delete<G4LogicalVolume>(dynaxion_tube_small_volume_final.get(), materials_[passive_material], name + "small_log");
+        auto dynaxion_small_volume_log = make_shared_no_delete<G4LogicalVolume>(
+            dynaxion_tube_small_volume_final.get(), materials_[passive_material], name + "small_log");
 
         // Place the physical volume of the dynaxion large tube
         auto dynaxion_tube_small_volume_phys = make_shared_no_delete<G4PVPlacement>(
-            orientation, G4ThreeVector(passive_material_pos.x(), passive_material_pos.y(), passive_material_pos.z()-0.5*small_tube_lenght), dynaxion_small_volume_log.get(), name + "small_phys", world_log, false, 0, true);           
-          
-
-        
-  
+            orientation,
+            G4ThreeVector(
+                passive_material_pos.x(), passive_material_pos.y(), passive_material_pos.z() - 0.5 * small_tube_lenght),
+            dynaxion_small_volume_log.get(),
+            name + "small_phys",
+            world_log,
+            false,
+            0,
+            true);
     }
 }
 
