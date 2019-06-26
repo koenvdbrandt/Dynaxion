@@ -263,7 +263,7 @@ void DepositionGeant4Module::init() {
             std::string plot_name = "deposited_charge_" + sensitive_detector_action->getName();
             charge_per_event_[sensitive_detector_action->getName()] =
                 new TH1D(plot_name.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
-            vent = new TH1D("charges", "deposited charge per event;deposited charge [ke];events", 1, 0, maximum);
+		vent = new TH1D("charges", "deposited charge per event;deposited charge [ke];events", 1, 0, maximum);
         }
     }
 
@@ -309,7 +309,8 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         if(config_.get<bool>("output_plots")) {
             int charge = static_cast<int>(Units::convert(sensor->getDepositedCharge(), "ke"));
             charge_per_event_[sensor->getName()]->Fill(charge);
-            vent->Fill(charge);
+	    vent->Fill(charge);
+
         }
     }
 
@@ -325,10 +326,10 @@ void DepositionGeant4Module::finalize() {
 
     if(config_.get<bool>("output_plots")) {
         // Write histograms
-        vent->Write();
+	vent->Write();
         LOG(INFO) << "Writing output plots to file";
         for(auto& plot : charge_per_event_) {
-            plot.second->Write();
+	plot.second->Write();
         }
     }
 

@@ -67,10 +67,9 @@ G4bool SensitiveDetectorActionG4::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     // Calculate the charge deposit at a local position
     auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(mid_pos));
-    std::cout << deposit_position.x() << " " << deposit_position.y() << " " << deposit_position.z() << " " << std::endl;
+    std::cout << deposit_position.x()<< " " << deposit_position.y()<< " " << deposit_position.z()<< " " << std::endl; 
     auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(mid_pos);
-    std::cout << deposit_position_g4.x() << " " << deposit_position_g4.y() << " " << deposit_position_g4.z() << " "
-              << std::endl;
+    std::cout << deposit_position_g4.x()<< " " << deposit_position_g4.y()<< " " << deposit_position_g4.z()<< " " << std::endl; 
     // Calculate number of electron hole pairs produced, taking into acocunt fluctuations between ionization and lattice
     // excitations via the Fano factor. We assume Gaussian statistics here.
     auto mean_charge = static_cast<unsigned int>(edep / charge_creation_energy_);
@@ -78,15 +77,15 @@ G4bool SensitiveDetectorActionG4::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto charge = charge_fluctuation(random_generator_);
     auto sensor_center = detector_->getModel()->getSensorCenter();
 
-    if(detector_->getModel()->isActive() == true) {
-        auto active_material_center = detector_->getPosition();
-        sensor_center = active_material_center;
+    if(detector_->getModel()->isActive()== true){
+	auto active_material_center = detector_->getPosition();
+	sensor_center = active_material_center;
     }
-    auto deposit_position_g4loc = ROOT::Math::XYZPoint(deposit_position_g4.x() + sensor_center.x(),
-                                                       deposit_position_g4.y() + sensor_center.y(),
-                                                       deposit_position_g4.z() + sensor_center.z());
-    std::cout << deposit_position_g4loc.x() << " " << deposit_position_g4loc.y() << " " << deposit_position_g4loc.z() << " "
-              << std::endl;
+    auto deposit_position_g4loc =
+        ROOT::Math::XYZPoint(deposit_position_g4.x() + sensor_center.x(),
+                             deposit_position_g4.y() + sensor_center.y(),
+                             deposit_position_g4.z() + sensor_center.z());
+    std::cout << deposit_position_g4loc.x()<<" " << deposit_position_g4loc.y()<< " " << deposit_position_g4loc.z()<< " " << std::endl; 
     const auto userTrackInfo = dynamic_cast<TrackInfoG4*>(step->GetTrack()->GetUserInformation());
     if(userTrackInfo == nullptr) {
         throw ModuleError("No track information attached to track.");
@@ -205,7 +204,7 @@ void SensitiveDetectorActionG4::dispatchMessages() {
 
         // Store the number of charge carriers:
         deposited_charge_ = charges;
-        LOG(INFO) << "Deposited " << deposited_charge_ << " charges in sensor of detector " << detector_->getName();
+	LOG(INFO) << "Deposited " << deposited_charge_ << " charges in sensor of detector " << detector_->getName();
         // Match deposit with mc particle if possible
         for(size_t i = 0; i < deposits_.size(); ++i) {
             auto track_id = deposit_to_id_.at(i);
