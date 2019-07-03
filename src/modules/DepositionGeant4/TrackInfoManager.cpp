@@ -36,6 +36,8 @@ void TrackInfoManager::storeTrackInfo(std::unique_ptr<TrackInfoG4> the_track_inf
     if(element != to_store_track_ids_.end()) {
         stored_track_infos_.push_back(std::move(the_track_info));
         to_store_track_ids_.erase(element);
+    } else {
+        stored_track_infos_.push_back(std::move(the_track_info));
     }
 }
 
@@ -53,7 +55,7 @@ void TrackInfoManager::resetTrackInfoManager() {
 void TrackInfoManager::dispatchMessage(Module* module, Messenger* messenger) {
     setAllTrackParents();
     IFLOG(DEBUG) {
-        LOG(DEBUG) << "Dispatching " << stored_tracks_.size() << " MCTrack(s) from TrackInfoManager::dispatchMessage()";
+        LOG(INFO) << "Dispatching " << stored_tracks_.size() << " MCTrack(s) from TrackInfoManager::dispatchMessage()";
         for(auto const& mc_track : stored_tracks_) {
             LOG(DEBUG) << "MCTrack originates at: " << Units::display(mc_track.getStartPoint(), {"mm", "um"})
                        << " and terminates at: " << Units::display(mc_track.getEndPoint(), {"mm", "um"});
@@ -72,6 +74,8 @@ void TrackInfoManager::createMCTracks() {
     for(auto& track_info : stored_track_infos_) {
         stored_tracks_.emplace_back(track_info->getStartPoint(),
                                     track_info->getEndPoint(),
+                                    track_info->getInitialMomentum(),
+                                    track_info->getFinalMomentum(),
                                     track_info->getOriginatingVolumeName(),
                                     track_info->getCreationProcessName(),
                                     track_info->getCreationProcessType(),

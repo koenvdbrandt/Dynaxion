@@ -160,6 +160,7 @@ void GeometryConstructionG4::init_materials() {
     // Create required elements:
     G4Element* H = new G4Element("Hydrogen", "H", 1., 1.01 * CLHEP::g / CLHEP::mole);
     G4Element* C = new G4Element("Carbon", "C", 6., 12.01 * CLHEP::g / CLHEP::mole);
+    G4Element* N = new G4Element("Nitrogen", "N", 7., 14.007 * CLHEP::g / CLHEP::mole);
     G4Element* O = new G4Element("Oxygen", "O", 8., 16.0 * CLHEP::g / CLHEP::mole);
     G4Element* Cl = new G4Element("Chlorine", "Cl", 17., 35.45 * CLHEP::g / CLHEP::mole);
     G4Element* Sn = new G4Element("Tin", "Sn", 50., 118.710 * CLHEP::g / CLHEP::mole);
@@ -193,6 +194,16 @@ void GeometryConstructionG4::init_materials() {
     Solder->AddElement(Sn, 0.63);
     Solder->AddElement(Pb, 0.37);
     materials_["solder"] = Solder;
+
+    // Create Fentanyl
+    // Link to Fentanyl density
+    // https://www.epa.gov/sites/production/files/2018-07/documents/fentanyl_fact_sheet_ver_7-26-18.pdf
+    G4Material* Fentanyl = new G4Material("Fentanyl", 1.087 * CLHEP::g / CLHEP::cm3, 4);
+    Fentanyl->AddElement(H, 28);
+    Fentanyl->AddElement(C, 22);
+    Fentanyl->AddElement(N, 2);
+    Fentanyl->AddElement(O, 1);
+    materials_["fentanyl"] = Fentanyl;
 }
 
 void GeometryConstructionG4::check_overlaps() {
