@@ -130,6 +130,7 @@ ROOT::Math::XYZVector DetectorModel::getSize() const {
     return size;
 }
 
+
 std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const {
     auto ret_layers = support_layers_;
 
@@ -151,13 +152,10 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
     return ret_layers;
 }
 // for the active materials
-bool DetectorModel::isActive() {
+bool DetectorModel::isActive() const{
     auto config = reader_.getHeaderConfiguration();
-    if(config.get<std::string>("type", "") == "active") {
-        return true;
-    } else {
-        return false;
-    }
+    auto active = config.get<bool>("active", false);
+    return active;
 }
 
 std::string DetectorModel::getActiveMaterial() {

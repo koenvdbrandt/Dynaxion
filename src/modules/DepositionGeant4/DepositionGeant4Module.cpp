@@ -174,8 +174,10 @@ void DepositionGeant4Module::init() {
 
     // Initialize the physics list
     LOG(TRACE) << "Initializing physics list";
-    run_manager_g4_->SetUserInitialization(physicsList);
+    //run_manager_g4_->InitializeGeometry();
 
+    run_manager_g4_->SetUserInitialization(physicsList);
+    //run_manager_g4_->InitializePhysics();
     // Initialize the full run manager to ensure correct state flags
     LOG(TRACE) << "Initializing all";
     run_manager_g4_->Initialize();

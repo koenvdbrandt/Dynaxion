@@ -272,6 +272,9 @@ namespace allpix {
         virtual ROOT::Math::XYZPoint getSensorCenter() const {
             ROOT::Math::XYZVector offset(
                 (sensor_excess_.at(1) - sensor_excess_.at(3)) / 2.0, (sensor_excess_.at(0) - sensor_excess_.at(2)) / 2.0, 0);
+             if(this->isActive()== true){
+                offset = {0,0,0};
+            }
             return getCenter() + offset;
         }
         /**
@@ -369,8 +372,8 @@ namespace allpix {
                                                    std::move(hole_offset)));
         }
 
-        bool isActive();
-        std::string getActiveMaterial();
+        bool isActive() const;
+        std::string getActiveMaterial() ;
 
     protected:
         std::string type_;

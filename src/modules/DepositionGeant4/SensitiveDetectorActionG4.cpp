@@ -67,21 +67,28 @@ G4bool SensitiveDetectorActionG4::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     // Calculate the charge deposit at a local position
     auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(mid_pos));
+    //std::cout<< "deposit_position" <<std::endl <<deposit_position.x()<< " " << deposit_position.y() <<" " << deposit_position.z() <<"" << std::endl;
     auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(mid_pos);
+    //std::cout<<"deposit_position_g4"<<std::endl <<deposit_position_g4.x()<< " " << deposit_position_g4.y() <<" " << deposit_position_g4.z() <<"" << std::endl;
+
     // Calculate number of electron hole pairs produced, taking into acocunt fluctuations between ionization and lattice
     // excitations via the Fano factor. We assume Gaussian statistics here.
     auto mean_charge = static_cast<unsigned int>(edep / charge_creation_energy_);
     std::normal_distribution<double> charge_fluctuation(mean_charge, std::sqrt(mean_charge * fano_factor_));
     auto charge = charge_fluctuation(random_generator_);
     auto sensor_center = detector_->getModel()->getSensorCenter();
+    //std::cout<< "sensor_center"<<std::endl << sensor_center.x()<< " " << sensor_center.y() <<" " << sensor_center.z() <<"" << std::endl;
+    //if(detector_->getModel()->isActive()== true){
+        //auto active_material_center = detector_->getPosition();
+        //std::cout<< "active_material_center"<<std::endl << active_material_center.x()<< " " << active_material_center.y() <<" " << active_material_center.z() <<"" << std::endl;
 
-    /*  if(detector_->getModel()->isActive()== true){
-        auto active_material_center = detector_->getPosition();
-        sensor_center = active_material_center;
-        }*/
+        //sensor_center = active_material_center;
+        //}
     auto deposit_position_g4loc = ROOT::Math::XYZPoint(deposit_position_g4.x() + sensor_center.x(),
                                                        deposit_position_g4.y() + sensor_center.y(),
                                                        deposit_position_g4.z() + sensor_center.z());
+    //std::cout<<"deposit_position_g4loc"<<std::endl <<deposit_position_g4loc.x()<< " " << deposit_position_g4loc.y() <<" " << deposit_position_g4loc.z() <<"" << std::endl;
+                                                   
     const auto userTrackInfo = dynamic_cast<TrackInfoG4*>(step->GetTrack()->GetUserInformation());
     if(userTrackInfo == nullptr) {
         throw ModuleError("No track information attached to track.");
