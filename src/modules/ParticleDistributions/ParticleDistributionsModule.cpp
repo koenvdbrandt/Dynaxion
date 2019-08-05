@@ -43,7 +43,7 @@ void ParticleDistributionsModule::init() {
 
     config_.setDefault<bool>("store_particles", false);
     store_particles_ = config_.get<bool>("store_particles");
-    simple_tree_ = new TTree("protons", "protons");
+    simple_tree_ = new TTree("neutrons", "neutrons");
     simple_tree_->Branch("initial_energy", &initial_energy_);
     simple_tree_->Branch("final_energy", &final_energy_);
     simple_tree_->Branch("particle_id", &particle_id_);
@@ -65,20 +65,20 @@ void ParticleDistributionsModule::run(unsigned int) {
 
     // Make a store for desired MC tracks
     std::vector<MCTrack> saved_tracks;
-    std::vector<MCTrack> proton_track;
+    std::vector<MCTrack> neutron_track;
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() == 2212) {
-            proton_track.insert(proton_track.end(), particle);
+        if(particle.getParticleID() == 2112) {
+            neutron_track.insert(neutron_track.end(), particle);
         }
     }
 
-    for(auto& proton : proton_track) {
+    for(auto& neutron : neutron_track) {
 
-        ROOT::Math::XYZVector initial_momentum = proton.getInitialMomentum();
-        ROOT::Math::XYZVector final_momentum = proton.getFinalMomentum();
+        ROOT::Math::XYZVector initial_momentum = neutron.getInitialMomentum();
+        ROOT::Math::XYZVector final_momentum = neutron.getFinalMomentum();
         double magnitude = sqrt(initial_momentum.Mag2());
         // double magnitude_final = sqrt(final_momentum.Mag2());
-        double energy = proton.getKineticEnergyInitial();
+        double energy = neutron.getKineticEnergyInitial();
 
         ROOT::Math::XYZVector directionVector, energyWeightedDirection;
         directionVector.SetX(initial_momentum.X() / magnitude);
@@ -96,16 +96,16 @@ void ParticleDistributionsModule::run(unsigned int) {
         xyz_energy_distribution_->Fill(
             energyWeightedDirection.X(), energyWeightedDirection.Y(), energyWeightedDirection.Z());
 
-        initial_energy_ = proton.getKineticEnergyInitial();
-        final_energy_ = proton.getKineticEnergyFinal();
+        initial_energy_ = neutron.getKineticEnergyInitial();
+        final_energy_ = neutron.getKineticEnergyFinal();
 
-        particle_id_ = proton.getParticleID();
-        start_position_x_ = proton.getStartPoint().X();
-        start_position_y_ = proton.getStartPoint().Y();
-        start_position_z_ = proton.getStartPoint().Z();
-        end_position_x_ = proton.getEndPoint().X();
-        end_position_y_ = proton.getEndPoint().Y();
-        end_position_z_ = proton.getEndPoint().Z();
+        particle_id_ = neutron.getParticleID();
+        start_position_x_ = neutron.getStartPoint().X();
+        start_position_y_ = neutron.getStartPoint().Y();
+        start_position_z_ = neutron.getStartPoint().Z();
+        end_position_x_ = neutron.getEndPoint().X();
+        end_position_y_ = neutron.getEndPoint().Y();
+        end_position_z_ = neutron.getEndPoint().Z();
         initial_momentum_x_ = initial_momentum.X();
         initial_momentum_y_ = initial_momentum.Y();
         initial_momentum_z_ = initial_momentum.Z();
@@ -115,7 +115,7 @@ void ParticleDistributionsModule::run(unsigned int) {
         simple_tree_->Fill();
 
         if(store_particles_) {
-            saved_tracks.push_back(proton);
+            saved_tracks.push_back(neutron);
         }
     }
 
@@ -125,7 +125,7 @@ void ParticleDistributionsModule::run(unsigned int) {
         messenger_->dispatchMessage(this, mcparticle_message);
     }
 
-    proton_track.clear();
+    neutron_track.clear();
 }
 
 void ParticleDistributionsModule::finalize() {
