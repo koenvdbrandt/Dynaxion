@@ -53,6 +53,6 @@ namespace allpix {
         std::vector<std::shared_ptr<G4VSolid>> solids_;
     };
 
-}; // namespace allpix
+} // namespace allpix
 
 #endif /* ALLPIX_MODULE_PASSIVE_MATERIAL_CONSTRUCTION_H */

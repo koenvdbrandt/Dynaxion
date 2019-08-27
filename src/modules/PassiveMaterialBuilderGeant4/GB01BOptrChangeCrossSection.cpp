@@ -46,7 +46,7 @@ GB01BOptrChangeCrossSection::GB01BOptrChangeCrossSection(G4String particleName, 
     : G4VBiasingOperator(name), fSetup(true) {
     fParticleToBias = G4ParticleTable::GetParticleTable()->FindParticle(particleName);
 
-    if(fParticleToBias == 0) {
+    if(fParticleToBias == nullptr) {
         G4ExceptionDescription ed;
         ed << "Particle `" << particleName << "' not found !" << G4endl;
         G4Exception("GB01BOptrChangeCrossSection(...)", "exGB01.01", JustWarning, ed);
