@@ -66,11 +66,37 @@ void ParticleDistributionsModule::run(unsigned int) {
     // Make a store for desired MC tracks
     std::vector<MCTrack> saved_tracks;
     std::vector<MCTrack> neutron_track;
+    std::vector<MCTrack> particle_track;
+
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() == 2112) {
+        particle_track.insert(particle_track.end(), particle);
+        if(particle.getParticleID() == 2112)
             neutron_track.insert(neutron_track.end(), particle);
-        }
     }
+
+    auto counter_neutron = 0;
+    auto counter_proton = 0;
+    auto counter_alpha = 0;
+    auto counter_electron = 0;
+    for(auto& vent : particle_track) {
+        if(vent.getParticleID() == 2112)
+            counter_neutron++;
+        if(vent.getParticleID() == 2212)
+            counter_proton++;
+        if(vent.getParticleID() == 1000020040)
+            counter_alpha++;
+        if(vent.getParticleID() == 11)
+            counter_electron++;
+    }
+
+    // if(counter_neutron + counter_proton < 2 ) neutron_track.clear();
+    // if(counter_neutron != 1 ) neutron_track.clear();
+    // if(counter_alpha != 2 ) neutron_track.clear();
+    // if(counter_electron == 0 ) neutron_track.clear();
+
+    // if(particle.getParticleID() < 200 ) {
+    //     neutron_track.insert(neutron_track.end(), particle);
+    //}
 
     for(auto& neutron : neutron_track) {
 
