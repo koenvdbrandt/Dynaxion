@@ -97,7 +97,7 @@ GB01BOptrChangeCrossSection::ProposeOccurenceBiasingOperation(const G4Track* tra
     // -- Check if current particle type is the one to bias:
     // -----------------------------------------------------
     if(track->GetDefinition() != fParticleToBias)
-        return 0;
+        return nullptr;
 
     // ---------------------------------------------------------------------
     // -- select and setup the biasing operation for current callingProcess:
@@ -108,7 +108,7 @@ GB01BOptrChangeCrossSection::ProposeOccurenceBiasingOperation(const G4Track* tra
     G4double analogInteractionLength = callingProcess->GetWrappedProcess()->GetCurrentInteractionLength();
     if(analogInteractionLength > DBL_MAX / 10.) {
         LOG(TRACE) << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-        return 0;
+        return nullptr;
     }
     LOG(TRACE) << "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
 
@@ -136,7 +136,7 @@ GB01BOptrChangeCrossSection::ProposeOccurenceBiasingOperation(const G4Track* tra
     // -- only on the first time the operation is proposed, or if the interaction
     // -- occured. If the interaction did not occur for the process in the previous,
     // -- we update the number of interaction length instead of resampling.
-    if(previousOperation == 0) {
+    if(previousOperation == nullptr) {
         operation->SetBiasedCrossSection(XStransformation * analogXS);
         operation->Sample();
     } else {
@@ -145,7 +145,7 @@ GB01BOptrChangeCrossSection::ProposeOccurenceBiasingOperation(const G4Track* tra
             G4ExceptionDescription ed;
             ed << " Logic problem in operation handling !" << G4endl;
             G4Exception("GB01BOptrChangeCrossSection::ProposeOccurenceBiasingOperation(...)", "exGB01.02", JustWarning, ed);
-            return 0;
+            return nullptr;
         }
         if(operation->GetInteractionOccured()) {
             operation->SetBiasedCrossSection(XStransformation * analogXS);
