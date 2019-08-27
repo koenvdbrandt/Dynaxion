@@ -45,12 +45,12 @@
 #include "tools/ROOT.h"
 #include "tools/geant4.h"
 
-#include "GB01BOptrMultiParticleChangeCrossSection.hpp"
+//#include "GB01BOptrMultiParticleChangeCrossSection.hpp"
 
 using namespace allpix;
 
 PassiveMaterialConstructionG4::PassiveMaterialConstructionG4(Configuration& config, bool bias)
-    : config_(config), bias_(bias) {}
+    : config_(config), bias_(bias) {(void) bias_;}
 
 /**
  * @brief Version of std::make_shared that does not delete the pointer
@@ -437,10 +437,10 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
         auto concrete_wall_volume_phys = make_shared_no_delete<G4PVPlacement>(
             transform_phys, concrete_wall_volume_log.get(), name + "concrete_wall_volume_phys", world_log, false, 0, true);
     }
-    if(bias_ == true) {
+    /*if(bias_ == true) {
         LOG(TRACE) << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
         ConstructSDandField();
-    }
+    }*/
 }
 
 std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {
@@ -525,7 +525,7 @@ std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {
 
     return points_;
 }
-
+/* 
 void PassiveMaterialConstructionG4::ConstructSDandField() {
     std::string name = config_.getName();
 
@@ -543,3 +543,4 @@ void PassiveMaterialConstructionG4::ConstructSDandField() {
     testMany->AttachTo(logicTest);
     LOG(TRACE) << " Attaching biasing operator " << testMany->GetName() << " to logical volume " << logicTest->GetName();
 }
+*/

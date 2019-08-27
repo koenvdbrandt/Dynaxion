@@ -20,8 +20,8 @@ ENDIF()
 ALLPIX_MODULE_SOURCES(${MODULE_NAME}
     PassiveMaterialBuilderGeant4Module.cpp
     PassiveMaterialConstructionG4.cpp
-    GB01BOptrChangeCrossSection.cpp
-    GB01BOptrMultiParticleChangeCrossSection.cpp
+    # GB01BOptrChangeCrossSection.cpp
+    # GB01BOptrMultiParticleChangeCrossSection.cpp
     
 )
 

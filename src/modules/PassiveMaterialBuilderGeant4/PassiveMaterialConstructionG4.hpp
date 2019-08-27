@@ -41,7 +41,7 @@ namespace allpix {
         void build(G4LogicalVolume* world_log, std::map<std::string, G4Material*> materials_) override;
 
         std::vector<ROOT::Math::XYZPoint> addPoints();
-        void ConstructSDandField();
+        //void ConstructSDandField();
 
     private:
         Configuration& config_;

@@ -175,7 +175,7 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand("/run/setCut " + std::to_string(production_cut));
 
     // Initialize the physics list
-
+/* 
     G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
     biasingPhysics->PhysicsBias("deuteron", {"dInelastic"});
     LOG(TRACE) << "Biasing Deuterons";
@@ -183,7 +183,7 @@ void DepositionGeant4Module::init() {
     LOG(TRACE) << "Biasing Neutrons";
 
     physicsList->RegisterPhysics(biasingPhysics);
-
+*/
     LOG(TRACE) << "Initializing physics processes";
     run_manager_g4_->SetUserInitialization(physicsList);
     // run_manager_g4_->InitializePhysics();
