@@ -42,6 +42,8 @@
 
 #define G4_NUM_SEEDS 10
 
+#include "G4GenericBiasingPhysics.hh"
+
 using namespace allpix;
 
 /**
@@ -173,6 +175,15 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand("/run/setCut " + std::to_string(production_cut));
 
     // Initialize the physics list
+
+    G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
+    biasingPhysics->PhysicsBias("deuteron", {"dInelastic"});
+    LOG(TRACE) << "Biasing Deuterons";
+    biasingPhysics->PhysicsBias("neutron", {"neutronInelastic"});
+    LOG(TRACE) << "Biasing Neutrons";
+
+    physicsList->RegisterPhysics(biasingPhysics);
+
     LOG(TRACE) << "Initializing physics processes";
     run_manager_g4_->SetUserInitialization(physicsList);
     // run_manager_g4_->InitializePhysics();
@@ -190,6 +201,7 @@ void DepositionGeant4Module::init() {
     // User hook to store additional information at track initialization and termination as well as custom track ids
     auto userTrackIDHook = new SetTrackInfoUserHookG4(track_info_manager_.get());
     run_manager_g4_->SetUserAction(userTrackIDHook);
+    // run_manager_g4_->Initialize();
 
     if(geo_manager_->hasMagneticField()) {
         MagneticFieldType magnetic_field_type_ = geo_manager_->getMagneticFieldType();

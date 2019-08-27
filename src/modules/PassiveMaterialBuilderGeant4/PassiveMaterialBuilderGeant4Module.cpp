@@ -58,20 +58,21 @@ void PassiveMaterialBuilderGeant4Module::init() {
     RELEASE_STREAM(std::cout);
 
     ConfigManager* conf_manager = getConfigManager();
+    auto bias = config_.get<bool>("bias", false);
+
     for(auto& passive_material_section : conf_manager->getPassiveMaterialConfigurations()) {
         std::shared_ptr<PassiveMaterialConstructionG4> passive_material_builder =
-            std::make_shared<PassiveMaterialConstructionG4>(passive_material_section);
+            std::make_shared<PassiveMaterialConstructionG4>(passive_material_section, bias);
 
         geo_manager_->addBuilder(passive_material_builder);
+
+        // Add the max and min points of the passive material to the world volume
+        auto points = new PassiveMaterialConstructionG4(passive_material_section, bias);
+        points_ = points->addPoints();
+        for(auto& point : points_) {
+            geo_manager_->addPoint(point);
+        }
     }
-
-    // Add the max and min points of the passive material to the world volume
-    // auto points = new PassiveMaterialConstructionG4(passive_material_section);
-    // points_ = points->addPoints();
-    // for(auto& point : points_) {
-    // geo_manager_->addPoint(point);
-    // }
-
     // Run the geometry construct function in GeometryConstructionG4
     // LOG(TRACE) << "Building Geant4 geometry";
     // run_manager_g4_->InitializeGeometry();

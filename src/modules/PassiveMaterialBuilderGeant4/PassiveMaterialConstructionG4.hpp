@@ -32,7 +32,7 @@ namespace allpix {
          * @param config Configuration object of the geometry builder module
          */
         // TargetConstructionG4(ConfigReader& reader);
-        PassiveMaterialConstructionG4(Configuration& config);
+        PassiveMaterialConstructionG4(Configuration& config, bool bias);
 
         /**
          * @brief Constructs the world geometry with all detectors
@@ -41,9 +41,11 @@ namespace allpix {
         void build(G4LogicalVolume* world_log, std::map<std::string, G4Material*> materials_) override;
 
         std::vector<ROOT::Math::XYZPoint> addPoints();
+        void ConstructSDandField();
 
     private:
         Configuration& config_;
+        bool bias_;
         // Storage of internal objects
 
         std::vector<ROOT::Math::XYZPoint> points_;
@@ -51,6 +53,6 @@ namespace allpix {
         std::vector<std::shared_ptr<G4VSolid>> solids_;
     };
 
-} // namespace allpix
+}; // namespace allpix
 
 #endif /* ALLPIX_MODULE_PASSIVE_MATERIAL_CONSTRUCTION_H */
