@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of geometry manager
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -334,6 +334,7 @@ std::shared_ptr<Detector> GeometryManager::getDetector(const std::string& name) 
     }
     throw allpix::InvalidDetectorError(name);
 }
+
 /**
  * @throws InvalidDetectorError If not a single detector with this type exists
  */
@@ -506,4 +507,12 @@ MagneticFieldType GeometryManager::getMagneticFieldType() const {
 
 ROOT::Math::XYZVector GeometryManager::getMagneticField(const ROOT::Math::XYZPoint& position) const {
     return magnetic_field_function_(position);
+}
+
+void GeometryManager::addBuilder(const std::shared_ptr<BaseBuilder>& builder) {
+    builders_.push_back(builder);
+}
+
+std::vector<std::shared_ptr<BaseBuilder>> GeometryManager::getBuilders() {
+    return builders_;
 }

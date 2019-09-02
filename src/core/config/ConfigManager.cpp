@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of config manager
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -87,6 +87,22 @@ void ConfigManager::parse_detectors() {
     detector_configs_ = std::list<Configuration>(detector_configs.begin(), detector_configs.end());
 }
 
+void ConfigManager::parse_passive_materials() {
+    // If detector configurations have been parsed already, skip:
+    if(!passive_material_configs_.empty()) {
+        return;
+    }
+
+    // Reading detector file
+    std::string passive_material_file_name = global_config_.getPath("passive_materials_file", true);
+    LOG(TRACE) << "Reading passive material configuration";
+
+    std::ifstream passive_material_file(passive_material_file_name);
+    ConfigReader passive_material_reader(passive_material_file, passive_material_file_name);
+    auto passive_material_configs = passive_material_reader.getConfigurations();
+    passive_material_configs_ = std::list<Configuration>(passive_material_configs.begin(), passive_material_configs.end());
+}
+
 /**
  * The global configuration is the combination of all sections with a global header.
  */
@@ -154,6 +170,14 @@ std::list<Configuration>& ConfigManager::getModuleConfigurations() {
 std::list<Configuration>& ConfigManager::getDetectorConfigurations() {
     parse_detectors();
     return detector_configs_;
+}
+
+/**
+ * The list of passive material configurations is read from the configuration defined in 'passive_material_file'
+ */
+std::list<Configuration>& ConfigManager::getPassiveMaterialConfigurations() {
+    parse_passive_materials();
+    return passive_material_configs_;
 }
 
 /**

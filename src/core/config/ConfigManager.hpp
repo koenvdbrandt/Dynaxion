@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Interface to the main configuration and its normal and special sections
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -103,6 +103,12 @@ namespace allpix {
         std::list<Configuration>& getDetectorConfigurations();
 
         /**
+         * @brief Get all the passive material configurations
+         * @return Reference to list of passive material configurations
+         */
+        std::list<Configuration>& getPassiveMaterialConfigurations();
+
+        /**
          * @brief Load detector specific options
          * @param options List of options to load and apply
          * @return True if any actual options where applied
@@ -120,7 +126,9 @@ namespace allpix {
 
         // Helper function for delayed parsing of detectors file
         void parse_detectors();
+        void parse_passive_materials();
         std::list<Configuration> detector_configs_;
+        std::list<Configuration> passive_material_configs_;
 
         std::list<Configuration> instance_configs_;
         std::map<std::string, std::list<Configuration>::iterator> instance_name_to_config_;

@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Keeping track of the global geometry of independent detectors
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -20,6 +20,7 @@
 
 #include "Detector.hpp"
 #include "DetectorModel.hpp"
+#include "GeometryBuilder.hpp"
 #include "core/config/ConfigManager.hpp"
 #include "core/config/ConfigReader.hpp"
 
@@ -204,6 +205,10 @@ namespace allpix {
 
         MagneticFieldType getMagneticFieldType() const;
 
+        void addBuilder(const std::shared_ptr<BaseBuilder>& builder);
+
+        std::vector<std::shared_ptr<BaseBuilder>> getBuilders();
+
     private:
         /**
          * @brief Load all standard framework models (automatically done when the geometry is closed)
@@ -236,6 +241,8 @@ namespace allpix {
 
         MagneticFieldType magnetic_field_type_{MagneticFieldType::NONE};
         MagneticFieldFunction magnetic_field_function_;
+
+        std::vector<std::shared_ptr<BaseBuilder>> builders_;
     };
 } // namespace allpix
 

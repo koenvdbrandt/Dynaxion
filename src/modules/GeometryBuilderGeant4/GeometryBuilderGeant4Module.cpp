@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of Geant4 geometry construction module
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -27,15 +27,11 @@
 #include "tools/ROOT.h"
 #include "tools/geant4.h"
 
+#include "DetectorConstructionG4.hpp"
 #include "core/config/ConfigReader.hpp"
 #include "core/config/exceptions.h"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/utils/log.h"
-
-// Include GDML if Geant4 version has it
-#ifdef Geant4_GDML
-#include "G4GDMLParser.hh"
-#endif
 
 using namespace allpix;
 using namespace ROOT;
@@ -91,7 +87,15 @@ void GeometryBuilderGeant4Module::init() {
 
     // Set the geometry construction to use
     auto geometry_construction = new GeometryConstructionG4(geo_manager_, config_);
+
+    std::shared_ptr<DetectorConstructionG4> detBuilder = std::make_shared<DetectorConstructionG4>(geo_manager_, config_);
+
+    geo_manager_->addBuilder(detBuilder);
     run_manager_g4_->SetUserInitialization(geometry_construction);
+
+    // Comment out this initialization because the code becomes unstable when you doulbe initialize the geometry
+    // The initialization is done in the last geometrybuilder Module, which currently is the TargetGeometryBuilderGeant4
+    // FIXME: Something has to be found to make the initialization independant of the number of modules
 
     // Run the geometry construct function in GeometryConstructionG4
     LOG(TRACE) << "Building Geant4 geometry";
