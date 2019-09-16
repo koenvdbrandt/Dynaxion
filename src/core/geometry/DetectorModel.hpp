@@ -188,7 +188,7 @@ namespace allpix {
             double support_sensorSide_thickness =
                 std::abs(min_support_center) + min_support_size / 2 -
                 getSensorSize().Z() / 2; // total thickness of support layers (including empty spaces) on the sensor side
-            double zDistanceToGeoCenter = detector_thickness / 2 - support_sensorSide_thickness - getSensorSize().Z() / 2;
+            double zDistanceToGeoCenter = detector_thickness / 2 - support_sensorSide_thickness - getSensorSize().z() / 2;
 
             return ROOT::Math::XYZPoint(getCenter().x(), getCenter().y(), zDistanceToGeoCenter);
         }
@@ -272,9 +272,6 @@ namespace allpix {
         virtual ROOT::Math::XYZPoint getSensorCenter() const {
             ROOT::Math::XYZVector offset(
                 (sensor_excess_.at(1) - sensor_excess_.at(3)) / 2.0, (sensor_excess_.at(0) - sensor_excess_.at(2)) / 2.0, 0);
-             if(this->isActive()== true){
-                offset = {0,0,0};
-            }
             return getCenter() + offset;
         }
         /**
@@ -372,12 +369,10 @@ namespace allpix {
                                                    std::move(hole_offset)));
         }
 
-        bool isActive() const;
-        std::string getActiveMaterial() ;
+        std::string getActiveMaterial();
 
     protected:
         std::string type_;
-        bool active_material{false};
         std::string active_material_;
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;

@@ -123,13 +123,8 @@ ROOT::Math::XYZVector DetectorModel::getSize() const {
     size.SetZ((max.z() - getCenter().z()) +
               (getCenter().z() - min.z())); // max.z() is positive (chip side) and min.z() is negative (sensor side)
 
-    if(config.get<bool>("active_material", false)) {
-        auto active_material_size = config.get<ROOT::Math::XYZVector>("size");
-        size = active_material_size / 2;
-    }
     return size;
 }
-
 
 std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const {
     auto ret_layers = support_layers_;
@@ -151,14 +146,8 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
 
     return ret_layers;
 }
-// for the active materials
-bool DetectorModel::isActive() const{
-    auto config = reader_.getHeaderConfiguration();
-    auto active = config.get<bool>("active", false);
-    return active;
-}
 
 std::string DetectorModel::getActiveMaterial() {
     auto config = reader_.getHeaderConfiguration();
-    return active_material_ = config.get<std::string>("material");
+    return active_material_ = config.get<std::string>("active_material", "silicon");
 }

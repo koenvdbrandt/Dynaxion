@@ -62,6 +62,7 @@ namespace allpix {
 
         std::unique_ptr<G4LogicalVolume> world_log_;
         std::unique_ptr<G4VPhysicalVolume> world_phys_;
+        G4MaterialPropertiesTable* CeBr3_mt;
     };
 } // namespace allpix
 

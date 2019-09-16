@@ -77,11 +77,50 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
 
     std::transform(passive_material.begin(), passive_material.end(), passive_material.begin(), ::tolower);
 
-    auto orientation = new G4RotationMatrix; // Rotates X and Z axes only
     auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0., 0., 0.});
-    orientation->rotateX(orientation_vector.x() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
-    orientation->rotateY(orientation_vector.y() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
-    orientation->rotateZ(orientation_vector.z() * CLHEP::pi * CLHEP::rad); // Rotates 45 degrees
+
+    /*
+        // Calculate possible detector misalignment to be added !! Have to figure out the random_generater from
+       GeoManager.cpp
+        auto misalignment = [&](auto residuals) {
+        double dx = std::normal_distribution<double>(0, residuals.x())(random_generator);
+        double dy = std::normal_distribution<double>(0, residuals.y())(random_generator);
+        double dz = std::normal_distribution<double>(0, residuals.z())(random_generator);
+        return DisplacementVector3D<Cartesian3D<double>>(dx, dy, dz);
+        };
+        orientation_vector += misalignment(config_.get<ROOT::Math::XYZVector>("alignment_precision_orientation", {0., 0.,
+       0.}));
+    */
+
+    ROOT::Math::Rotation3D orientation;
+
+    auto orientation_mode = config_.get<std::string>("orientation_mode", "xyz");
+    if(orientation_mode == "zyx") {
+        // First angle given in the configuration file is around z, second around y, last around x:
+        LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
+        orientation = ROOT::Math::RotationZYX(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
+    } else if(orientation_mode == "xyz") {
+        LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
+        // First angle given in the configuration file is around x, second around y, last around z:
+        orientation = ROOT::Math::RotationZ(orientation_vector.z()) * ROOT::Math::RotationY(orientation_vector.y()) *
+                      ROOT::Math::RotationX(orientation_vector.x());
+    } else if(orientation_mode == "zxz") {
+        LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
+        // First angle given in the configuration file is around z, second around x, last around z:
+        orientation = ROOT::Math::EulerAngles(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
+    } else {
+        throw InvalidValueError(config_, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
+    }
+
+    std::vector<double> copy_vec(9);
+    orientation.GetComponents(copy_vec.begin(), copy_vec.end());
+    ROOT::Math::XYZPoint vx, vy, vz;
+    orientation.GetComponents(vx, vy, vz);
+    auto rotWrapper = std::make_shared<G4RotationMatrix>(copy_vec.data());
+    // auto wrapperGeoTranslation = toG4Vector((0.,0.,0.));
+    // wrapperGeoTranslation *= *rotWrapper;
+    G4ThreeVector posWrapper = toG4Vector(passive_material_location); // - wrapperGeoTranslation;
+    G4Transform3D transform_phys(*rotWrapper, posWrapper);
 
     if(config_.get<std::string>("type") == "box") {
         auto box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
@@ -93,8 +132,8 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
         auto box_log = make_shared_no_delete<G4LogicalVolume>(box_volume.get(), materials_[passive_material], name + "_log");
 
         // Place the physical volume of the box
-        auto box_phys_ = make_shared_no_delete<G4PVPlacement>(
-            orientation, passive_material_pos, box_log.get(), name + "_phys", world_log, false, 0, true);
+        auto box_phys_ =
+            make_shared_no_delete<G4PVPlacement>(transform_phys, box_log.get(), name + "_phys", world_log, false, 0, true);
     }
 
     if(config_.get<std::string>("type") == "cylinder") {
@@ -117,7 +156,7 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
 
         // Place the physical volume of the cylinder
         auto cylinder_phys_ = make_shared_no_delete<G4PVPlacement>(
-            orientation, passive_material_pos, cylinder_log.get(), name + "_phys", world_log, false, 0, true);
+            transform_phys, cylinder_log.get(), name + "_phys", world_log, false, 0, true);
 
         auto filling_material = config_.get<std::string>("filling_material", "");
 
@@ -136,14 +175,8 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
                 cylinder_filling_volume.get(), materials_[filling_material], name + "_filling_log");
 
             // Place the physical volume of the filling material
-            auto cylinder_filling_phys_ = make_shared_no_delete<G4PVPlacement>(orientation,
-                                                                               passive_material_pos,
-                                                                               cylinder_filling_log.get(),
-                                                                               name + "_filling_phys",
-                                                                               world_log,
-                                                                               false,
-                                                                               0,
-                                                                               true);
+            auto cylinder_filling_phys_ = make_shared_no_delete<G4PVPlacement>(
+                transform_phys, cylinder_filling_log.get(), name + "_filling_phys", world_log, false, 0, true);
             //}
             // else{ throw ModuleError("Cylinder '" + name + "' is not closed! Can't fill it with material");}
         }

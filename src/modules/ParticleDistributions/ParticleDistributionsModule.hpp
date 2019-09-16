@@ -61,14 +61,18 @@ namespace allpix {
         std::shared_ptr<MCTrackMessage> message_;
         TH1F* energy_distribution_;
         TH2F* zx_distribution_;
+        TH2F* scint_hit_;
         TH2F* zy_distribution_;
         TH3F* xyz_distribution_;
+        TH3F* scint_hit_3D_;
         TH3F* xyz_energy_distribution_;
 
         // ntuple variables
         TTree* simple_tree_;
         double initial_energy_;
         double final_energy_;
+        double initial_wavelength_;
+        double final_wavelength_;
 
         double particle_id_;
         double start_position_x_;

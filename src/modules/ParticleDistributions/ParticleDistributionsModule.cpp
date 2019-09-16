@@ -36,8 +36,10 @@ void ParticleDistributionsModule::init() {
     }
     energy_distribution_ = new TH1F("energy_distribution", "energy_distribution", 1000, 0, 15);
     zx_distribution_ = new TH2F("zx_distribution", "zx_distribution", 100, -1, 1, 100, -1, 1);
+    scint_hit_ = new TH2F("scint_hit", "scint_hit", 100, -5, 5, 100, -5, 5);
     zy_distribution_ = new TH2F("zy_distribution", "zy_distribution", 100, -1, 1, 100, -1, 1);
     xyz_distribution_ = new TH3F("xyz_distribution", "xyz_distribution", 100, -1, 1, 100, -1, 1, 100, -1, 1);
+    scint_hit_3D_ = new TH3F("scint_hit_3D", "scint_hit_3D", 100, -5, 5, 100, -5, 5, 100, -6, -4);
     xyz_energy_distribution_ =
         new TH3F("xyz_energy_distribution", "xyz_energy_distribution", 100, -12., 12, 100, -12, 12, 100, -12, 12);
 
@@ -46,6 +48,8 @@ void ParticleDistributionsModule::init() {
     simple_tree_ = new TTree("protons", "protons");
     simple_tree_->Branch("initial_energy", &initial_energy_);
     simple_tree_->Branch("final_energy", &final_energy_);
+    simple_tree_->Branch("initial_wavelength", &initial_wavelength_);
+    simple_tree_->Branch("final_wavelength", &final_wavelength_);
     simple_tree_->Branch("particle_id", &particle_id_);
     simple_tree_->Branch("start_position_x", &start_position_x_);
     simple_tree_->Branch("start_position_y", &start_position_y_);
@@ -67,7 +71,7 @@ void ParticleDistributionsModule::run(unsigned int) {
     std::vector<MCTrack> saved_tracks;
     std::vector<MCTrack> proton_track;
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() == 2212) {
+        if(particle.getParticleID() == 0 && particle.getEndPoint().Y() <= -4.99999) {
             proton_track.insert(proton_track.end(), particle);
         }
     }
@@ -91,14 +95,17 @@ void ParticleDistributionsModule::run(unsigned int) {
 
         energy_distribution_->Fill(energy);
         zx_distribution_->Fill(directionVector.Z(), directionVector.X());
+        scint_hit_->Fill(proton.getEndPoint().X(), proton.getEndPoint().Z());
         zy_distribution_->Fill(directionVector.Z(), directionVector.Y());
         xyz_distribution_->Fill(directionVector.X(), directionVector.Y(), directionVector.Z());
+        scint_hit_3D_->Fill(proton.getEndPoint().X(), proton.getEndPoint().Z(), proton.getEndPoint().Y());
         xyz_energy_distribution_->Fill(
             energyWeightedDirection.X(), energyWeightedDirection.Y(), energyWeightedDirection.Z());
 
         initial_energy_ = proton.getKineticEnergyInitial();
         final_energy_ = proton.getKineticEnergyFinal();
-
+        initial_wavelength_ = 1.2398 / (1000000 * proton.getKineticEnergyInitial());
+        final_wavelength_ = 1.2398 / (1000000 * proton.getKineticEnergyFinal());
         particle_id_ = proton.getParticleID();
         start_position_x_ = proton.getStartPoint().X();
         start_position_y_ = proton.getStartPoint().Y();
@@ -131,8 +138,10 @@ void ParticleDistributionsModule::run(unsigned int) {
 void ParticleDistributionsModule::finalize() {
     energy_distribution_->Write();
     zx_distribution_->Write();
+    scint_hit_->Write();
     zy_distribution_->Write();
     xyz_distribution_->Write();
+    scint_hit_3D_->Write();
     xyz_energy_distribution_->Write();
     simple_tree_->Write();
 }

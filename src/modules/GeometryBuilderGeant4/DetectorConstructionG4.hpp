@@ -17,6 +17,8 @@
 #include "G4Material.hh"
 #include "G4VSolid.hh"
 
+#include "G4OpticalSurface.hh"
+
 #include "core/geometry/GeometryBuilder.hpp"
 
 #include "core/geometry/GeometryManager.hpp"
@@ -39,8 +41,34 @@ namespace allpix {
          * @return Physical volume representing the world
          */
         void build(G4LogicalVolume* world_log, std::map<std::string, G4Material*> materials_) override;
+        std::vector<G4ThreeVector> GetPMTPositions() { return PMT_positions; }
 
     private:
+        // PMT stuff
+        void PlacePMTs(G4LogicalVolume* pmt_Log,
+                       G4RotationMatrix* rot,
+                       G4double& a,
+                       G4double& b,
+                       G4double da,
+                       G4double db,
+                       G4double amin,
+                       G4double bmin,
+                       G4int na,
+                       G4int nb,
+                       G4double& x,
+                       G4double& y,
+                       G4double& z,
+                       G4int& k);
+        // void SurfaceProperties();
+        std::shared_ptr<G4LogicalVolume> housing_log;
+        std::vector<G4ThreeVector> PMT_positions;
+        G4double housing_reflectivity;
+
+        // Logical volumes
+        //
+        std::shared_ptr<G4LogicalVolume> PMT_log;
+        std::shared_ptr<G4LogicalVolume> photo_cath_log;
+
         GeometryManager* geo_manager_;
         Configuration& config_;
 

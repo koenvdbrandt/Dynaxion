@@ -26,8 +26,8 @@ void TrackInfoManager::setTrackInfoToBeStored(int track_id) {
     auto element = std::find(to_store_track_ids_.begin(), to_store_track_ids_.end(), track_id);
     // If track id is not present we add it, otherwise skip as we only need each track once
     if(element == to_store_track_ids_.end()) {
-        to_store_track_ids_.emplace_back(track_id); 
-	} 
+        to_store_track_ids_.emplace_back(track_id);
+    }
 }
 
 void TrackInfoManager::storeTrackInfo(std::unique_ptr<TrackInfoG4> the_track_info) {
@@ -36,8 +36,8 @@ void TrackInfoManager::storeTrackInfo(std::unique_ptr<TrackInfoG4> the_track_inf
     if(element != to_store_track_ids_.end()) {
         stored_track_infos_.push_back(std::move(the_track_info));
         to_store_track_ids_.erase(element);
-    }else {
-	    stored_track_infos_.push_back(std::move(the_track_info));
+    } else {
+        stored_track_infos_.push_back(std::move(the_track_info));
     }
 }
 

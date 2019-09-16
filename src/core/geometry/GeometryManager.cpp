@@ -32,6 +32,7 @@
 #include "core/geometry/ActiveMaterialModel.hpp"
 #include "core/geometry/HybridPixelDetectorModel.hpp"
 #include "core/geometry/MonolithicPixelDetectorModel.hpp"
+#include "core/geometry/ScintillatorModel.hpp"
 
 using namespace allpix;
 using namespace ROOT::Math;
@@ -424,7 +425,9 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(!config.has("type")) {
         LOG(ERROR) << "Model file " << config.getFilePath() << " does not provide a type parameter";
     }
-    auto type = config.get<std::string>("type");
+    // Create a map of the detector type for each model
+    std::string type = config.get<std::string>("type");
+    type_[name] = type;
 
     // Instantiate the correct detector model
     if(type == "hybrid") {
@@ -436,12 +439,17 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(type == "active") {
         return std::make_shared<ActiveMaterialModel>(name, reader);
     }
+    if(type == "scintillator") {
+        return std::make_shared<ScintillatorModel>(name, reader);
+    }
 
     LOG(ERROR) << "Model file " << config.getFilePath() << " type parameter is not valid";
     // FIXME: The model can probably be silently ignored if we have more model readers later
     throw InvalidValueError(config, "type", "model type is not supported");
 }
-
+std::map<std::string, std::string> GeometryManager::getDetectorType() {
+    return type_;
+}
 /*
  * After closing the geometry new parts of the geometry cannot be added anymore. All the models for the detectors in the
  * configuration are resolved to requested type (and an error is thrown if this is not possible). Also if a parameter is

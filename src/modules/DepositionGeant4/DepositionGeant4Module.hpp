@@ -19,6 +19,7 @@
 #include "core/module/Module.hpp"
 
 #include "SensitiveDetectorActionG4.hpp"
+#include "SensitiveScintillatorActionG4.hpp"
 #include "TrackInfoManager.hpp"
 
 #include <TH1D.h>
@@ -69,7 +70,10 @@ namespace allpix {
         std::unique_ptr<TrackInfoManager> track_info_manager_;
 
         // Handling of the charge deposition in all the sensitive devices
-        std::vector<SensitiveDetectorActionG4*> sensors_;
+        SensitiveDetectorActionG4* sensitive_detector_action_;
+        SensitiveScintillatorActionG4* sensitive_scintillator_action_;
+        std::vector<SensitiveDetectorActionG4*> detector_sensors_;
+        std::vector<SensitiveScintillatorActionG4*> scintillator_sensors_;
 
         // Number of the last event
         unsigned int last_event_num_;
@@ -81,6 +85,7 @@ namespace allpix {
         G4RunManager* run_manager_g4_;
         // Vector of histogram pointers for debugging plots
         std::map<std::string, TH1D*> charge_per_event_;
+        std::map<std::string, TH1D*> hits_per_event_;
     };
 } // namespace allpix
 

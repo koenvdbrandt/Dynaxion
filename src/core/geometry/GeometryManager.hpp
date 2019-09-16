@@ -209,6 +209,8 @@ namespace allpix {
 
         std::vector<std::shared_ptr<BaseBuilder>> getBuilders();
 
+        std::map<std::string, std::string> getDetectorType();
+
     private:
         /**
          * @brief Load all standard framework models (automatically done when the geometry is closed)
@@ -242,6 +244,7 @@ namespace allpix {
         MagneticFieldFunction magnetic_field_function_;
 
         std::vector<std::shared_ptr<BaseBuilder>> builders_;
+        std::map<std::string, std::string> type_;
     };
 } // namespace allpix
 
