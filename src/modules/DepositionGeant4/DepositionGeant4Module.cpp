@@ -153,6 +153,8 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
+    // Has to be commented out for tests to work
+    // Have to find a flag for scintillators or something
     /*   physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
        G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
        opticalPhysics->SetWLSTimeProfile("delta");

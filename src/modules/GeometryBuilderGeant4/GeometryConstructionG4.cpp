@@ -284,6 +284,10 @@ void GeometryConstructionG4::build_detectors() {
 
         std::map<std::string, std::string> type = geo_manager_->getDetectorType();
         if(type[detector->getType()] == "scintillator") {
+            /*  Scintillator
+                    Creates a housing box with a scintillator and a sensor in it
+                    Support layer is optional
+                 */
             auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
 
             // Get parameters from model
@@ -296,6 +300,8 @@ void GeometryConstructionG4::build_detectors() {
             housing_reflectivity = scint_model->getHousingReflectivity();
             /*   Housing
                     the housing of the scintillator
+                    housing works like the wrapper. There was some issue whith placing the housing in a wrapper
+                    where the scintillation effect stopped working when not hit at exactly the middle of the scintillator
                 */
 
             // Create the volume containing the housing
@@ -309,6 +315,10 @@ void GeometryConstructionG4::build_detectors() {
             housing_log = make_shared_no_delete<G4LogicalVolume>(
                 housing_box.get(), materials_[housing_material], "housing_" + name + "_log");
             detector->setExternalObject("housing_log", housing_log);
+            // Have to place the housing at scint_size.y()/2 to have the sensor_pos equal to the position of the whole
+            // construction
+            // Else, the SensitiveScintillatorActionG4 gives a warning "Difference to G4 Internal" because local deposition
+            // positions are not equal
             ROOT::Math::XYZVector housing_displacement = {0, scint_size.y() / 2.0, 0};
             auto housing_pos = posWrapper + toG4Vector(housing_displacement);
             G4Transform3D transform_phys_housing(*rotWrapper, housing_pos);
@@ -348,15 +358,13 @@ void GeometryConstructionG4::build_detectors() {
 
             // Place the sensor box
             ROOT::Math::XYZVector sensor_displacement = {0, -scint_size.y() / 2.0, 0};
-            LOG(WARNING) << "  - Sensor\t\t:\t" << Units::display(sensor_displacement, {"mm", "um"});
-            LOG(WARNING) << "  - Scint_size_y" << scint_size.y();
-            LOG(WARNING) << "  - Sensor_size_y" << sensor_size.y();
-
             auto sensor_pos = toG4Vector(sensor_displacement);
             LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
             auto sensor_phys = make_shared_no_delete<G4PVPlacement>(
                 nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", housing_log.get(), false, 0, true);
             detector->setExternalObject("sensor_phys", sensor_phys);
+
+            // FIXME:: Find somewhere to store this information for multiple scintillators
 
             // General Info
             G4double cebr3_Energy[] = {3.96 * CLHEP::eV,
@@ -419,13 +427,14 @@ void GeometryConstructionG4::build_detectors() {
                 new G4OpticalSurface("photocath_opsurf", glisur, polished, dielectric_metal);
             photocath_opsurf->SetMaterialPropertiesTable(photocath_mt);
 
-            //**Create logical skin surfaces
+            //  Create logical skin surfaces
             new G4LogicalSkinSurface("photocath_surf", sensor_log.get(), photocath_opsurf);
             new G4LogicalSkinSurface("housing_surf", housing_log.get(), OpScintHousingSurface);
 
             /*   PMT
                     the PMT
-                                  
+            FIXME:: Have to find a way to add PMT's where the photo cathode gets defined as the sensor material
+
             if(scint_model->getPMType() == "PMT"){
                 // Get parameters from model
                 auto PMT_outer_radius = scint_model->getPMTOuterRadius();
@@ -494,15 +503,14 @@ void GeometryConstructionG4::build_detectors() {
                 rm_x2->rotateX(-90*CLHEP::deg);
                 y = scint_size.y()/2. + PMT_height/2;      //top
                 PlacePMTs(PMT_log.get(),rm_x2,x,z,dx,dz,xmin,zmin,Nx,Nz,x,y,z,k);
-                
-                //VisAttributes();
-                //SurfaceProperties();
 
                 //SetLogicalVolume(housing_log.get());
             }
              */ /*
           * SUPPORT
           * optional layers of support
+          * FIXME:: supports_log has to be added or else the VisualizationGeant4 (Line412) loop over the to the
+          * std::vector<std::shared_ptr<G4LogicalVolume>> gives a double free or corrupt error
   */
             auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
             auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
@@ -565,6 +573,9 @@ void GeometryConstructionG4::build_detectors() {
             detector->setExternalObject("supports_phys", supports_phys);
 
         } else {
+            /*  Detector
+                    Creates a detector with a sensitive sensor with pixels, a chip and an optional support layer
+                */
             // Create the wrapper box and logical volume
             auto wrapper_box = std::make_shared<G4Box>(
                 "wrapper_" + name, model->getSize().x() / 2.0, model->getSize().y() / 2.0, model->getSize().z() / 2.0);
