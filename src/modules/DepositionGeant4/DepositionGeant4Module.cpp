@@ -153,21 +153,21 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
-    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
-    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
-    opticalPhysics->SetWLSTimeProfile("delta");
+    /*    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+        G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+        opticalPhysics->SetWLSTimeProfile("delta");
 
-    opticalPhysics->SetScintillationYieldFactor(1.0);
-    opticalPhysics->SetScintillationExcitationRatio(1.0);
+        opticalPhysics->SetScintillationYieldFactor(1.0);
+        opticalPhysics->SetScintillationExcitationRatio(1.0);
 
-    opticalPhysics->SetMaxNumPhotonsPerStep(100);
-    opticalPhysics->SetMaxBetaChangePerStep(10.0);
+        opticalPhysics->SetMaxNumPhotonsPerStep(100);
+        opticalPhysics->SetMaxBetaChangePerStep(10.0);
 
-    opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
-    opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+        opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
+        opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
 
-    physicsList->RegisterPhysics(opticalPhysics);
-
+        physicsList->RegisterPhysics(opticalPhysics);
+    */
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
@@ -259,7 +259,6 @@ void DepositionGeant4Module::init() {
         std::map<std::string, std::string> type = geo_manager_->getDetectorType();
 
         if(type[detector->getType()] == "scintillator") {
-            LOG(WARNING) << "TEST TEST TEST DEPOSITION";
 
             sensitive_scintillator_action_ =
                 new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());
@@ -295,15 +294,30 @@ void DepositionGeant4Module::init() {
 
             // Plot axis are in kilo electrons - convert from framework units!
             int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+
             int nbins = 5 * maximum;
 
             // Create histograms if needed
-            std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
-            charge_per_event_[sensitive_detector_action_->getName()] = new TH1D(
-                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
-            std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
-            hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
-                plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+            if(!detector_sensors_.empty()) {
+                std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+
+                charge_per_event_[sensitive_detector_action_->getName()] =
+                    new TH1D(plot_name_detector.c_str(),
+                             "deposited charge per event;deposited charge [ke];events",
+                             nbins,
+                             0,
+                             maximum);
+            }
+            if(!scintillator_sensors_.empty()) {
+                std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
+
+                hits_per_event_[sensitive_scintillator_action_->getName()] =
+                    new TH1D(plot_name_scintillator.c_str(),
+                             "scintillator hits per event; scintillator hits ;events",
+                             nbins,
+                             0,
+                             maximum);
+            }
         }
     }
 

@@ -241,7 +241,7 @@ void GeometryConstructionG4::init_materials() {
                              2.1 * CLHEP::cm,
                              2.1 * CLHEP::cm};
     assert(sizeof(cebr3_ABSL) == sizeof(cebr3_Energy));
-    CeBr3_mt = new G4MaterialPropertiesTable();
+    auto CeBr3_mt = new G4MaterialPropertiesTable();
     CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
     CeBr3_mt->AddProperty("SLOWCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
     CeBr3_mt->AddProperty("RINDEX", cebr3_Energy, cebr3_RIND, cebr3num);

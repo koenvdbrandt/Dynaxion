@@ -103,11 +103,7 @@ void DetectorConstructionG4::build(G4LogicalVolume* world_log, std::map<std::str
         LOG(DEBUG) << " Center of the geometry parts relative to the detector wrapper geometric center:";
 
         std::map<std::string, std::string> type = geo_manager_->getDetectorType();
-        LOG(WARNING) << "type[name]: " << type[detector->getType()];
-        LOG(WARNING) << "Name: " << detector->getName();
-        LOG(WARNING) << "Model: " << detector->getType();
         if(type[detector->getType()] == "scintillator") {
-            LOG(WARNING) << "TEST TEST TEST CONSTRUCTION";
             auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
 
             // Get parameters from model
@@ -220,7 +216,7 @@ void DetectorConstructionG4::build(G4LogicalVolume* world_log, std::map<std::str
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             };
             assert(sizeof(efficiency) == sizeof(cebr3_Energy));
-            G4MaterialPropertiesTable* scintHsngPT = new G4MaterialPropertiesTable();
+            auto scintHsngPT = new G4MaterialPropertiesTable();
             scintHsngPT->AddProperty("REFLECTIVITY", cebr3_Energy, reflectivity, num);
             scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, efficiency, num);
             G4OpticalSurface* OpScintHousingSurface =
@@ -235,7 +231,7 @@ void DetectorConstructionG4::build(G4LogicalVolume* world_log, std::map<std::str
             assert(sizeof(photocath_ReR) == sizeof(cebr3_Energy));
             G4double photocath_ImR[] = {1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69};
             assert(sizeof(photocath_ImR) == sizeof(cebr3_Energy));
-            G4MaterialPropertiesTable* photocath_mt = new G4MaterialPropertiesTable();
+            auto photocath_mt = new G4MaterialPropertiesTable();
             photocath_mt->AddProperty("EFFICIENCY", cebr3_Energy, photocath_EFF, num);
             photocath_mt->AddProperty("REALRINDEX", cebr3_Energy, photocath_ReR, num);
             photocath_mt->AddProperty("IMAGINARYRINDEX", cebr3_Energy, photocath_ImR, num);
@@ -650,7 +646,7 @@ void DetectorConstructionG4::PlacePMTs(G4LogicalVolume* pmt_log,
         for(G4int i = 1; i <= nb; i++) {
             b += db;
             new G4PVPlacement(rot, G4ThreeVector(x, y, z), pmt_log, "pmt", housing_log.get(), false, k);
-            PMT_positions.push_back(G4ThreeVector(x, y, z));
+            PMT_positions.emplace_back(G4ThreeVector(x, y, z));
             k++;
         }
     }

@@ -59,7 +59,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
     // Put the charge deposit in the middle of the step
-    G4ThreeVector end_pos = postStepPoint->GetPosition();
+    const G4ThreeVector end_pos& = postStepPoint->GetPosition();
     double mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
 
     // Calculate the charge deposit at a local position
@@ -109,12 +109,12 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
 
     // FIXME: edep or wavelenght?
 
-    LOG(WARNING) << "Scintillator " << detector_->getName() << " got hit. Optical photon deposited " << edep * 1000000
-                 << " eV Energy at " << Units::display(end_pos, {"mm", "um"}) << " locally on "
-                 << Units::display(deposit_position, {"mm", "um"}) << " in " << detector_->getName() << " after "
-                 << Units::display(mid_time, {"ns", "ps"});
+    LOG(DEBUG) << "Scintillator " << detector_->getName() << " got hit. Optical photon deposited " << edep * 1000000
+               << " eV Energy at " << Units::display(end_pos, {"mm", "um"}) << " locally on "
+               << Units::display(deposit_position, {"mm", "um"}) << " in " << detector_->getName() << " after "
+               << Units::display(mid_time, {"ns", "ps"});
 
-    LOG(WARNING) << "Geant4 transformation to local: " << Units::display(deposit_position_g4loc, {"mm", "um"});
+    LOG(DEBUG) << "Geant4 transformation to local: " << Units::display(deposit_position_g4loc, {"mm", "um"});
     if((deposit_position_g4loc - deposit_position).mag2() > 0.001) {
         LOG(ERROR) << "Difference G4 to internal: "
                    << Units::display((deposit_position_g4loc - deposit_position), {"mm", "um"});
@@ -188,11 +188,10 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
             hits += ch.getCharge();
             total_scint_hits_ += ch.getCharge();
         }
-        LOG(WARNING) << "Registered " << hits << " hits in PM of scintillator " << detector_->getName();
+        LOG(INFO) << "Registered " << hits << " hits in PM of scintillator " << detector_->getName();
 
         // Store the number of charge carriers:
         scint_hits_ = hits;
-        LOG(WARNING) << "Registered " << scint_hits_ << " hits in PM of scintillator " << detector_->getName();
         // Match deposit with mc particle if possible
         for(size_t i = 0; i < deposits_.size(); ++i) {
             auto track_id = deposit_to_id_.at(i);

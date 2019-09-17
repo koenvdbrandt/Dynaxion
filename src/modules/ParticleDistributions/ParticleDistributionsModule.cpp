@@ -71,7 +71,7 @@ void ParticleDistributionsModule::run(unsigned int) {
     std::vector<MCTrack> saved_tracks;
     std::vector<MCTrack> proton_track;
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() == 0 && particle.getEndPoint().Y() <= -4.99999) {
+        if(particle.getParticleID() == 0 && particle.getEndPoint().Y() <= -23.99999) {
             proton_track.insert(proton_track.end(), particle);
         }
     }
