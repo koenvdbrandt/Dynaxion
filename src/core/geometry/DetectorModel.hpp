@@ -2,7 +2,7 @@
  * @file
  * @brief Base of detector models
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -188,7 +188,7 @@ namespace allpix {
             double support_sensorSide_thickness =
                 std::abs(min_support_center) + min_support_size / 2 -
                 getSensorSize().Z() / 2; // total thickness of support layers (including empty spaces) on the sensor side
-            double zDistanceToGeoCenter = detector_thickness / 2 - support_sensorSide_thickness - getSensorSize().Z() / 2;
+            double zDistanceToGeoCenter = detector_thickness / 2 - support_sensorSide_thickness - getSensorSize().z() / 2;
 
             return ROOT::Math::XYZPoint(getCenter().x(), getCenter().y(), zDistanceToGeoCenter);
         }
@@ -262,6 +262,7 @@ namespace allpix {
                                                    sensor_thickness_);
             return getGridSize() + excess_thickness;
         }
+
         /**
          * @brief Get center of the sensor in local coordinates
          * @return Center of the sensor
@@ -368,9 +369,11 @@ namespace allpix {
                                                    std::move(hole_offset)));
         }
 
+        std::string getActiveMaterial();
+
     protected:
         std::string type_;
-
+        std::string active_material_;
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;

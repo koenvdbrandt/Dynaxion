@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of detector model
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -88,6 +88,7 @@ std::vector<Configuration> DetectorModel::getConfigurations() const {
 }
 
 ROOT::Math::XYZVector DetectorModel::getSize() const {
+    auto config = reader_.getHeaderConfiguration();
     ROOT::Math::XYZVector max(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
     ROOT::Math::XYZVector min(
@@ -121,6 +122,7 @@ ROOT::Math::XYZVector DetectorModel::getSize() const {
     size.SetY(2 * std::max(max.y() - getCenter().y(), getCenter().y() - min.y()));
     size.SetZ((max.z() - getCenter().z()) +
               (getCenter().z() - min.z())); // max.z() is positive (chip side) and min.z() is negative (sensor side)
+
     return size;
 }
 
@@ -143,4 +145,9 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
     }
 
     return ret_layers;
+}
+
+std::string DetectorModel::getActiveMaterial() {
+    auto config = reader_.getHeaderConfiguration();
+    return active_material_ = config.get<std::string>("active_material", "silicon");
 }

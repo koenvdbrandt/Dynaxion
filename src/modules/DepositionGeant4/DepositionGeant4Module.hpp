@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Definition of Geant4 deposition module
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -19,6 +19,7 @@
 #include "core/module/Module.hpp"
 
 #include "SensitiveDetectorActionG4.hpp"
+#include "SensitiveScintillatorActionG4.hpp"
 #include "TrackInfoManager.hpp"
 
 #include <TH1D.h>
@@ -69,7 +70,10 @@ namespace allpix {
         std::unique_ptr<TrackInfoManager> track_info_manager_;
 
         // Handling of the charge deposition in all the sensitive devices
-        std::vector<SensitiveDetectorActionG4*> sensors_;
+        SensitiveDetectorActionG4* sensitive_detector_action_;
+        SensitiveScintillatorActionG4* sensitive_scintillator_action_;
+        std::vector<SensitiveDetectorActionG4*> detector_sensors_;
+        std::vector<SensitiveScintillatorActionG4*> scintillator_sensors_;
 
         // Number of the last event
         unsigned int last_event_num_;
@@ -79,9 +83,9 @@ namespace allpix {
 
         // Pointer to the Geant4 manager (owned by GeometryBuilderGeant4)
         G4RunManager* run_manager_g4_;
-
         // Vector of histogram pointers for debugging plots
         std::map<std::string, TH1D*> charge_per_event_;
+        std::map<std::string, TH1D*> hits_per_event_;
     };
 } // namespace allpix
 

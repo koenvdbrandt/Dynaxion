@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of Geant4 deposition module
  * @remarks Based on code from Mathieu Benoit
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -24,6 +24,9 @@
 #include <G4UImanager.hh>
 #include <G4UserLimits.hh>
 
+#include "G4EmStandardPhysics_option4.hh"
+#include "G4OpticalPhysics.hh"
+
 #include "G4FieldManager.hh"
 #include "G4TransportationManager.hh"
 #include "G4UniformMagField.hh"
@@ -38,6 +41,7 @@
 
 #include "GeneratorActionG4.hpp"
 #include "SensitiveDetectorActionG4.hpp"
+#include "SensitiveScintillatorActionG4.hpp"
 #include "SetTrackInfoUserHookG4.hpp"
 
 #define G4_NUM_SEEDS 10
@@ -64,27 +68,8 @@ DepositionGeant4Module::DepositionGeant4Module(Configuration& config, Messenger*
     config_.setAlias("source_energy", "beam_energy");
     config_.setAlias("source_energy_spread", "beam_energy_spread");
 
-    // If macro, parse for positions of sources and add these as points to the GeoManager to extend the world:
-    if(config.get<std::string>("source_type") == "macro") {
-        std::ifstream file(config.getPath("file_name", true));
-        std::string line;
-        while(std::getline(file, line)) {
-            if(line.rfind("/gps/position", 0) == 0 || line.rfind("/gps/pos/centre") == 0) {
-                LOG(TRACE) << "Macro contains source position: \"" << line << "\"";
-                std::stringstream sstr(line);
-                std::string command, units;
-                double pos_x, pos_y, pos_z;
-                sstr >> command >> pos_x >> pos_y >> pos_z >> units;
-                ROOT::Math::XYZPoint source_position(
-                    Units::get(pos_x, units), Units::get(pos_y, units), Units::get(pos_z, units));
-                LOG(DEBUG) << "Found source positioned at " << Units::display(source_position, {"mm", "cm"});
-                geo_manager_->addPoint(source_position);
-            }
-        }
-    }
-
     // Add the particle source position to the geometry
-    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("source_position", ROOT::Math::XYZPoint()));
+    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("source_position"));
 }
 
 /**
@@ -167,6 +152,22 @@ void DepositionGeant4Module::init() {
     // Register radioactive decay physics lists
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
+    // Scintillator stuff
+    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+    opticalPhysics->SetWLSTimeProfile("delta");
+
+    opticalPhysics->SetScintillationYieldFactor(1.0);
+    opticalPhysics->SetScintillationExcitationRatio(1.0);
+
+    opticalPhysics->SetMaxNumPhotonsPerStep(100);
+    opticalPhysics->SetMaxBetaChangePerStep(10.0);
+
+    opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
+    opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+
+    physicsList->RegisterPhysics(opticalPhysics);
+
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
@@ -192,11 +193,13 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand("/run/setCut " + std::to_string(production_cut));
 
     // Initialize the physics list
-    LOG(TRACE) << "Initializing physics processes";
+    LOG(TRACE) << "Initializing physics list";
+    // run_manager_g4_->InitializeGeometry();
+
     run_manager_g4_->SetUserInitialization(physicsList);
     run_manager_g4_->InitializePhysics();
-
     // Initialize the full run manager to ensure correct state flags
+    LOG(TRACE) << "Initializing all";
     run_manager_g4_->Initialize();
 
     // Build particle generator
@@ -241,6 +244,7 @@ void DepositionGeant4Module::init() {
     // Loop through all detectors and set the sensitive detector action that handles the particle passage
     bool useful_deposition = false;
     for(auto& detector : geo_manager_->getDetectors()) {
+
         // Do not add sensitive detector for detectors that have no listeners for the deposited charges
         // FIXME Probably the MCParticle has to be checked as well
         if(!messenger_->hasReceiver(this,
@@ -251,20 +255,38 @@ void DepositionGeant4Module::init() {
         }
         useful_deposition = true;
 
-        // Get model of the sensitive device
-        auto sensitive_detector_action = new SensitiveDetectorActionG4(
-            this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
-        auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
-        if(logical_volume == nullptr) {
-            throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
+        // Get a map of the detector type of each model
+        std::map<std::string, std::string> type = geo_manager_->getDetectorType();
+
+        if(type[detector->getType()] == "scintillator") {
+
+            sensitive_scintillator_action_ =
+                new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());
+            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
+            if(logical_volume == nullptr) {
+                throw ModuleError("Scintillator " + detector->getName() +
+                                  " has no sensitive device (broken Geant4 geometry)");
+            }
+            // Apply the user limits to this element
+            logical_volume->SetUserLimits(user_limits_.get());
+
+            // Add the sensitive detector action
+            logical_volume->SetSensitiveDetector(sensitive_scintillator_action_);
+            scintillator_sensors_.push_back(sensitive_scintillator_action_);
+        } else {
+            sensitive_detector_action_ = new SensitiveDetectorActionG4(
+                this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
+            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
+            if(logical_volume == nullptr) {
+                throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
+            }
+            // Apply the user limits to this element
+            logical_volume->SetUserLimits(user_limits_.get());
+
+            // Add the sensitive detector action
+            logical_volume->SetSensitiveDetector(sensitive_detector_action_);
+            detector_sensors_.push_back(sensitive_detector_action_);
         }
-
-        // Apply the user limits to this element
-        logical_volume->SetUserLimits(user_limits_.get());
-
-        // Add the sensitive detector action
-        logical_volume->SetSensitiveDetector(sensitive_detector_action);
-        sensors_.push_back(sensitive_detector_action);
 
         // If requested, prepare output plots
         if(config_.get<bool>("output_plots")) {
@@ -275,9 +297,12 @@ void DepositionGeant4Module::init() {
             int nbins = 5 * maximum;
 
             // Create histograms if needed
-            std::string plot_name = "deposited_charge_" + sensitive_detector_action->getName();
-            charge_per_event_[sensitive_detector_action->getName()] =
-                new TH1D(plot_name.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+            std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+            charge_per_event_[sensitive_detector_action_->getName()] = new TH1D(
+                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+            std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
+            hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
+                plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
         }
     }
 
@@ -316,13 +341,22 @@ void DepositionGeant4Module::run(unsigned int event_num) {
     track_info_manager_->createMCTracks();
 
     // Dispatch the necessary messages
-    for(auto& sensor : sensors_) {
+    for(auto& sensor : detector_sensors_) {
         sensor->dispatchMessages();
 
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
             double charge = static_cast<double>(Units::convert(sensor->getDepositedCharge(), "ke"));
             charge_per_event_[sensor->getName()]->Fill(charge);
+        }
+    }
+    for(auto& sensor : scintillator_sensors_) {
+        sensor->dispatchMessages();
+
+        // Fill output plots if requested:
+        if(config_.get<bool>("output_plots")) {
+            double hits = static_cast<double>(sensor->getScintillatorHits());
+            hits_per_event_[sensor->getName()]->Fill(hits);
         }
     }
 
@@ -332,24 +366,39 @@ void DepositionGeant4Module::run(unsigned int event_num) {
 
 void DepositionGeant4Module::finalize() {
     size_t total_charges = 0;
-    for(auto& sensor : sensors_) {
+    size_t total_hits = 0;
+
+    for(auto& sensor : detector_sensors_) {
         total_charges += sensor->getTotalDepositedCharge();
+    }
+    for(auto& sensor : scintillator_sensors_) {
+        total_hits += sensor->getTotalScintillatorHits();
     }
 
     if(config_.get<bool>("output_plots")) {
         // Write histograms
-        LOG(TRACE) << "Writing output plots to file";
+        LOG(INFO) << "Writing output plots to file";
         for(auto& plot : charge_per_event_) {
+            plot.second->Write();
+        }
+        for(auto& plot : hits_per_event_) {
             plot.second->Write();
         }
     }
 
     // Print summary or warns if module did not output any charges
-    if(!sensors_.empty() && total_charges > 0 && last_event_num_ > 0) {
-        size_t average_charge = total_charges / sensors_.size() / last_event_num_;
-        LOG(INFO) << "Deposited total of " << total_charges << " charges in " << sensors_.size() << " sensor(s) (average of "
-                  << average_charge << " per sensor for every event)";
+    if(!detector_sensors_.empty() && total_charges > 0 && last_event_num_ > 0) {
+        size_t average_charge = total_charges / detector_sensors_.size() / last_event_num_;
+        LOG(WARNING) << "Deposited total of " << total_charges << " charges in " << detector_sensors_.size()
+                     << " sensor(s) (average of " << average_charge << " per sensor for every event)";
     } else {
-        LOG(WARNING) << "No charges deposited";
+        LOG(WARNING) << "No charges deposited in the sensors";
+    }
+    if(!scintillator_sensors_.empty() && total_hits > 0 && last_event_num_ > 0) {
+        size_t average_hits = total_hits / scintillator_sensors_.size() / last_event_num_;
+        LOG(WARNING) << "Registered total of " << total_hits << " hits in " << scintillator_sensors_.size()
+                     << " photocathodes(s) (average of " << average_hits << " per photocathodes for every event)";
+    } else {
+        LOG(WARNING) << "No hits registered in the scintillators";
     }
 }
