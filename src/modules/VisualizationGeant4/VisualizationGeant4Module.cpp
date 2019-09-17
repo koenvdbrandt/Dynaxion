@@ -348,6 +348,16 @@ void VisualizationGeant4Module::set_visualization_attributes() {
     G4VisAttributes SensorVisAtt = G4VisAttributes(sensorColor);
     SensorVisAtt.SetForceSolid(false);
 
+    // Housing, ie scintillator box
+    auto housingColor = G4Color(0.5, 0.5, 0.5, 0.3); // transparant Grey
+    G4VisAttributes HousingVisAtt = G4VisAttributes(housingColor);
+    HousingVisAtt.SetForceSolid(false);
+
+    // Scintillator
+    auto scintColor = G4Color(1.0, 0.0, 1.0, 0.5); // Magenta
+    G4VisAttributes ScintVisAtt = G4VisAttributes(scintColor);
+    ScintVisAtt.SetForceSolid(false);
+
     // The box holding all the pixels
     G4VisAttributes BoxVisAtt = G4VisAttributes(sensorColor);
     BoxVisAtt.SetForceSolid(false);
@@ -407,6 +417,16 @@ void VisualizationGeant4Module::set_visualization_attributes() {
         auto support_log = detector->getExternalObject<G4LogicalVolume>("support_log");
         if(support_log != nullptr) {
             support_log->SetVisAttributes(supportVisAtt);
+        }
+
+        auto housing_log = detector->getExternalObject<G4LogicalVolume>("housing_log");
+        if(housing_log != nullptr) {
+            housing_log->SetVisAttributes(HousingVisAtt);
+        }
+
+        auto scint_log = detector->getExternalObject<G4LogicalVolume>("scint_log");
+        if(scint_log != nullptr) {
+            scint_log->SetVisAttributes(ScintVisAtt);
         }
     }
 }
