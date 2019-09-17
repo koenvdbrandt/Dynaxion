@@ -311,8 +311,12 @@ void DepositionGeant4Module::init() {
             if(!scintillator_sensors_.empty()) {
                 std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
 
-                hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
-                    plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+                hits_per_event_[sensitive_scintillator_action_->getName()] =
+                    new TH1D(plot_name_scintillator.c_str(),
+                             "scintillator hits per event; scintillator hits ;events",
+                             nbins,
+                             0,
+                             maximum);
             }
         }
     }
