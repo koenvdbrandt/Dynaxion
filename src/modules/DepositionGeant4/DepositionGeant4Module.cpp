@@ -392,12 +392,14 @@ void DepositionGeant4Module::finalize() {
     }
 
     // Print summary or warns if module did not output any charges
-    if(!detector_sensors_.empty() && total_charges > 0 && last_event_num_ > 0) {
-        size_t average_charge = total_charges / detector_sensors_.size() / last_event_num_;
-        LOG(INFO) << "Deposited total of " << total_charges << " charges in " << detector_sensors_.size()
-                  << " sensor(s) (average of " << average_charge << " per sensor for every event)";
-    } else {
-        LOG(WARNING) << "No charges deposited in the sensors";
+    if(!detector_sensors_.empty()) {
+        if(total_charges > 0 && last_event_num_ > 0) {
+            size_t average_charge = total_charges / detector_sensors_.size() / last_event_num_;
+            LOG(INFO) << "Deposited total of " << total_charges << " charges in " << detector_sensors_.size()
+                      << " sensor(s) (average of " << average_charge << " per sensor for every event)";
+        } else {
+            LOG(WARNING) << "No charges deposited in the sensors";
+        }
     }
     if(!scintillator_sensors_.empty()) {
         if(total_hits > 0 && last_event_num_ > 0) {
