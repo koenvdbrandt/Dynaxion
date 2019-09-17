@@ -59,7 +59,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
     // Put the charge deposit in the middle of the step
-    const G4ThreeVector end_pos& = postStepPoint->GetPosition();
+    const G4ThreeVector& end_pos = postStepPoint->GetPosition();
     double mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
 
     // Calculate the charge deposit at a local position
