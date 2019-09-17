@@ -298,15 +298,21 @@ void DepositionGeant4Module::init() {
             int nbins = 5 * maximum;
 
             // Create histograms if needed
-            std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+            if(!detector_sensors_.empty()) {
+                std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
 
-            charge_per_event_[sensitive_detector_action_->getName()] = new TH1D(
-                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+                charge_per_event_[sensitive_detector_action_->getName()] =
+                    new TH1D(plot_name_detector.c_str(),
+                             "deposited charge per event;deposited charge [ke];events",
+                             nbins,
+                             0,
+                             maximum);
+            }
             if(!scintillator_sensors_.empty()) {
                 std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
 
                 hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
-                    plot_name_detector.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+                    plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
             }
         }
     }
