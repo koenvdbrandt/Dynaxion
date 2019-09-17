@@ -25,12 +25,12 @@
 
 namespace allpix {
     /**
-     * @brief Handles the steps of the particles in all sensitive devices
+     * @brief Handles the steps of the particles in sensitive scintillators
      */
     class SensitiveScintillatorActionG4 : public G4VSensitiveDetector {
     public:
         /**
-         * @brief Constructs the action handling for every sensitive detector
+         * @brief Constructs the action handling for every sensitive scintillators
          * @param module Pointer to the DepositionGeant4 module holding this class
          * @param detector Detector this sensitive device is bound to
          * @param msg Pointer to the messenger to send the charge deposits
@@ -45,12 +45,12 @@ namespace allpix {
                                       uint64_t random_seed);
 
         /**
-         * @brief Get total number of charges deposited in the sensitive device bound to this action
+         * @brief Get total number of hits deposited in the sensitive device bound to this action
          */
         unsigned int getTotalScintillatorHits();
 
         /**
-         * @brief Get the number of charges deposited in the sensitive device for this event only.
+         * @brief Get the number of hits deposited in the sensitive device for this event only.
          * @warning The correct number is only available after dispatching the message, before it refers to the previous
          * event.
          */
@@ -81,14 +81,14 @@ namespace allpix {
         // Pointer to track info manager to register tracks which pass through sensitive detectors
         TrackInfoManager* track_info_manager_;
 
-        // Random number generator for e/h pair creation fluctuation
+        // Random number generator for e/h pair creation fluctuation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         std::mt19937_64 random_generator_;
 
-        // Statistics of total and per-event deposited charge
+        // Statistics of total and per-event registered hits
         unsigned int total_scint_hits_{};
         unsigned int scint_hits_{};
 
-        // Set of deposited charges in this event
+        // Set of deposited charges in this event!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
         std::vector<DepositedCharge> deposits_;
 
         // List of begin points for tracks

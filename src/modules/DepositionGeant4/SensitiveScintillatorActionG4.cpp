@@ -45,7 +45,7 @@ SensitiveScintillatorActionG4::SensitiveScintillatorActionG4(Module* module,
     G4SDManager* sd_man_g4 = G4SDManager::GetSDMpointer();
     sd_man_g4->AddNewDetector(this);
 
-    // Seed the random generator for Fano fluctuations with the seed received
+    // Seed the random generator for Fano fluctuations with the seed received!!!!!!!!!!
     random_generator_.seed(random_seed);
 }
 
@@ -58,11 +58,11 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     // Get Transportaion Matrix
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
-    // Put the charge deposit in the middle of the step
-    G4ThreeVector end_pos = postStepPoint->GetPosition();
+    // Put the hit at the end of the step
+    const G4ThreeVector &end_pos = postStepPoint->GetPosition();
     double mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
 
-    // Calculate the charge deposit at a local position
+    // Calculate the hit at a local position
     auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(end_pos));
     auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(end_pos);
     // Define a scintillator hit
@@ -95,7 +95,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     auto end_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(postStepPoint->GetPosition()));
     track_end_[trackID] = end_position;
 
-    // Add new deposit if the charge is more than zero
+    // Add new hit if the number of hits is more than zero
     if(scint_hit == 0) {
         return false;
     }
@@ -190,9 +190,9 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
         }
         LOG(INFO) << "Registered " << hits << " hits in PM of scintillator " << detector_->getName();
 
-        // Store the number of charge carriers:
+        // Store the number of hits:
         scint_hits_ = hits;
-        // Match deposit with mc particle if possible
+        // Match hit with mc particle if possible
         for(size_t i = 0; i < deposits_.size(); ++i) {
             auto track_id = deposit_to_id_.at(i);
             deposits_.at(i).setMCParticle(&mc_particle_message->getData().at(id_to_particle_.at(track_id)));

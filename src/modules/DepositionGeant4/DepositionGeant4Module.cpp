@@ -360,7 +360,7 @@ void DepositionGeant4Module::run(unsigned int event_num) {
 
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
-            double hits = static_cast<double>(sensor->getScintillatorHits());
+            auto hits = static_cast<double>(sensor->getScintillatorHits());
             hits_per_event_[sensor->getName()]->Fill(hits);
         }
     }
