@@ -294,15 +294,26 @@ void DepositionGeant4Module::init() {
 
             // Plot axis are in kilo electrons - convert from framework units!
             int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+            LOG(TRACE) << "1";
+
             int nbins = 5 * maximum;
+            LOG(TRACE) << "2";
 
             // Create histograms if needed
             std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+            LOG(TRACE) << "3";
+
             charge_per_event_[sensitive_detector_action_->getName()] = new TH1D(
                 plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
-            std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
-            hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
-                plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+            LOG(TRACE) << "4";
+            if(!scintillator_sensors_.empty()) {
+                std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
+                LOG(TRACE) << "5";
+
+                hits_per_event_[sensitive_scintillator_action_->getName()] = new TH1D(
+                    plot_name_detector.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+                LOG(TRACE) << "6";
+            }
         }
     }
 
@@ -389,16 +400,18 @@ void DepositionGeant4Module::finalize() {
     // Print summary or warns if module did not output any charges
     if(!detector_sensors_.empty() && total_charges > 0 && last_event_num_ > 0) {
         size_t average_charge = total_charges / detector_sensors_.size() / last_event_num_;
-        LOG(WARNING) << "Deposited total of " << total_charges << " charges in " << detector_sensors_.size()
-                     << " sensor(s) (average of " << average_charge << " per sensor for every event)";
+        LOG(INFO) << "Deposited total of " << total_charges << " charges in " << detector_sensors_.size()
+                  << " sensor(s) (average of " << average_charge << " per sensor for every event)";
     } else {
         LOG(WARNING) << "No charges deposited in the sensors";
     }
-    if(!scintillator_sensors_.empty() && total_hits > 0 && last_event_num_ > 0) {
-        size_t average_hits = total_hits / scintillator_sensors_.size() / last_event_num_;
-        LOG(WARNING) << "Registered total of " << total_hits << " hits in " << scintillator_sensors_.size()
-                     << " photocathodes(s) (average of " << average_hits << " per photocathodes for every event)";
-    } else {
-        LOG(WARNING) << "No hits registered in the scintillators";
+    if(!scintillator_sensors_.empty()) {
+        if(total_hits > 0 && last_event_num_ > 0) {
+            size_t average_hits = total_hits / scintillator_sensors_.size() / last_event_num_;
+            LOG(INFO) << "Registered total of " << total_hits << " hits in " << scintillator_sensors_.size()
+                      << " photocathodes(s) (average of " << average_hits << " per photocathodes for every event)";
+        } else {
+            LOG(WARNING) << "No hits registered in the scintillators";
+        }
     }
 }
