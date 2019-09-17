@@ -2,7 +2,7 @@
  * @file
  * @brief Implements the handling of the sensitive device
  * @remarks Based on code from John Idarraga
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -59,7 +59,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
     // Put the hit at the end of the step
-    const G4ThreeVector &end_pos = postStepPoint->GetPosition();
+    const G4ThreeVector& end_pos = postStepPoint->GetPosition();
     double mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
 
     // Calculate the hit at a local position
