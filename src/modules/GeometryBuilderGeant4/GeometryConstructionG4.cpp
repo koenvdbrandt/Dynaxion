@@ -396,7 +396,7 @@ void GeometryConstructionG4::build_detectors() {
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             };
             assert(sizeof(efficiency) == sizeof(cebr3_Energy));
-            G4MaterialPropertiesTable* scintHsngPT = new G4MaterialPropertiesTable();
+            auto scintHsngPT = new G4MaterialPropertiesTable();
             scintHsngPT->AddProperty("REFLECTIVITY", cebr3_Energy, reflectivity, num);
             scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, efficiency, num);
             G4OpticalSurface* OpScintHousingSurface =
@@ -411,7 +411,7 @@ void GeometryConstructionG4::build_detectors() {
             assert(sizeof(photocath_ReR) == sizeof(cebr3_Energy));
             G4double photocath_ImR[] = {1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69, 1.69};
             assert(sizeof(photocath_ImR) == sizeof(cebr3_Energy));
-            G4MaterialPropertiesTable* photocath_mt = new G4MaterialPropertiesTable();
+            auto photocath_mt = new G4MaterialPropertiesTable();
             photocath_mt->AddProperty("EFFICIENCY", cebr3_Energy, photocath_EFF, num);
             photocath_mt->AddProperty("REALRINDEX", cebr3_Energy, photocath_ReR, num);
             photocath_mt->AddProperty("IMAGINARYRINDEX", cebr3_Energy, photocath_ImR, num);
@@ -843,7 +843,7 @@ void GeometryConstructionG4::PlacePMTs(G4LogicalVolume* pmt_log,
         for(G4int i = 1; i <= nb; i++) {
             b += db;
             new G4PVPlacement(rot, G4ThreeVector(x, y, z), pmt_log, "pmt", housing_log.get(), false, k);
-            PMT_positions.push_back(G4ThreeVector(x, y, z));
+            PMT_positions.emplace_back(G4ThreeVector(x, y, z));
             k++;
         }
     }
