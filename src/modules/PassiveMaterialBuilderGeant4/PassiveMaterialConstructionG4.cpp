@@ -20,12 +20,14 @@
 #include <Math/Vector3D.h>
 
 #include <G4Box.hh>
+#include <G4Color.hh>
 #include <G4IntersectionSolid.hh>
 #include <G4RotationMatrix.hh>
 #include <G4Sphere.hh>
 #include <G4SubtractionSolid.hh>
 #include <G4Tubs.hh>
 #include <G4UnionSolid.hh>
+#include <G4VisAttributes.hh>
 #include "CLHEP/Vector/Rotation.h"
 
 #include <G4LogicalVolume.hh>
@@ -50,7 +52,9 @@
 using namespace allpix;
 
 PassiveMaterialConstructionG4::PassiveMaterialConstructionG4(Configuration& config, bool bias)
-    : config_(config), bias_(bias) {(void) bias_;}
+    : config_(config), bias_(bias) {
+    (void)bias_;
+}
 
 /**
  * @brief Version of std::make_shared that does not delete the pointer
@@ -292,7 +296,7 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
         // passive_material_location.y(), passive_material_location.z() + 0.25*small_tube_lenght));
         // G4Transform3D transform_phys_Dynaxion(*rotWrapper, posDynaxionWrapper);
         auto dynaxion_tube_wrapper_phys_ = make_shared_no_delete<G4PVPlacement>(
-            transform_phys, dynaxion_tube_wrapper_log.get(), name + "wrapper_phys", world_log, false, 0, true);
+            transform_phys, dynaxion_tube_wrapper_log.get(), "Dynaxion_wrapper_phys", world_log, false, 0, true);
 
         auto large_tube_volume = new G4Tubs(name + "large_tube_volume",
                                             large_tube_inner_radius,
@@ -379,7 +383,7 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
             new G4Box(name + "support_volume", large_tube_lenght / 2, support_thickness / 2, support_width / 2);
 
         auto luggage_height = config_.get<double>("luggage_height", 0);
-        auto conveyer_height = config_.get<double>("conveyer_height ", 0);
+        auto conveyer_height = config_.get<double>("conveyer_height", 0);
 
         G4RotationMatrix* yRot = new G4RotationMatrix; // Rotates X and Z axes only
         yRot->rotateY(CLHEP::pi / 2. * CLHEP::rad);    // Rotates 45 degrees
@@ -388,18 +392,21 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
             support_volume,
             large_tube_volume,
             yRot,
-            G4ThreeVector(0, +(luggage_height / 2 + conveyer_height + support_thickness), 0));
+            G4ThreeVector(0, +(luggage_height / 2 + conveyer_height + support_thickness / 2), 0));
         solids_.push_back(dynaxion_conveyer_support_volume);
+        std::cout << "luggage_height = " << luggage_height << std::endl;
+        std::cout << "conveyer_height = " << conveyer_height << std::endl;
+        std::cout << "support_thickness = " << support_thickness << std::endl;
 
         // Place the logical volume of the dynaxion_conveyer_support
         auto dynaxion_conveyer_support_volume_log = make_shared_no_delete<G4LogicalVolume>(
-            dynaxion_conveyer_support_volume.get(), materials_[passive_material], name + "dynaxion_conveyer_support_log");
+            dynaxion_conveyer_support_volume.get(), materials_[passive_material], name + "_log");
 
         // Place the physical volume of the dynaxion large tube
-        G4ThreeVector posDynaxionSupport = toG4Vector(
-            ROOT::Math::XYZVector(passive_material_location.x(),
-                                  passive_material_location.y() - (luggage_height / 2 + conveyer_height + support_thickness),
-                                  passive_material_location.z()));
+        G4ThreeVector posDynaxionSupport = toG4Vector(ROOT::Math::XYZVector(
+            passive_material_location.x(),
+            passive_material_location.y() - (luggage_height / 2 + conveyer_height + support_thickness / 2),
+            passive_material_location.z()));
         G4Transform3D transform_phys_Support(*rotWrapper, posDynaxionSupport);
         auto dynaxion_conveyer_support_volume_phys =
             make_shared_no_delete<G4PVPlacement>(transform_phys_Support,
@@ -430,13 +437,35 @@ void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<s
         solids_.push_back(concrete_wall_volume);
 
         // Place the logical volume of the dynaxion_conveyer_support
-        auto concrete_wall_volume_log = make_shared_no_delete<G4LogicalVolume>(
-            concrete_wall_volume.get(), materials_[passive_material], name + "concrete_wall_volume_log");
+        auto concrete_wall_volume_log =
+            make_shared_no_delete<G4LogicalVolume>(concrete_wall_volume.get(), materials_[passive_material], name + "_log");
 
         // Place the physical volume of the dynaxion large tube
         auto concrete_wall_volume_phys = make_shared_no_delete<G4PVPlacement>(
             transform_phys, concrete_wall_volume_log.get(), name + "concrete_wall_volume_phys", world_log, false, 0, true);
     }
+    if(config_.get<std::string>("type") == "pills") {
+        auto log_volume = config_.get<std::string>("logical_volume");
+        G4LogicalVolume* log_volume_ = G4LogicalVolumeStore::GetInstance()->GetVolume(log_volume);
+        if(log_volume_ == nullptr) {
+            throw ModuleError("Geometry contains no logical volume named" + log_volume + " to put the pills in");
+        }
+        auto see_through = G4VisAttributes(G4Color(.5, .5, .5, .5));
+        log_volume_->SetVisAttributes(see_through);
+        auto pill_size = config_.get<ROOT::Math::XYZVector>("pill_size", {0, 0, 0});
+        auto pill_volume =
+            std::make_shared<G4Box>(name + "pill_volume", pill_size.x() / 2, pill_size.y() / 2, pill_size.z() / 2);
+        solids_.push_back(pill_volume);
+
+        // Place the logical volume of the pill
+        auto pill_log =
+            make_shared_no_delete<G4LogicalVolume>(pill_volume.get(), materials_[passive_material], name + "pill_log");
+
+        // Place the physical volume of the pill
+        auto pill_phys_ = make_shared_no_delete<G4PVPlacement>(
+            transform_phys, pill_log.get(), name + "pill_phys", log_volume_, false, 0, true);
+    }
+
     /*if(bias_ == true) {
         LOG(TRACE) << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
         ConstructSDandField();
@@ -525,7 +554,7 @@ std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {
 
     return points_;
 }
-/* 
+/*
 void PassiveMaterialConstructionG4::ConstructSDandField() {
     std::string name = config_.getName();
 

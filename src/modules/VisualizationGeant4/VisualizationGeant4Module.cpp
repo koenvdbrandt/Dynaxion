@@ -23,6 +23,7 @@
 #endif
 
 #include <G4LogicalVolume.hh>
+#include <G4LogicalVolumeStore.hh>
 #include <G4RunManager.hh>
 #ifdef G4UI_USE_QT
 #include <G4UIQt.hh>
@@ -408,6 +409,10 @@ void VisualizationGeant4Module::set_visualization_attributes() {
         if(support_log != nullptr) {
             support_log->SetVisAttributes(supportVisAtt);
         }
+    }
+    G4LogicalVolume* Dynaxion_log = G4LogicalVolumeStore::GetInstance()->GetVolume("Dynaxion_log");
+    if(Dynaxion_log != nullptr) {
+        Dynaxion_log->SetVisAttributes(wrapperVisAtt);
     }
 }
 
