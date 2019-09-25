@@ -55,14 +55,6 @@ ScintillatorDigitizerModule::ScintillatorDigitizerModule(Configuration& config,
 }
 
 void ScintillatorDigitizerModule::init() {
-    auto type = geo_manager_->getDetectorType();
-    (void)type;
-    /* std::map<std::string, std::string> type = geo_manager_->getDetectorType();
-    LOG(WARNING) << "Detector_type1" << getDetector()->getType();
-    //LOG(WARNING) << "Detector_type2" << type[getDetector()->getType()];
-    if(type[getDetector()->getType()] != "scintillator") {
-        //throw ModuleError("Detector is no scintillator, use DefaultDigitizer");
-    }*/
     // Conversion to ADC units requested:
     if(config_.get<int>("adc_resolution") > 31) {
         throw InvalidValueError(config_, "adc_resolution", "precision higher than 31bit is not possible");

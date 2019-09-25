@@ -155,21 +155,21 @@ void DepositionGeant4Module::init() {
     // Scintillator stuff
     // Has to be commented out for tests to work
     // Have to find a flag for scintillators or something
-    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
-    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
-    opticalPhysics->SetWLSTimeProfile("delta");
+    /*    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+       G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+       opticalPhysics->SetWLSTimeProfile("delta");
 
-    opticalPhysics->SetScintillationYieldFactor(1.0);
-    opticalPhysics->SetScintillationExcitationRatio(1.0);
+       opticalPhysics->SetScintillationYieldFactor(1.0);
+       opticalPhysics->SetScintillationExcitationRatio(1.0);
 
-    opticalPhysics->SetMaxNumPhotonsPerStep(100);
-    opticalPhysics->SetMaxBetaChangePerStep(10.0);
+       opticalPhysics->SetMaxNumPhotonsPerStep(100);
+       opticalPhysics->SetMaxBetaChangePerStep(10.0);
 
-    opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
-    opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+       opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
+       opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
 
-    physicsList->RegisterPhysics(opticalPhysics);
-
+       physicsList->RegisterPhysics(opticalPhysics);
+   */
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
