@@ -59,12 +59,12 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
     // Put the hit at the end of the step
-    const G4ThreeVector& end_pos = postStepPoint->GetPosition();
+    G4ThreeVector mid_pos = (preStepPoint->GetPosition() + postStepPoint->GetPosition()) / 2;
     double mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
 
     // Calculate the hit at a local position
-    auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(end_pos));
-    auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(end_pos);
+    auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(mid_pos));
+    auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(mid_pos);
     // Define a scintillator hit
     auto scint_hit = static_cast<unsigned int>(edep / edep);
 
@@ -110,7 +110,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     // FIXME: edep or wavelenght?
 
     LOG(DEBUG) << "Scintillator " << detector_->getName() << " got hit. Optical photon deposited " << edep * 1000000
-               << " eV Energy at " << Units::display(end_pos, {"mm", "um"}) << " locally on "
+               << " eV Energy at " << Units::display(mid_pos, {"mm", "um"}) << " locally on "
                << Units::display(deposit_position, {"mm", "um"}) << " in " << detector_->getName() << " after "
                << Units::display(mid_time, {"ns", "ps"});
 

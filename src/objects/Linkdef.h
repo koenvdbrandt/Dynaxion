@@ -22,6 +22,7 @@
 #pragma link C++ class allpix::Pixel + ;
 #pragma link C++ class allpix::PixelCharge + ;
 #pragma link C++ class allpix::PixelHit + ;
+#pragma link C++ class allpix::ScintHit + ;
 #pragma link C++ class allpix::Pulse + ;
 
 // Vector of Object for internal storage

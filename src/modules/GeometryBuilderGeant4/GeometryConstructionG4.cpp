@@ -191,7 +191,7 @@ void GeometryConstructionG4::init_materials() {
     materials_["solder"] = Solder;
 
     // Create CeBr3
-    G4Material* CeBr3 = new G4Material("CeBr3", 5.1 * CLHEP::g / CLHEP::cm3, 2);
+    G4Material* CeBr3 = new G4Material("CeBr3", 5.18 * CLHEP::g / CLHEP::cm3, 2);
     CeBr3->AddElement(Ce, 1);
     CeBr3->AddElement(Br, 3);
     materials_["cebr3"] = CeBr3;
@@ -215,6 +215,7 @@ void GeometryConstructionG4::init_materials() {
     const G4int cebr3num = sizeof(cebr3_Energy) / sizeof(G4double);
     G4double cebr3_SCINT[] = {0.01, 0.02, 0.04, 0.13, 0.36, 0.98, 0.98, 0.34, 0.20, 0.12, 0.08, 0.03, 0.02, 0.01};
     assert(sizeof(cebr3_SCINT) == sizeof(cebr3_Energy));
+
     // info from
     // https://www.researchgate.net/figure/The-calculated-optical-constants-of-CeCl-3-and-CeBr-3-a-refractive-index-b_fig7_256855384
     G4double cebr3_RIND[] = {2.40, 2.38, 2.35, 2.33, 2.30, 2.28, 2.25, 2.23, 2.20, 2.17, 2.10, 2.05, 2.10, 2.10};
@@ -237,16 +238,20 @@ void GeometryConstructionG4::init_materials() {
     assert(sizeof(cebr3_ABSL) == sizeof(cebr3_Energy));
     auto CeBr3_mt = new G4MaterialPropertiesTable();
     CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
-    CeBr3_mt->AddProperty("SLOWCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
     CeBr3_mt->AddProperty("RINDEX", cebr3_Energy, cebr3_RIND, cebr3num);
     CeBr3_mt->AddProperty("ABSLENGTH", cebr3_Energy, cebr3_ABSL, cebr3num);
-    CeBr3_mt->AddConstProperty("SCINTILLATIONYIELD", 60000. / CLHEP::MeV);
+    // Info https://www.ipen.br/biblioteca/cd/ieee/2004/DATA/3R04-1.PDF
+    CeBr3_mt->AddConstProperty("SCINTILLATIONYIELD", 68000. / CLHEP::MeV);
+    // ??
     CeBr3_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 1. * CLHEP::ns);
-    CeBr3_mt->AddConstProperty("SLOWTIMECONSTANT", 1. * CLHEP::ns);
+    // Info  https://www.degruyter.com/downloadpdf/j/nuka.2017.62.issue-3/nuka-2017-0032/nuka-2017-0032.pdf
+    CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 18. * CLHEP::ns);
+
+    // Only fast component so yield = 1
     CeBr3_mt->AddConstProperty("YIELDRATIO", 1.0);
     CeBr3->SetMaterialPropertiesTable(CeBr3_mt);
-    CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
+    // ??
+    // CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
 }
 
 void GeometryConstructionG4::build_detectors() {

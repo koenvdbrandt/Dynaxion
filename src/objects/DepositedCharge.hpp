@@ -22,6 +22,7 @@ namespace allpix {
      */
     class DepositedCharge : public SensorCharge {
         friend class PropagatedCharge;
+        friend class ScintHit;
 
     public:
         /**
