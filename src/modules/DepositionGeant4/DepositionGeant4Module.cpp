@@ -33,8 +33,6 @@
 
 #include "core/config/exceptions.h"
 #include "core/geometry/GeometryManager.hpp"
-#include "core/geometry/HybridPixelDetectorModel.hpp"
-#include "core/geometry/MonolithicPixelDetectorModel.hpp"
 #include "core/geometry/ScintillatorModel.hpp"
 
 #include "core/module/exceptions.h"
@@ -261,14 +259,15 @@ void DepositionGeant4Module::init() {
         }
         useful_deposition = true;
 
-        // Get a map of the detector type of each model
         auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
         if(logical_volume == nullptr) {
             throw ModuleError("Scintillator " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
         }
+
         // Apply the user limits to this element
         logical_volume->SetUserLimits(user_limits_.get());
 
+        // Set the sensitive actions for the different types of detectors
         if(std::dynamic_pointer_cast<ScintillatorModel>(detector->getModel()) != nullptr) {
             auto sensitive_scintillator_action_ =
                 new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());

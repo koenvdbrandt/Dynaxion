@@ -34,8 +34,8 @@ namespace allpix {
         explicit ScintillatorModel(std::string type, const ConfigReader& reader) : DetectorModel(std::move(type), reader) {
             auto config = reader.getHeaderConfiguration();
             // Excess around the chip from the pixel grid
-            setScintShape(config.get<std::string>("scintillator_shape", "square"));
-            if(scint_shape_ == "square")
+            setScintShape(config.get<std::string>("scintillator_shape", "box"));
+            if(scint_shape_ == "box")
                 setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", ROOT::Math::XYZVector()));
             if(scint_shape_ == "cylinder") {
                 setScintRadius(config.get<double>("scintillator_radius", 0));

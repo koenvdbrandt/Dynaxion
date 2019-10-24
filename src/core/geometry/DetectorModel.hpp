@@ -303,12 +303,12 @@ namespace allpix {
          * @brief Set the material of the sensor
          * @param val Sensor material
          */
-        void setSensorMaterial(std::string val) { sensor_material_ = val; }
+        void setSensorMaterial(std::string val) { sensor_material_ = std::move(val); }
         /**
          * @brief Get the material of the sensor
          * @return Sensor material
          */
-        std::string getSensorMaterial() const { return sensor_material_; }
+        virtual std::string getSensorMaterial() const { return sensor_material_; }
         /* CHIP */
         /**
          * @brief Get size of the chip

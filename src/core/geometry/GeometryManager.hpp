@@ -236,8 +236,6 @@ namespace allpix {
 
         MagneticFieldType magnetic_field_type_{MagneticFieldType::NONE};
         MagneticFieldFunction magnetic_field_function_;
-
-        std::map<std::string, std::string> type_;
     };
 } // namespace allpix
 

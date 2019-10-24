@@ -423,8 +423,6 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(!config.has("type")) {
         LOG(ERROR) << "Model file " << config.getFilePath() << " does not provide a type parameter";
     }
-
-    // Create a map of the detector type for each model
     auto type = config.get<std::string>("type");
 
     // Instantiate the correct detector model
