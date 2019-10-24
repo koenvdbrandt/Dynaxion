@@ -36,7 +36,7 @@ namespace allpix {
             // Excess around the chip from the pixel grid
             setScintShape(config.get<std::string>("scintillator_shape", "square"));
             if(scint_shape_ == "square")
-                setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", {0., 0., 0.}));
+                setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", ROOT::Math::XYZVector()));
             if(scint_shape_ == "cylinder") {
                 setScintRadius(config.get<double>("scintillator_radius", 0));
                 setScintHeight(config.get<double>("scintillator_height", 0));
@@ -58,23 +58,21 @@ namespace allpix {
          * @brief Set the thickness of the housing of the scintillator
          * @param val housing thickness
          */
-        std::string getScintShape() const {
-            return scint_shape_;
-        } /**
-* @brief Set the thickness of the housing of the scintillator
-* @param val housing thickness
-*/
+        std::string getScintShape() const { return scint_shape_; }
+        /**
+        * @brief Set the thickness of the housing of the scintillator
+        * @param val housing thickness
+        */
         void setScintHeight(double val) { scint_height_ = val; }
         /**
          * @brief Set the thickness of the housing of the scintillator
          * @param val housing thickness
          */
-        double getScintHeight() const {
-            return scint_height_;
-        } /**
-* @brief Set the thickness of the housing of the scintillator
-* @param val housing thickness
-*/
+        double getScintHeight() const { return scint_height_; }
+        /**
+        * @brief Set the thickness of the housing of the scintillator
+        * @param val housing thickness
+        */
         void setScintRadius(double val) { scint_radius_ = val; }
         /**
          * @brief Set the thickness of the housing of the scintillator

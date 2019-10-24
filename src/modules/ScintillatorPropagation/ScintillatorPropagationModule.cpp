@@ -177,7 +177,7 @@ void ScintillatorPropagationModule::run(unsigned int) {
 
     // std::map<Pixel::Index, std::vector<const PropagatedCharge*>> pixel_map;
     Pixel::Index pixel_index(1, 1);
-    unsigned long charge = 0;
+    double charge = 0;
     for(auto& prop_charge : propagated_charges) {
         charge += prop_charge.getCharge();
         prop_charges.emplace_back(&prop_charge);
