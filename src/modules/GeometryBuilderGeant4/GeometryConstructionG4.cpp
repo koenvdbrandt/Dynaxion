@@ -323,15 +323,8 @@ void GeometryConstructionG4::build_detectors() {
                 housing_log = make_shared_no_delete<G4LogicalVolume>(
                     housing_box.get(), materials_[housing_material], "housing_" + name + "_log");
                 detector->setExternalObject("housing_log", housing_log);
-                auto housing_pos = posWrapper;
-                G4Transform3D transform_phys_housing(*rotWrapper, housing_pos);
-                housing_phys = make_shared_no_delete<G4PVPlacement>(transform_phys_housing,
-                                                                    housing_log.get(),
-                                                                    "housing_" + name + "_phys",
-                                                                    world_log_.get(),
-                                                                    false,
-                                                                    0,
-                                                                    true);
+                housing_phys = make_shared_no_delete<G4PVPlacement>(
+                    transform_phys, housing_log.get(), "housing_" + name + "_phys", world_log_.get(), false, 0, true);
                 detector->setExternalObject("housing_phys", housing_phys);
 
                 /* Scintillator

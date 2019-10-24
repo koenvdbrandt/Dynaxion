@@ -197,13 +197,11 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand("/run/setCut " + std::to_string(production_cut));
 
     // Initialize the physics list
-    LOG(TRACE) << "Initializing physics list";
-    // run_manager_g4_->InitializeGeometry();
-
+    LOG(TRACE) << "Initializing physics processes";
     run_manager_g4_->SetUserInitialization(physicsList);
     run_manager_g4_->InitializePhysics();
+
     // Initialize the full run manager to ensure correct state flags
-    LOG(TRACE) << "Initializing all";
     run_manager_g4_->Initialize();
 
     // Build particle generator

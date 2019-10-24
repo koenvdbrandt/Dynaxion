@@ -59,7 +59,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
     // Put the hit and the time at the end of the step
-    auto end_pos = postStepPoint->GetPosition();
+    auto& end_pos = postStepPoint->GetPosition();
     double end_time = postStepPoint->GetGlobalTime();
 
     // Calculate the hit at a local position
@@ -129,11 +129,11 @@ std::string SensitiveScintillatorActionG4::getName() {
     return detector_->getName();
 }
 
-unsigned int SensitiveScintillatorActionG4::getTotalScintillatorHits() {
+unsigned long SensitiveScintillatorActionG4::getTotalScintillatorHits() {
     return total_scint_hits_;
 }
 
-unsigned int SensitiveScintillatorActionG4::getScintillatorHits() {
+unsigned long SensitiveScintillatorActionG4::getScintillatorHits() {
     return scint_hits_;
 }
 
@@ -185,13 +185,10 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
     track_time_.clear();
 
     // Send a deposit message if we have any deposits
-    unsigned int hits = 0;
+    unsigned long hits = 0;
     if(!deposits_.empty()) {
-        for(auto& ch : deposits_) {
-            auto dep_charge = ch.getCharge();
-            hits += dep_charge / dep_charge;
-            total_scint_hits_ += dep_charge / dep_charge;
-        }
+        hits = deposits_.size();
+        total_scint_hits_ += deposits_.size();
         LOG(INFO) << "Registered " << hits << " hits in PM of scintillator " << detector_->getName();
 
         // Match hit with mc particle if possible
