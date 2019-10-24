@@ -204,8 +204,6 @@ namespace allpix {
 
         MagneticFieldType getMagneticFieldType() const;
 
-        std::map<std::string, std::string> getDetectorType();
-
     private:
         /**
          * @brief Load all standard framework models (automatically done when the geometry is closed)

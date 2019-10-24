@@ -7,8 +7,8 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-#ifndef ALLPIX_DEPOSITED_CHARGE_H
-#define ALLPIX_DEPOSITED_CHARGE_H
+#ifndef ALLPIX_SCINTILLATOR_HIT_H
+#define ALLPIX_SCINTILLATOR_HIT_H
 
 #include <TRef.h>
 
@@ -20,8 +20,7 @@ namespace allpix {
      * @ingroup Objects
      * @brief Charge deposit in sensor of detector
      */
-    class DepositedCharge : public SensorCharge {
-        friend class PropagatedCharge;
+    class ScintillatorHit : public SensorCharge {
 
     public:
         /**
@@ -33,7 +32,7 @@ namespace allpix {
          * @param event_time Time of deposition after event start
          * @param mc_particle Optional pointer to related MC particle
          */
-        DepositedCharge(ROOT::Math::XYZPoint local_position,
+        ScintillatorHit(ROOT::Math::XYZPoint local_position,
                         ROOT::Math::XYZPoint global_position,
                         CarrierType type,
                         unsigned int charge,
@@ -62,11 +61,11 @@ namespace allpix {
         /**
          * @brief ROOT class definition
          */
-        ClassDefOverride(DepositedCharge, 2);
+        ClassDefOverride(ScintillatorHit, 2);
         /**
          * @brief Default constructor for ROOT I/O
          */
-        DepositedCharge() = default;
+        ScintillatorHit() = default;
 
     private:
         TRef mc_particle_;
@@ -75,7 +74,7 @@ namespace allpix {
     /**
      * @brief Typedef for message carrying deposits
      */
-    using DepositedChargeMessage = Message<DepositedCharge>;
+    using ScintillatorHitMessage = Message<ScintillatorHit>;
 } // namespace allpix
 
-#endif /* ALLPIX_DEPOSITED_CHARGE_H */
+#endif /* ALLPIX_SCINTILLATOR_HIT_H */

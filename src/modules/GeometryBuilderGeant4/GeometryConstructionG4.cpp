@@ -264,9 +264,11 @@ void GeometryConstructionG4::build_detectors() {
         auto model = detector->getModel();
 
         std::string name = detector->getName();
+        auto sensor_material = model->getSensorMaterial();
         LOG(DEBUG) << "Creating Geant4 model for " << name;
         LOG(DEBUG) << " Wrapper dimensions of model: " << Units::display(model->getSize(), {"mm", "um"});
         LOG(TRACE) << " Sensor dimensions: " << model->getSensorSize();
+        LOG(TRACE) << " Sensor material: " << sensor_material;
         LOG(TRACE) << " Chip dimensions: " << model->getChipSize();
         LOG(DEBUG) << " Global position and orientation of the detector:";
 
@@ -287,88 +289,158 @@ void GeometryConstructionG4::build_detectors() {
 
         LOG(DEBUG) << " Center of the geometry parts relative to the detector wrapper geometric center:";
 
-        std::map<std::string, std::string> type = geo_manager_->getDetectorType();
-        if(type[detector->getType()] == "scintillator") {
+        auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
+        if(scint_model != nullptr) {
             /*  Scintillator
                     Creates a housing box with a scintillator and a sensor in it
                     Support layer is optional
                  */
-            auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
-
             // Get parameters from model
             auto sensor_size = scint_model->getSensorSize();
-            auto sensor_material = scint_model->getActiveMaterial();
-            auto scint_size = scint_model->getScintSize();
+            auto scint_shape = scint_model->getScintShape();
             auto scint_material = scint_model->getScintMaterial();
             auto housing_thickness = scint_model->getHousingThickness();
             auto housing_material = scint_model->getHousingMaterial();
             housing_reflectivity = scint_model->getHousingReflectivity();
-            /*   Housing
-                    the housing of the scintillator
-                    housing works like the wrapper. There was some issue whith placing the housing in a wrapper
-                    where the scintillation effect stopped working when not hit at exactly the middle of the scintillator
+
+            if(scint_shape == "box") {
+                auto scint_size = scint_model->getScintSize();
+
+                /*   Housing
+                        the housing of the scintillator
+                        housing works like the wrapper. There was some issue whith placing the housing in a wrapper
+                        where the scintillation effect stopped working when not hit at exactly the middle of the scintillator
+                    */
+
+                // Create the volume containing the housing
+                auto housing_box = std::make_shared<G4Box>("housing_box_" + name,
+                                                           scint_size.x() / 2.0 + housing_thickness,
+                                                           scint_size.y() / 2.0 + housing_thickness,
+                                                           scint_size.z() / 2.0 + housing_thickness + sensor_size.z() / 2.0);
+                solids_.push_back(housing_box);
+
+                // Create the housing logical volume
+                housing_log = make_shared_no_delete<G4LogicalVolume>(
+                    housing_box.get(), materials_[housing_material], "housing_" + name + "_log");
+                detector->setExternalObject("housing_log", housing_log);
+                auto housing_pos = posWrapper;
+                G4Transform3D transform_phys_housing(*rotWrapper, housing_pos);
+                housing_phys = make_shared_no_delete<G4PVPlacement>(transform_phys_housing,
+                                                                    housing_log.get(),
+                                                                    "housing_" + name + "_phys",
+                                                                    world_log_.get(),
+                                                                    false,
+                                                                    0,
+                                                                    true);
+                detector->setExternalObject("housing_phys", housing_phys);
+
+                /* Scintillator
+                * the scintillator is the part that creates the optical photons
                 */
+                // Create the scintillator box and logical volume
+                auto scint_box = std::make_shared<G4Box>(
+                    "scint_" + name, scint_size.x() / 2.0, scint_size.y() / 2.0, scint_size.z() / 2.0);
+                solids_.push_back(scint_box);
+                auto scint_log = make_shared_no_delete<G4LogicalVolume>(
+                    scint_box.get(), materials_[scint_material], "scint_" + name + "_log");
+                detector->setExternalObject("scint_log", scint_log);
 
-            // Create the volume containing the housing
-            auto housing_box = std::make_shared<G4Box>("housing_box_" + name,
-                                                       scint_size.x() / 2.0 + 2 * housing_thickness,
-                                                       scint_size.y() / 2.0 + sensor_size.y() / 2.0 + 2 * housing_thickness,
-                                                       scint_size.z() / 2.0 + 2 * housing_thickness);
-            solids_.push_back(housing_box);
+                // Place the scintillator box
+                ROOT::Math::XYZVector scint_displacement = {0, 0, sensor_size.z() / 2.0};
+                auto scint_pos = toG4Vector(scint_displacement);
+                LOG(DEBUG) << "  - Scintillator\t\t:\t" << Units::display(scint_pos, {"mm", "um"});
+                scint_phys = make_shared_no_delete<G4PVPlacement>(
+                    nullptr, scint_pos, scint_log.get(), "scint_" + name + "_phys", housing_log.get(), false, 0, true);
+                detector->setExternalObject("scint_phys", scint_phys);
 
-            // Create the housing logical volume
-            housing_log = make_shared_no_delete<G4LogicalVolume>(
-                housing_box.get(), materials_[housing_material], "housing_" + name + "_log");
-            detector->setExternalObject("housing_log", housing_log);
-            // Have to place the housing at scint_size.y()/2 to have the sensor_pos equal to the position of the whole
-            // construction
-            // Else, the SensitiveScintillatorActionG4 gives a warning "Difference to G4 Internal" because local deposition
-            // positions are not equal
-            ROOT::Math::XYZVector housing_displacement = {0, scint_size.y() / 2.0, 0};
-            auto housing_pos = posWrapper + toG4Vector(housing_displacement);
-            G4Transform3D transform_phys_housing(*rotWrapper, housing_pos);
-            auto housing_phys = make_shared_no_delete<G4PVPlacement>(
-                transform_phys_housing, housing_log.get(), "housing_" + name + "_phys", world_log_.get(), false, 0, true);
-            detector->setExternalObject("housing_phys", housing_phys);
+                /* SENSOR
+                * the sensitive photocathode is the part that collects the optical photons
+                */
+                // Create the sensor box and logical volume
+                auto sensor_box = std::make_shared<G4Box>(
+                    "sensor_" + name, sensor_size.x() / 2.0, sensor_size.y() / 2.0, sensor_size.z() / 2.0);
+                solids_.push_back(sensor_box);
+                auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
+                    sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
+                detector->setExternalObject("sensor_log", sensor_log);
 
-            /* Scintillator
-             * the scintillator is the part that creates the optical photons
-            */
-            // Create the scintillator box and logical volume
-            auto scint_box =
-                std::make_shared<G4Box>("scint_" + name, scint_size.x() / 2.0, scint_size.y() / 2.0, scint_size.z() / 2.0);
-            solids_.push_back(scint_box);
-            auto scint_log = make_shared_no_delete<G4LogicalVolume>(
-                scint_box.get(), materials_[scint_material], "scint_" + name + "_log");
-            detector->setExternalObject("scint_log", scint_log);
+                // Place the sensor box
+                ROOT::Math::XYZVector sensor_displacement = {0, 0, -scint_size.z() / 2.0};
+                auto sensor_pos = toG4Vector(sensor_displacement);
+                LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
+                sensor_phys = make_shared_no_delete<G4PVPlacement>(
+                    nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", housing_log.get(), false, 0, true);
+                detector->setExternalObject("sensor_phys", sensor_phys);
+            }
+            if(scint_shape == "cylinder") {
+                auto scint_radius = scint_model->getScintRadius();
+                auto scint_height = scint_model->getScintHeight();
 
-            // Place the scintillator box
-            ROOT::Math::XYZVector scint_displacement = {0, sensor_size.y() / 2.0, 0};
-            auto scint_pos = toG4Vector(scint_displacement);
-            LOG(DEBUG) << "  - Scintillator\t\t:\t" << Units::display(scint_pos, {"mm", "um"});
-            auto scint_phys = make_shared_no_delete<G4PVPlacement>(
-                nullptr, scint_pos, scint_log.get(), "scint_" + name + "_phys", housing_log.get(), false, 0, true);
-            detector->setExternalObject("scint_phys", scint_phys);
+                auto housing_box = std::make_shared<G4Tubs>("housing_box_" + name,
+                                                            0,
+                                                            scint_radius + housing_thickness,
+                                                            scint_height / 2.0 + sensor_size.z() / 2.0 + housing_thickness,
+                                                            0,
+                                                            2 * CLHEP::pi);
+                solids_.push_back(housing_box);
 
-            /* SENSOR
-             * the sensitive photocathode is the part that collects the optical photons
-            */
-            // Create the sensor box and logical volume
-            auto sensor_box = std::make_shared<G4Box>(
-                "sensor_" + name, sensor_size.x() / 2.0, sensor_size.y() / 2.0, sensor_size.z() / 2.0);
-            solids_.push_back(sensor_box);
-            auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
-                sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
-            detector->setExternalObject("sensor_log", sensor_log);
+                // Create the housing logical volume
+                housing_log = make_shared_no_delete<G4LogicalVolume>(
+                    housing_box.get(), materials_[housing_material], "housing_" + name + "_log");
+                detector->setExternalObject("housing_log", housing_log);
+                CLHEP::Hep3Vector housing_displacement_ = {0, 0, -scint_height / 2.0 - housing_thickness};
+                housing_displacement_ *= *rotWrapper;
+                auto housing_displacement = static_cast<ROOT::Math::XYZVector>(housing_displacement_);
+                auto housing_pos = posWrapper + toG4Vector(housing_displacement);
+                G4Transform3D transform_phys_housing(*rotWrapper, housing_pos);
+                housing_phys = make_shared_no_delete<G4PVPlacement>(transform_phys_housing,
+                                                                    housing_log.get(),
+                                                                    "housing_" + name + "_phys",
+                                                                    world_log_.get(),
+                                                                    false,
+                                                                    0,
+                                                                    true);
+                detector->setExternalObject("housing_phys", housing_phys);
 
-            // Place the sensor box
-            ROOT::Math::XYZVector sensor_displacement = {0, -scint_size.y() / 2.0, 0};
-            auto sensor_pos = toG4Vector(sensor_displacement);
-            LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
-            auto sensor_phys = make_shared_no_delete<G4PVPlacement>(
-                nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", housing_log.get(), false, 0, true);
-            detector->setExternalObject("sensor_phys", sensor_phys);
+                /* Scintillator
+                * the scintillator is the part that creates the optical photons
+                */
+                // Create the scintillator box and logical volume
+                auto scint_box =
+                    std::make_shared<G4Tubs>("scint_" + name, 0, scint_radius, scint_height / 2.0, 0, 2 * CLHEP::pi);
+                solids_.push_back(scint_box);
+                auto scint_log = make_shared_no_delete<G4LogicalVolume>(
+                    scint_box.get(), materials_[scint_material], "scint_" + name + "_log");
+                detector->setExternalObject("scint_log", scint_log);
 
+                // Place the scintillator box
+                ROOT::Math::XYZVector scint_displacement = {0, 0, sensor_size.z() / 2.0};
+                auto scint_pos = toG4Vector(scint_displacement);
+                LOG(DEBUG) << "  - Scintillator\t\t:\t" << Units::display(scint_pos, {"mm", "um"});
+                scint_phys = make_shared_no_delete<G4PVPlacement>(
+                    nullptr, scint_pos, scint_log.get(), "scint_" + name + "_phys", housing_log.get(), false, 0, true);
+                detector->setExternalObject("scint_phys", scint_phys);
+
+                /* SENSOR
+                * the sensitive photocathode is the part that collects the optical photons
+                */
+                // Create the sensor box and logical volume
+                auto sensor_box = std::make_shared<G4Box>(
+                    "sensor_" + name, sensor_size.x() / 2.0, sensor_size.y() / 2.0, sensor_size.z() / 2.0);
+                solids_.push_back(sensor_box);
+                auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
+                    sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
+                detector->setExternalObject("sensor_log", sensor_log);
+
+                // Place the sensor box
+                ROOT::Math::XYZVector sensor_displacement = {0, 0, -scint_height / 2.0};
+
+                auto sensor_pos = toG4Vector(sensor_displacement);
+                LOG(WARNING) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
+                sensor_phys = make_shared_no_delete<G4PVPlacement>(
+                    nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", housing_log.get(), false, 0, true);
+                detector->setExternalObject("sensor_phys", sensor_phys);
+            }
             // FIXME:: Find somewhere to store this information for multiple scintillators
 
             // General Info
@@ -413,7 +485,7 @@ void GeometryConstructionG4::build_detectors() {
             scintHsngPT->AddProperty("REFLECTIVITY", cebr3_Energy, reflectivity, num);
             scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, efficiency, num);
             G4OpticalSurface* OpScintHousingSurface =
-                new G4OpticalSurface("HousingSurface", unified, polished, dielectric_metal);
+                new G4OpticalSurface("HousingSurface", unified, polishedteflonair, dielectric_metal);
             OpScintHousingSurface->SetMaterialPropertiesTable(scintHsngPT);
 
             // Scintillator Properties
@@ -433,90 +505,14 @@ void GeometryConstructionG4::build_detectors() {
             photocath_opsurf->SetMaterialPropertiesTable(photocath_mt);
 
             //  Create logical skin surfaces
-            new G4LogicalSkinSurface("photocath_surf", sensor_log.get(), photocath_opsurf);
-            new G4LogicalSkinSurface("housing_surf", housing_log.get(), OpScintHousingSurface);
-
-            /*   PMT
-                    the PMT
-            FIXME:: Have to find a way to add PMT's where the photo cathode gets defined as the sensor material
-
-            if(scint_model->getPMType() == "PMT"){
-                // Get parameters from model
-                auto PMT_outer_radius = scint_model->getPMTOuterRadius();
-                auto PMT_height = scint_model->getPMTHeight();
-                auto PMT_material = scint_model->getPMTMaterial();
-                auto photo_cath_material = scint_model->getPhotoCathMaterial();
-                // Create the volume containing the housing
-                auto PMT_tube = std::make_shared<G4Tubs>("pmt_tube",0,PMT_outer_radius,
-                        PMT_height/2,0,2*CLHEP::pi);
-
-                solids_.push_back(PMT_tube);
-                auto photo_cath_tube = std::make_shared<G4Tubs>("photo_cath_tube",0,PMT_outer_radius,
-                        PMT_height/4,0,2*CLHEP::pi);
-                solids_.push_back(photo_cath_tube);
-
-                // Create the PMT logical volume
-                PMT_log =
-                    make_shared_no_delete<G4LogicalVolume>(PMT_tube.get(), materials_[PMT_material], "PMT_" + name + "_log");
-                detector->setExternalObject("PMT_log", PMT_log);
-                photo_cath_log =
-                    make_shared_no_delete<G4LogicalVolume>(photo_cath_tube.get(), materials_[photo_cath_material], "photo_cath_" + name + "_log");
-                detector->setExternalObject("photo_cath_log", photo_cath_log);
-                new G4PVPlacement(0,G4ThreeVector(0,0,-PMT_height/4),
-                                        photo_cath_log.get(),"photocath",
-                                        PMT_log.get(),false,0);
-                detector->setExternalObject("photo_cath_log", photo_cath_log);
-        
-                //Place the PMT's around the Volume
-                auto Nx =scint_model->getNx();
-                auto Ny =scint_model->getNy();
-                auto Nz =scint_model->getNz();
-                G4double dx = scint_size.x()/Nx;
-                G4double dy = scint_size.y()/Ny;
-                G4double dz = scint_size.z()/Nz;
-                
-                G4double x,y,z;
-                G4double xmin = -scint_size.x()/2. - dx/2.;
-                G4double ymin = -scint_size.y()/2. - dy/2.;
-                G4double zmin = -scint_size.z()/2. - dz/2.;
-                G4int k=0;
-                
-                z = -scint_size.z()/2. - PMT_height/2;      //front
-                PlacePMTs(PMT_log.get(),0,x,y,dx,dy,xmin,ymin,Nx,Ny,x,y,z,k);
-
-                G4RotationMatrix* rm_z = new G4RotationMatrix();
-                rm_z->rotateY(180*CLHEP::deg);
-                z = scint_size.z()/2. + PMT_height/2;       //back
-                PlacePMTs(PMT_log.get(),rm_z,x,y,dx,dy,xmin,ymin,Nx,Ny,x,y,z,k);
-                
-                G4RotationMatrix* rm_y1 = new G4RotationMatrix();
-                rm_y1->rotateY(-90*CLHEP::deg);
-                x = -scint_size.x()/2. - PMT_height/2;      //left
-                PlacePMTs(PMT_log.get(),rm_y1,y,z,dy,dz,ymin,zmin,Ny,Nz,x,y,z,k);
-
-                G4RotationMatrix* rm_y2 = new G4RotationMatrix();
-                rm_y2->rotateY(90*CLHEP::deg);
-                x = scint_size.x()/2. + PMT_height/2;      //right
-                PlacePMTs(PMT_log.get(),rm_y2,y,z,dy,dz,ymin,zmin,Ny,Nz,x,y,z,k);
-                
-                G4RotationMatrix* rm_x1 = new G4RotationMatrix();
-                rm_x1->rotateX(90*CLHEP::deg);
-                y = -scint_size.y()/2. - PMT_height/2;     //bottom
-                PlacePMTs(PMT_log.get(),rm_x1,x,z,dx,dz,xmin,zmin,Nx,Nz,x,y,z,k);
-
-                G4RotationMatrix* rm_x2 = new G4RotationMatrix();
-                rm_x2->rotateX(-90*CLHEP::deg);
-                y = scint_size.y()/2. + PMT_height/2;      //top
-                PlacePMTs(PMT_log.get(),rm_x2,x,z,dx,dz,xmin,zmin,Nx,Nz,x,y,z,k);
-
-                //SetLogicalVolume(housing_log.get());
-            }
-             */ /*
-          * SUPPORT
-          * optional layers of support
-          * FIXME:: supports_log has to be added or else the VisualizationGeant4 (Line412) loop over the to the
-          * std::vector<std::shared_ptr<G4LogicalVolume>> gives a double free or corrupt error
-  */
+            new G4LogicalBorderSurface("photocath_surf", scint_phys.get(), sensor_phys.get(), photocath_opsurf);
+            new G4LogicalBorderSurface("housing_surf", scint_phys.get(), housing_phys.get(), OpScintHousingSurface);
+            /*
+            * SUPPORT
+            * optional layers of support
+            * FIXME:: supports_log has to be added or else the VisualizationGeant4 (Line412) loop over the to the
+            * std::vector<std::shared_ptr<G4LogicalVolume>> gives a double free or corrupt error
+            */
             auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
             auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
             int support_idx = 0;
@@ -604,14 +600,14 @@ void GeometryConstructionG4::build_detectors() {
                                                       model->getSensorSize().y() / 2.0,
                                                       model->getSensorSize().z() / 2.0);
             solids_.push_back(sensor_box);
-            auto sensor_log =
-                make_shared_no_delete<G4LogicalVolume>(sensor_box.get(), materials_["silicon"], "sensor_" + name + "_log");
+            auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
+                sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
             detector->setExternalObject("sensor_log", sensor_log);
 
             // Place the sensor box
             auto sensor_pos = toG4Vector(model->getSensorCenter() - model->getGeometricalCenter());
             LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
-            auto sensor_phys = make_shared_no_delete<G4PVPlacement>(
+            sensor_phys = make_shared_no_delete<G4PVPlacement>(
                 nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", wrapper_log.get(), false, 0, true);
             detector->setExternalObject("sensor_phys", sensor_phys);
 
@@ -816,51 +812,11 @@ void GeometryConstructionG4::check_overlaps() {
     bool overlapFlag = false;
     for(auto volume : (*phys_volume_store)) {
         LOG(TRACE) << "Checking overlaps for physical volume \"" << volume->GetName() << "\"";
-        overlapFlag = volume->CheckOverlaps(1000, 0., false) || overlapFlag;
+        overlapFlag = volume->CheckOverlaps(1000, 0., true) || overlapFlag;
     }
     if(overlapFlag) {
         LOG(ERROR) << "Overlapping volumes detected.";
     } else {
         LOG(INFO) << "No overlapping volumes detected.";
-    }
-}
-
-void GeometryConstructionG4::PlacePMTs(G4LogicalVolume* pmt_log,
-                                       G4RotationMatrix* rot,
-                                       G4double& a,
-                                       G4double& b,
-                                       G4double da,
-                                       G4double db,
-                                       G4double amin,
-                                       G4double bmin,
-                                       G4int na,
-                                       G4int nb,
-                                       G4double& x,
-                                       G4double& y,
-                                       G4double& z,
-                                       G4int& k) {
-    /*PlacePMTs : a different way to parameterize placement that does not depend on
-    calculating the position from the copy number
-
-    pmt_log = logical volume for pmts to be placed
-    rot = rotation matrix to apply
-    a,b = coordinates to vary(ie. if varying in the xy plane then pass x,y)
-    da,db = value to increment a,b by
-    amin,bmin = start values for a,b
-    na,nb = number of repitions in a and b
-    x,y,z = just pass x,y, and z by reference (the same ones passed for a,b)
-    k = copy number to start with
-    sd = sensitive detector for pmts
-    */
-    a = amin;
-    for(G4int j = 1; j <= na; j++) {
-        a += da;
-        b = bmin;
-        for(G4int i = 1; i <= nb; i++) {
-            b += db;
-            new G4PVPlacement(rot, G4ThreeVector(x, y, z), pmt_log, "pmt", housing_log.get(), false, k);
-            PMT_positions.emplace_back(G4ThreeVector(x, y, z));
-            k++;
-        }
     }
 }

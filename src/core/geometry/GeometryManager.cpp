@@ -426,7 +426,6 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
 
     // Create a map of the detector type for each model
     auto type = config.get<std::string>("type");
-    type_[name] = type;
 
     // Instantiate the correct detector model
     if(type == "hybrid") {
@@ -442,10 +441,6 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     LOG(ERROR) << "Model file " << config.getFilePath() << " type parameter is not valid";
     // FIXME: The model can probably be silently ignored if we have more model readers later
     throw InvalidValueError(config, "type", "model type is not supported");
-}
-
-std::map<std::string, std::string> GeometryManager::getDetectorType() {
-    return type_;
 }
 
 /*

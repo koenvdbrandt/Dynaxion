@@ -56,6 +56,11 @@ namespace allpix {
          * @return Track start point
          */
         ROOT::Math::XYZPoint getStartPoint() const;
+        /**
+         * @brief Get the time of the point where the track originated in global calculated from the start of the event
+         * @return Track start time
+         */
+        double getStartTime() const;
 
         /**
          * @brief Get the point of where the track terminated in global coordiantes
@@ -131,6 +136,8 @@ namespace allpix {
         int n_steps_{};
         // Start point of track (in mm)
         ROOT::Math::XYZPoint start_point_{};
+        // Start Time of the track (in ns)
+        double start_time_;
         // End point of track (in mm)
         ROOT::Math::XYZPoint end_point_{};
         // Geant4 volume in which the track was created

@@ -34,22 +34,53 @@ namespace allpix {
         explicit ScintillatorModel(std::string type, const ConfigReader& reader) : DetectorModel(std::move(type), reader) {
             auto config = reader.getHeaderConfiguration();
             // Excess around the chip from the pixel grid
-            setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", {0., 0., 0.}));
+            setScintShape(config.get<std::string>("scintillator_shape", "square"));
+            if(scint_shape_ == "square")
+                setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", {0., 0., 0.}));
+            if(scint_shape_ == "cylinder") {
+                setScintRadius(config.get<double>("scintillator_radius", 0));
+                setScintHeight(config.get<double>("scintillator_height", 0));
+                setScintSize({scint_radius_, scint_radius_, scint_height_});
+            }
             setScintMaterial(config.get<std::string>("scintillator_material", "vacuum"));
             setHousingThickness(config.get<double>("housing_thickness", 0));
             setHousingReflectivity(config.get<double>("housing_reflectivity", 0));
             setHousingMaterial(config.get<std::string>("housing_material", "vacuum"));
             setPMType(config.get<std::string>("PM_type", ""));
-            if(PM_type_ == "PMT") {
-                setPMTOuterRadius(config.get<double>("PMT_Outer_Radius", 0));
-                setPMTHeight(config.get<double>("PMT_Height", 0));
-                setPMTMaterial(config.get<std::string>("PMT_Material", "glass"));
-                setPhotoCathMaterial(config.get<std::string>("PhotoCath_Material", "aluminum"));
-                setNx(config.get<int>("Nx", 0));
-                setNy(config.get<int>("Ny", 0));
-                setNz(config.get<int>("Nz", 0));
-            }
         }
+
+        /**
+         * @brief Set the thickness of the housing of the scintillator
+         * @param val housing thickness
+         */
+        void setScintShape(std::string val) { scint_shape_ = val; }
+        /**
+         * @brief Set the thickness of the housing of the scintillator
+         * @param val housing thickness
+         */
+        std::string getScintShape() const {
+            return scint_shape_;
+        } /**
+* @brief Set the thickness of the housing of the scintillator
+* @param val housing thickness
+*/
+        void setScintHeight(double val) { scint_height_ = val; }
+        /**
+         * @brief Set the thickness of the housing of the scintillator
+         * @param val housing thickness
+         */
+        double getScintHeight() const {
+            return scint_height_;
+        } /**
+* @brief Set the thickness of the housing of the scintillator
+* @param val housing thickness
+*/
+        void setScintRadius(double val) { scint_radius_ = val; }
+        /**
+         * @brief Set the thickness of the housing of the scintillator
+         * @param val housing thickness
+         */
+        double getScintRadius() const { return scint_radius_; }
 
         /**
          * @brief Set the size of the scintillator
@@ -114,90 +145,70 @@ namespace allpix {
         std::string getPMType() const { return PM_type_; }
 
         /**
-         * @brief Set outer radius of the photo multiplier tube
-         * @param val Photo multiplier tube outer radius
+         * @brief Get size of the Detector
+         * @return Size of the Detector
+         *
+         * Calculated from \ref DetectorModel::getGridSize "pixel grid size", chip excess and chip thickness
          */
-        void setPMTOuterRadius(double val) { PMT_outer_radius_ = val; }
-        /**
-         * @brief Get outer radius of the photo multiplier tube
-         * @return Photo multiplier tube outer radius
-         */
-        double getPMTOuterRadius() const { return PMT_outer_radius_; }
-        /**
-         * @brief Set height of the photo multiplier tube
-         * @param val photo multiplier tube height
-         */
-        void setPMTHeight(double val) { PMT_height_ = val; }
-        /**
-         * @brief Get height of the photo multiplier tube
-         * @return Photo multiplier tube height
-         */
-        double getPMTHeight() const { return PMT_height_; }
-        /**
-         * @brief Set material of the photo multiplier tube
-         * @param val Photo multiplier tube material
-         */
-        void setPMTMaterial(std::string val) { PMT_material_ = val; }
-        /**
-         * @brief Get material of the photo multiplier tube
-         * @return Photo multiplier tube material
-         */
-        std::string getPMTMaterial() const { return PMT_material_; }
-        /**
-         * @brief Set the material of the photo cathode of the photo multiplier tube
-         * @param val Photo cathode material
-         */
-        void setPhotoCathMaterial(std::string val) { photo_cath_material_ = val; }
-        /**
-         * @brief Get the material of the photo cathode of the photo multiplier tube
-         * @return Photo cathode material
-         */
-        std::string getPhotoCathMaterial() const { return photo_cath_material_; }
-        /**
-         * @brief Set the number of PMT's in the x-direction
-         * @param val Nx
-         */
-        void setNx(int val) { Nx_ = val; }
-        /**
-         * @brief Set the number of PMT's in the x-direction
-         * @return Nx
-         */
-        int getNx() const { return Nx_; }
-        /**
-         * @brief Set the number of PMT's in the y-direction
-         * @param Ny
-         */
-        void setNy(int val) { Ny_ = val; }
-        /**
-         * @brief Get the number of PMT's in the y-direction
-         * @return Ny
-         */
-        int getNy() const { return Ny_; }
-        /**
-         * @brief Set the number of PMT's in the z-direction
-         * @param Nz
-         */
-        void setNz(int val) { Nz_ = val; }
-        /**
-         * @brief Get the number of PMT's in the z-direction
-         * @return Nz
-         */
-        int getNz() const { return Nz_; }
+        ROOT::Math::XYZVector getSize() const override {
+            ROOT::Math::XYZVector max(std::numeric_limits<double>::lowest(),
+                                      std::numeric_limits<double>::lowest(),
+                                      std::numeric_limits<double>::lowest());
+            ROOT::Math::XYZVector min(
+                std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+
+            ROOT::Math::XYZPoint HousingCenter = {getSensorCenter().x(),
+                                                  getSensorCenter().y(),
+                                                  getSensorCenter().z() + getSensorSize().z() / 2 + getScintSize().z() / 2};
+            ROOT::Math::XYZVector HousingSize = {getScintSize().x(), getScintSize().y(), getScintSize().z()};
+
+            std::array<ROOT::Math::XYZPoint, 2> centers = {{getSensorCenter(), HousingCenter}};
+            std::array<ROOT::Math::XYZVector, 2> sizes = {{getSensorSize(), HousingSize}};
+
+            for(size_t i = 0; i < 2; ++i) {
+                max.SetX(std::max(max.x(), (centers.at(i) + sizes.at(i) / 2.0).x() + getHousingThickness()));
+                max.SetY(std::max(max.y(), (centers.at(i) + sizes.at(i) / 2.0).y() + getHousingThickness()));
+                max.SetZ(std::max(max.z(), (centers.at(i) + sizes.at(i) / 2.0).z() + getHousingThickness()));
+                min.SetX(std::min(min.x(), (centers.at(i) - sizes.at(i) / 2.0).x() + getHousingThickness()));
+                min.SetY(std::min(min.y(), (centers.at(i) - sizes.at(i) / 2.0).y() + getHousingThickness()));
+                min.SetZ(std::min(min.z(), (centers.at(i) - sizes.at(i) / 2.0).z() + getHousingThickness()));
+            }
+
+            for(auto& support_layer : getSupportLayers()) {
+                auto size = support_layer.getSize();
+                auto center = support_layer.getCenter();
+                max.SetX(std::max(max.x(), (center + size / 2.0).x()));
+                max.SetY(std::max(max.y(), (center + size / 2.0).y()));
+                max.SetZ(std::max(max.z(), (center + size / 2.0).z()));
+                min.SetX(std::min(min.x(), (center - size / 2.0).x()));
+                min.SetY(std::min(min.y(), (center - size / 2.0).y()));
+                min.SetZ(std::min(min.z(), (center - size / 2.0).z()));
+            }
+
+            ROOT::Math::XYZVector size;
+            size.SetX(2 * std::max(max.x() - getCenter().x(), getCenter().x() - min.x()));
+            size.SetY(2 * std::max(max.y() - getCenter().y(), getCenter().y() - min.y()));
+            size.SetZ((max.z() - getCenter().z()) +
+                      (getCenter().z() - min.z())); // max.z() is positive (chip side) and min.z() is negative (sensor side)
+
+            return size;
+        }
 
     private:
+        // Scintillator stuff
+        std::string scint_shape_;
         ROOT::Math::XYZVector scint_size_;
+        double scint_radius_;
+        double scint_height_;
         std::string scint_material_;
+
+        // Housing stuff
         double housing_thickness_{};
         double housing_reflectivity_{};
         std::string housing_material_;
+
+        // ??
         std::string PM_type_;
-        double PMT_outer_radius_{};
-        double PMT_height_{};
-        std::string PMT_material_;
-        std::string photo_cath_material_;
-        int Nx_{};
-        int Ny_{};
-        int Nz_{};
     };
 } // namespace allpix
 

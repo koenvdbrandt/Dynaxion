@@ -299,7 +299,16 @@ namespace allpix {
          * @param val Sensor right excess
          */
         void setSensorExcessLeft(double val) { sensor_excess_.at(3) = val; }
-
+        /**
+         * @brief Set the material of the sensor
+         * @param val Sensor material
+         */
+        void setSensorMaterial(std::string val) { sensor_material_ = val; }
+        /**
+         * @brief Get the material of the sensor
+         * @return Sensor material
+         */
+        std::string getSensorMaterial() const { return sensor_material_; }
         /* CHIP */
         /**
          * @brief Get size of the chip
@@ -369,11 +378,9 @@ namespace allpix {
                                                    std::move(hole_offset)));
         }
 
-        std::string getActiveMaterial();
-
     protected:
         std::string type_;
-        std::string active_material_;
+        std::string sensor_material_;
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;

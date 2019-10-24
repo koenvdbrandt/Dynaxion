@@ -33,6 +33,10 @@
 
 #include "core/config/exceptions.h"
 #include "core/geometry/GeometryManager.hpp"
+#include "core/geometry/HybridPixelDetectorModel.hpp"
+#include "core/geometry/MonolithicPixelDetectorModel.hpp"
+#include "core/geometry/ScintillatorModel.hpp"
+
 #include "core/module/exceptions.h"
 #include "core/utils/log.h"
 #include "objects/DepositedCharge.hpp"
@@ -153,23 +157,23 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
-    // Has to be commented out for tests to work
-    // Have to find a flag for scintillators or something
-    /*    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
-       G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
-       opticalPhysics->SetWLSTimeProfile("delta");
+    auto optical_physics = config_.get<bool>("optical_physics");
+    if(optical_physics) {
+        physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+        G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+        opticalPhysics->SetWLSTimeProfile("delta");
 
-       opticalPhysics->SetScintillationYieldFactor(1.0);
-       opticalPhysics->SetScintillationExcitationRatio(1.0);
+        opticalPhysics->SetScintillationYieldFactor(1.0);
+        opticalPhysics->SetScintillationExcitationRatio(1.0);
 
-       opticalPhysics->SetMaxNumPhotonsPerStep(100);
-       opticalPhysics->SetMaxBetaChangePerStep(10.0);
+        opticalPhysics->SetMaxNumPhotonsPerStep(100);
+        opticalPhysics->SetMaxBetaChangePerStep(10.0);
 
-       opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
-       opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+        opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
+        opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
 
-       physicsList->RegisterPhysics(opticalPhysics);
-   */
+        physicsList->RegisterPhysics(opticalPhysics);
+    }
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
@@ -258,68 +262,51 @@ void DepositionGeant4Module::init() {
         useful_deposition = true;
 
         // Get a map of the detector type of each model
-        std::map<std::string, std::string> type = geo_manager_->getDetectorType();
+        auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
+        if(logical_volume == nullptr) {
+            throw ModuleError("Scintillator " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
+        }
+        // Apply the user limits to this element
+        logical_volume->SetUserLimits(user_limits_.get());
 
-        if(type[detector->getType()] == "scintillator") {
-
-            sensitive_scintillator_action_ =
+        if(std::dynamic_pointer_cast<ScintillatorModel>(detector->getModel()) != nullptr) {
+            auto sensitive_scintillator_action_ =
                 new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());
-            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
-            if(logical_volume == nullptr) {
-                throw ModuleError("Scintillator " + detector->getName() +
-                                  " has no sensitive device (broken Geant4 geometry)");
-            }
-            // Apply the user limits to this element
-            logical_volume->SetUserLimits(user_limits_.get());
 
             // Add the sensitive detector action
             logical_volume->SetSensitiveDetector(sensitive_scintillator_action_);
+
             scintillator_sensors_.push_back(sensitive_scintillator_action_);
         } else {
-            sensitive_detector_action_ = new SensitiveDetectorActionG4(
+            auto sensitive_detector_action_ = new SensitiveDetectorActionG4(
                 this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
-            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
-            if(logical_volume == nullptr) {
-                throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
-            }
-            // Apply the user limits to this element
-            logical_volume->SetUserLimits(user_limits_.get());
 
             // Add the sensitive detector action
             logical_volume->SetSensitiveDetector(sensitive_detector_action_);
             detector_sensors_.push_back(sensitive_detector_action_);
         }
+    }
+    // If requested, prepare output plots
+    if(config_.get<bool>("output_plots")) {
+        LOG(TRACE) << "Creating output plots";
 
-        // If requested, prepare output plots
-        if(config_.get<bool>("output_plots")) {
-            LOG(TRACE) << "Creating output plots";
+        // Plot axis are in kilo electrons - convert from framework units!
+        int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
 
-            // Plot axis are in kilo electrons - convert from framework units!
-            int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+        int nbins = 5 * maximum;
 
-            int nbins = 5 * maximum;
+        // Create histograms if needed
+        for(auto& sensor : detector_sensors_) {
+            std::string plot_name_detector = "deposited_charge_" + sensor->getName();
 
-            // Create histograms if needed
-            if(!detector_sensors_.empty()) {
-                std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+            charge_per_event_[sensor->getName()] = new TH1D(
+                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+        }
+        for(auto& sensor : scintillator_sensors_) {
+            std::string plot_name_scintillator = "scintillator_hits_" + sensor->getName();
 
-                charge_per_event_[sensitive_detector_action_->getName()] =
-                    new TH1D(plot_name_detector.c_str(),
-                             "deposited charge per event;deposited charge [ke];events",
-                             nbins,
-                             0,
-                             maximum);
-            }
-            if(!scintillator_sensors_.empty()) {
-                std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
-
-                hits_per_event_[sensitive_scintillator_action_->getName()] =
-                    new TH1D(plot_name_scintillator.c_str(),
-                             "scintillator hits per event; scintillator hits ;events",
-                             nbins,
-                             0,
-                             maximum);
-            }
+            hits_per_event_[sensor->getName()] = new TH1D(
+                plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
         }
     }
 

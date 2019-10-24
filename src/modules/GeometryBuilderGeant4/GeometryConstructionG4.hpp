@@ -68,31 +68,12 @@ namespace allpix {
         std::unique_ptr<G4LogicalVolume> world_log_;
         std::unique_ptr<G4VPhysicalVolume> world_phys_;
 
-        // PMT stuff
-        void PlacePMTs(G4LogicalVolume* pmt_Log,
-                       G4RotationMatrix* rot,
-                       G4double& a,
-                       G4double& b,
-                       G4double da,
-                       G4double db,
-                       G4double amin,
-                       G4double bmin,
-                       G4int na,
-                       G4int nb,
-                       G4double& x,
-                       G4double& y,
-                       G4double& z,
-                       G4int& k);
-
-        std::vector<G4ThreeVector> GetPMTPositions() { return PMT_positions; }
-
         std::shared_ptr<G4LogicalVolume> housing_log;
-        std::vector<G4ThreeVector> PMT_positions;
-        G4double housing_reflectivity;
+        std::shared_ptr<G4VPhysicalVolume> housing_phys;
+        std::shared_ptr<G4VPhysicalVolume> scint_phys;
+        std::shared_ptr<G4VPhysicalVolume> sensor_phys;
 
-        // Logical volumes
-        std::shared_ptr<G4LogicalVolume> PMT_log;
-        std::shared_ptr<G4LogicalVolume> photo_cath_log;
+        G4double housing_reflectivity;
     };
 } // namespace allpix
 

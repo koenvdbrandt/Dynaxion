@@ -31,6 +31,9 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
 
     // Sensor thickness
     setSensorThickness(config.get<double>("sensor_thickness"));
+    // Sensor material
+    setSensorMaterial(config.get<std::string>("sensor_material", "silicon"));
+
     // Excess around the sensor from the pixel grid
     auto default_sensor_excess = config.get<double>("sensor_excess", 0);
     setSensorExcessTop(config.get<double>("sensor_excess_top", default_sensor_excess));
@@ -88,7 +91,6 @@ std::vector<Configuration> DetectorModel::getConfigurations() const {
 }
 
 ROOT::Math::XYZVector DetectorModel::getSize() const {
-    auto config = reader_.getHeaderConfiguration();
     ROOT::Math::XYZVector max(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
     ROOT::Math::XYZVector min(
@@ -145,9 +147,4 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
     }
 
     return ret_layers;
-}
-
-std::string DetectorModel::getActiveMaterial() {
-    auto config = reader_.getHeaderConfiguration();
-    return active_material_ = config.get<std::string>("active_material", "silicon");
 }
