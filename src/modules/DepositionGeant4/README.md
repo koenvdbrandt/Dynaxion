@@ -43,7 +43,7 @@ where `Z` and `A` are unsigned integers, `Q` is a signed integer and `E` a float
 
 #### Energy Deposition and Charge Carrier creation
 
-For all particles passing the sensitive device of the detectors, the energy loss is converted into deposited charge carriers in every step of the Geant4 simulation.
+For all particles passing the sensitive device of the detectors, and for all the optical photons hitting the photocathode of a scintillator, the energy loss is converted into deposited charge carriers in every step of the Geant4 simulation.
 Optionally, the Photoabsorption Ionization model (PAI) can be activated to improve the modeling of very thin sensors [@pai].
 The information about the truth particle passage is also fully available, with every deposit linked to a MCParticle.
 Each trajectory which passes through at least one detector is also registered and stored as a global MCTrack.
@@ -65,6 +65,7 @@ This module requires an installation Geant4.
 
 ### Parameters
 * `physics_list`: Geant4-internal list of physical processes to simulate, defaults to FTFP_BERT_LIV. More information about possible physics list and recommendations for defaults are available on the Geant4 website [@g4physicslists].
+* `optical_physics`: Enable the creation of optical photons by enabling scintillation and Cherenkov radiation. Note, the optical properties of the materials have to be added manually in GeometryBuilderGeant4.
 * `enable_pai`: Determines if the Photoabsorption Ionization model is enabled in the sensors of all detectors. Defaults to false.
 * `pai_model`: Model can be **pai** for the normal Photoabsorption Ionization model or **paiphoton** for the photon model. Default is **pai**. Only used if *enable_pai* is set to true.
 * `charge_creation_energy` : Energy needed to create a charge deposit. Defaults to the energy needed to create an electron-hole pair in silicon (3.64 eV, [@chargecreation]).

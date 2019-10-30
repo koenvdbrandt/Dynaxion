@@ -112,7 +112,7 @@ void ScintillatorPropagationModule::run(unsigned int) {
     // Create vector of propagated charges to output
     std::vector<PropagatedCharge> propagated_charges;
 
-    double total_charge = 0;
+    unsigned int total_charge = 0;
     // Loop over all deposits for propagation
     for(auto& deposit : deposits_message_->getData()) {
 
@@ -121,7 +121,7 @@ void ScintillatorPropagationModule::run(unsigned int) {
         // Gain stages
         std::normal_distribution<double> gain_smearing(config_.get<double>("gain"), config_.get<double>("gain_smearing"));
         for(int i = 1; i <= config_.get<double>("gain_stages"); i++) {
-            auto gain = gain_smearing(random_generator_);
+            auto gain = static_cast<unsigned int>(std::round(gain_smearing(random_generator_)));
             charge *= gain;
             LOG(DEBUG) << "photo-electrons after amplifying stage " << i << " with gain " << gain << " is " << charge;
         }
