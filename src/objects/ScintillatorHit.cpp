@@ -18,8 +18,10 @@ ScintillatorHit::ScintillatorHit(ROOT::Math::XYZPoint local_position,
                                  CarrierType type,
                                  unsigned int charge,
                                  double event_time,
+                                 double charge_deposit,
                                  const MCParticle* mc_particle)
-    : SensorCharge(std::move(local_position), std::move(global_position), type, charge, event_time) {
+    : SensorCharge(std::move(local_position), std::move(global_position), type, charge, event_time),
+      charge_deposit_(charge_deposit) {
     setMCParticle(mc_particle);
 }
 
@@ -38,6 +40,10 @@ const MCParticle* ScintillatorHit::getMCParticle() const {
 
 void ScintillatorHit::setMCParticle(const MCParticle* mc_particle) {
     mc_particle_ = const_cast<MCParticle*>(mc_particle); // NOLINT
+}
+
+double ScintillatorHit::getChargeDeposit() const {
+    return charge_deposit_;
 }
 
 void ScintillatorHit::print(std::ostream& out) const {

@@ -18,8 +18,8 @@
 #include "core/geometry/Detector.hpp"
 #include "core/messenger/Messenger.hpp"
 
-#include "objects/DepositedCharge.hpp"
 #include "objects/MCParticle.hpp"
+#include "objects/ScintillatorHit.hpp"
 
 #include "TrackInfoManager.hpp"
 
@@ -89,7 +89,7 @@ namespace allpix {
         unsigned long scint_hits_{};
 
         // Set of deposited charges in this event!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-        std::vector<DepositedCharge> deposits_;
+        std::vector<ScintillatorHit> deposits_;
 
         // List of begin points for tracks
         std::map<int, ROOT::Math::XYZPoint> track_begin_;

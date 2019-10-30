@@ -66,7 +66,7 @@ namespace allpix {
          * @brief Get total amount of charges stored
          * @return Total charge stored
          */
-        unsigned int getCharge() const;
+        virtual unsigned int getCharge() const;
         /**
          * @brief Get time after start of event
          * @return Time from start event

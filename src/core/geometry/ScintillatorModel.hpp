@@ -35,25 +35,26 @@ namespace allpix {
             auto config = reader.getHeaderConfiguration();
             // Excess around the chip from the pixel grid
             setScintShape(config.get<std::string>("scintillator_shape", "box"));
-            if(scint_shape_ == "box")
-                setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size", ROOT::Math::XYZVector()));
+            if(scint_shape_ == "box") {
+                setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size"));
+            }
             if(scint_shape_ == "cylinder") {
-                setScintRadius(config.get<double>("scintillator_radius", 0));
-                setScintHeight(config.get<double>("scintillator_height", 0));
-                setScintSize({scint_radius_, scint_radius_, scint_height_});
+                setScintRadius(config.get<double>("scintillator_radius"));
+                setScintHeight(config.get<double>("scintillator_height"));
+                setScintSize({2 * scint_radius_, 2 * scint_radius_, scint_height_});
             }
             setScintMaterial(config.get<std::string>("scintillator_material", "vacuum"));
-            setHousingThickness(config.get<double>("housing_thickness", 0));
+            setHousingShape(config.get<std::string>("housing_shape", scint_shape_));
+            setHousingThickness(config.get<double>("housing_thickness"));
             setHousingReflectivity(config.get<double>("housing_reflectivity", 0));
             setHousingMaterial(config.get<std::string>("housing_material", "vacuum"));
-            setPMType(config.get<std::string>("PM_type", ""));
         }
 
         /**
          * @brief Set the thickness of the housing of the scintillator
          * @param val housing thickness
          */
-        void setScintShape(std::string val) { scint_shape_ = val; }
+        void setScintShape(std::string val) { scint_shape_ = std::move(val); }
         /**
          * @brief Set the thickness of the housing of the scintillator
          * @param val housing thickness
@@ -84,12 +85,12 @@ namespace allpix {
          * @brief Set the size of the scintillator
          * @param val Size of scintillator
          */
-        void setScintSize(ROOT::Math::XYZVector val) { scint_size_ = val; }
+        void setScintSize(ROOT::Math::XYZVector val) { scint_size_ = std::move(val); }
         /**
          * @brief Set the material of the scintillator
          * @param val Material of scintillator
          */
-        void setScintMaterial(std::string val) { scint_material_ = val; }
+        void setScintMaterial(std::string val) { scint_material_ = std::move(val); }
         /**
          * @brief the size of the scintillator
          * @return Size of scintillator
@@ -114,12 +115,12 @@ namespace allpix {
          * @brief Set the material of the housing of the scintillator
          * @param val Hhousing material
          */
-        void setHousingMaterial(std::string val) { housing_material_ = val; }
+        void setHousingMaterial(std::string val) { housing_material_ = std::move(val); }
         /**
         * @brief Set the photo mulitplier type which is used by the scintillator
         * @param val Photo multiplier type
         */
-        void setPMType(std::string val) { PM_type_ = val; }
+        void setHousingShape(std::string val) { housing_shape_ = std::move(val); }
 
         /**
          * @brief Get the thickness of the housing of the scintillator
@@ -140,7 +141,7 @@ namespace allpix {
          * @brief Set the photo mulitplier type which is used by the scintillator
          * @return Photo multiplier type
          */
-        std::string getPMType() const { return PM_type_; }
+        std::string getHousingShape() const { return housing_shape_; }
 
         /**
          * @brief Get size of the Detector
@@ -201,12 +202,10 @@ namespace allpix {
         std::string scint_material_;
 
         // Housing stuff
+        std::string housing_shape_;
         double housing_thickness_{};
         double housing_reflectivity_{};
         std::string housing_material_;
-
-        // ??
-        std::string PM_type_;
     };
 } // namespace allpix
 

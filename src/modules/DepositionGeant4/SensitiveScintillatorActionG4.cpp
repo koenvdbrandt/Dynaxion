@@ -104,8 +104,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
 
     // Deposit electron
     // FIXME: Charge carrier?
-    deposits_.emplace_back(
-        deposit_position, global_deposit_position, CarrierType::ELECTRON, Units::convert(edep, "ev"), end_time);
+    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, 0, end_time, edep);
     deposit_to_id_.push_back(trackID);
     // auto start_pos = track_begin_[trackID];
     // FIXME: edep or wavelenght?
@@ -199,14 +198,14 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
         // Store the number of hits:
         scint_hits_ = hits;
         // Create a new charge deposit message
-        auto deposit_message = std::make_shared<DepositedChargeMessage>(std::move(deposits_), detector_);
+        auto scint_hit_message = std::make_shared<ScintillatorHitMessage>(std::move(deposits_), detector_);
 
         // Dispatch the message
-        messenger_->dispatchMessage(module_, deposit_message);
+        messenger_->dispatchMessage(module_, scint_hit_message);
     }
 
     // Clear deposits for next event
-    deposits_ = std::vector<DepositedCharge>();
+    deposits_ = std::vector<ScintillatorHit>();
 
     // Clear link tables for next event
     deposit_to_id_.clear();

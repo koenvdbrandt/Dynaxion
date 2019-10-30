@@ -37,6 +37,7 @@ namespace allpix {
                         CarrierType type,
                         unsigned int charge,
                         double event_time,
+                        double charge_deposit,
                         const MCParticle* mc_particle = nullptr);
 
         /**
@@ -51,6 +52,8 @@ namespace allpix {
          * @warning Special method because MCParticle is only known after deposit creation, should not be replaced later.
          */
         void setMCParticle(const MCParticle* mc_particle);
+
+        double getChargeDeposit() const;
 
         /**
          * @brief Print an ASCII representation of DepositedCharge to the given stream
@@ -69,6 +72,7 @@ namespace allpix {
 
     private:
         TRef mc_particle_;
+        double charge_deposit_;
     };
 
     /**

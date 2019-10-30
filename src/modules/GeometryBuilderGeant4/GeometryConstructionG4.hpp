@@ -68,12 +68,14 @@ namespace allpix {
         std::unique_ptr<G4LogicalVolume> world_log_;
         std::unique_ptr<G4VPhysicalVolume> world_phys_;
 
-        std::shared_ptr<G4LogicalVolume> housing_log;
-        std::shared_ptr<G4VPhysicalVolume> housing_phys;
-        std::shared_ptr<G4VPhysicalVolume> scint_phys;
-        std::shared_ptr<G4VPhysicalVolume> sensor_phys;
+        std::shared_ptr<G4VSolid> housing_solid_;
+        std::shared_ptr<G4VSolid> scint_solid_;
 
-        G4double housing_reflectivity;
+        std::shared_ptr<G4VPhysicalVolume> housing_phys_;
+        std::shared_ptr<G4VPhysicalVolume> scint_phys_;
+        std::shared_ptr<G4VPhysicalVolume> sensor_phys_;
+
+        G4double housing_reflectivity_;
     };
 } // namespace allpix
 

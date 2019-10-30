@@ -57,6 +57,7 @@ ScintillatorPropagationModule::ScintillatorPropagationModule(Configuration& conf
     config_.setDefault<double>("transit_time_spread", Units::get(10, "ns"));
     config_.setDefault<double>("rise_time", Units::get(10, "ns"));
     config_.setDefault<double>("rise_time_spread", Units::get(5, "ns"));
+    config_.setDefault<ROOT::Math::XYZVector>("pm_prop", ROOT::Math::XYZVector());
 
     /*     // Set default for charge carrier propagation:
         config_.setDefault<bool>("propagate_holes", false);
@@ -109,45 +110,24 @@ void ScintillatorPropagationModule::init() {
 void ScintillatorPropagationModule::run(unsigned int) {
 
     // Create vector of propagated charges to output
-    std::vector<PixelCharge> pixel_charges;
     std::vector<PropagatedCharge> propagated_charges;
-    std::vector<const PropagatedCharge*> prop_charges;
 
-    double initial_charge = 0;
     double total_charge = 0;
-    // double total_projected_charge = 0;
     // Loop over all deposits for propagation
-    // for(auto& deposit : scintillator_message_->getData()) {
     for(auto& deposit : deposits_message_->getData()) {
 
-        // auto position = deposit.getLocalPosition();
+        // FIXME DARK CURRENT
         auto charge = deposit.getCharge();
-        initial_charge += charge;
-        // DARK CURRENT
-
-        auto time = deposit.getEventTime();
-        // NEED TO ADD A FUNCTION WHICH INCREASES TIME BY THE PROPER AMOUNT
-
-        auto quantum_efficiency = config_.get<double>("quantum_efficiency");
-        if(quantum_efficiency > 1.0) {
-            throw ModuleError("Quantum efficiency must be between 0.0 and 1.0");
-        }
-        auto rand = std::uniform_real_distribution<double>(0, 1)(random_generator_);
-        LOG(DEBUG) << "Random variable = " << rand;
-
-        if(quantum_efficiency < rand) {
-            LOG(DEBUG) << "Optical Photon did not get recognized by the Scintillator";
-            continue;
-        }
-        double photo_electrons = 1;
         // Gain stages
         std::normal_distribution<double> gain_smearing(config_.get<double>("gain"), config_.get<double>("gain_smearing"));
         for(int i = 1; i <= config_.get<double>("gain_stages"); i++) {
             auto gain = gain_smearing(random_generator_);
-            photo_electrons *= gain;
-            LOG(DEBUG) << "photo-electrons after amplifying stage " << i << " with gain " << gain << " is "
-                       << photo_electrons;
+            charge *= gain;
+            LOG(DEBUG) << "photo-electrons after amplifying stage " << i << " with gain " << gain << " is " << charge;
         }
+
+        // NEED TO ADD A FUNCTION WHICH INCREASES TIME BY THE PROPER AMOUNT
+        auto time = deposit.getEventTime();
         std::normal_distribution<double> transit_time_spread(config_.get<double>("transit_time"),
                                                              config_.get<double>("transit_time_spread"));
         std::normal_distribution<double> rise_time_spread(config_.get<double>("rise_time"),
@@ -157,49 +137,29 @@ void ScintillatorPropagationModule::run(unsigned int) {
         auto rise_time = rise_time_spread(random_generator_);
         (void)rise_time;
         time += transit_time;
-        ///////
-        auto end_of_sensor_local =
-            (deposit.getLocalPosition().x(), deposit.getLocalPosition().y(), deposit.getLocalPosition().z());
-        auto end_of_sensor_global =
-            (deposit.getGlobalPosition().x(), deposit.getGlobalPosition().y(), deposit.getGlobalPosition().z());
-        (void)end_of_sensor_local;
-        (void)end_of_sensor_global;
+        // Position Propagation
+        // FIXME:: HAVE TO FIND SOMETHING WITH ORIENTATION OF PM
+        auto pm_prop = config_.get<ROOT::Math::XYZVector>("pm_prop");
+        LOG(TRACE) << "Location propagation in PM = " << pm_prop;
+        deposit.getLocalPosition() += pm_prop;
+        deposit.getGlobalPosition() += pm_prop;
         /////
         propagated_charges.emplace_back(
-            deposit.getLocalPosition(), deposit.getGlobalPosition(), deposit.getType(), photo_electrons, time, &deposit);
-        total_charge += photo_electrons;
-        LOG(TRACE) << "prop photo_electrons info:";
-        LOG(TRACE) << "Initial photon of energy : " << Units::display(charge, {"eV"});
-        LOG(TRACE) << "propagated photo-electrons = " << photo_electrons;
+            deposit.getLocalPosition(), deposit.getGlobalPosition(), deposit.getType(), charge, time, &deposit);
+        total_charge += charge;
+        LOG(TRACE) << "prop charge info:";
+        LOG(TRACE) << "propagated charges = " << charge;
         LOG(TRACE) << "transit time = " << transit_time;
-        LOG(TRACE) << "arival time photo_electrons time = " << time;
+        LOG(TRACE) << "arival time charge time = " << time;
     }
-
-    // std::map<Pixel::Index, std::vector<const PropagatedCharge*>> pixel_map;
-    Pixel::Index pixel_index(1, 1);
-    double charge = 0;
-    for(auto& prop_charge : propagated_charges) {
-        charge += prop_charge.getCharge();
-        prop_charges.emplace_back(&prop_charge);
-    }
-    if(charge != total_charge) {
-        LOG(WARNING) << "charges not equal, look at code";
-    }
-    auto pixel = detector_->getPixel(pixel_index);
-    pixel_charges.emplace_back(pixel, charge, prop_charges);
-    /*
-            if(output_plots_) {
-                drift_time_histo_->Fill(drift_time, deposit.getCharge());
-            }
-    */
 
     LOG(INFO) << "Total photo electrons at the end of the Photo Multiplier for this event = " << total_charge
               << " (started with  " << deposits_message_->getData().size() << " photons)";
 
     // Create a new message with propagated charges
-    auto pixel_message = std::make_shared<PixelChargeMessage>(std::move(pixel_charges), detector_);
+    auto prop_chare_message = std::make_shared<PropagatedChargeMessage>(std::move(propagated_charges), detector_);
     // Dispatch the message with propagated charges
-    messenger_->dispatchMessage(this, pixel_message);
+    messenger_->dispatchMessage(this, prop_chare_message);
 }
 
 void ScintillatorPropagationModule::finalize() {
