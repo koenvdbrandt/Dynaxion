@@ -155,7 +155,7 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
-    auto optical_physics = config_.get<bool>("optical_physics", false);
+    auto optical_physics = config_.get<bool>("optical_physics", true);
     if(optical_physics) {
         physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
         G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
