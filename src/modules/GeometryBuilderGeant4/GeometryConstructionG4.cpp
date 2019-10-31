@@ -450,10 +450,10 @@ void GeometryConstructionG4::build_detectors() {
             * FIXME:: supports_log has to be added or else the VisualizationGeant4 (Line412) loop over the to the
             * std::vector<std::shared_ptr<G4LogicalVolume>> gives a double free or corrupt error
             */
-            auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
-            auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
-            detector->setExternalObject("supports_log", supports_log);
-            detector->setExternalObject("supports_phys", supports_phys);
+            // auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
+            // auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
+            // detector->setExternalObject("supports_log", supports_log);
+            // detector->setExternalObject("supports_phys", supports_phys);
 
         } else {
             /*  Detector
