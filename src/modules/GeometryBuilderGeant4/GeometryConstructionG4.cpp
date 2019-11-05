@@ -246,7 +246,8 @@ void GeometryConstructionG4::init_materials() {
     CeBr3_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
     // Info  https://www.degruyter.com/downloadpdf/j/nuka.2017.62.issue-3/nuka-2017-0032/nuka-2017-0032.pdf
     CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 18. * CLHEP::ns);
-
+    // https://www.berkeleynucleonics.com/sites/default/files/products/resources/cebr3_fast_timing_study_below_120_ps.pdf
+    CeBr3_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.7 * CLHEP::ns);
     // Only fast component so yield = 1
     CeBr3_mt->AddConstProperty("YIELDRATIO", 1.0);
     CeBr3->SetMaterialPropertiesTable(CeBr3_mt);
@@ -425,7 +426,7 @@ void GeometryConstructionG4::build_detectors() {
                 new G4OpticalSurface("HousingSurface", unified, polishedteflonair, dielectric_metal);
             OpScintHousingSurface->SetMaterialPropertiesTable(scintHsngPT);
 
-            // Scintillator Properties
+            // Photocathode Properties
             G4double photocath_EFF[] = {
                 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.}; // Enables 'detection' of photons
             assert(sizeof(photocath_EFF) == sizeof(cebr3_Energy));
@@ -444,16 +445,6 @@ void GeometryConstructionG4::build_detectors() {
             //  Create logical skin surfaces
             new G4LogicalBorderSurface("photocath_surf", scint_phys_.get(), sensor_phys_.get(), photocath_opsurf);
             new G4LogicalBorderSurface("housing_surf", scint_phys_.get(), housing_phys_.get(), OpScintHousingSurface);
-            /*
-            * SUPPORT
-            * optional layers of support
-            * FIXME:: supports_log has to be added or else the VisualizationGeant4 (Line412) loop over the to the
-            * std::vector<std::shared_ptr<G4LogicalVolume>> gives a double free or corrupt error
-            */
-            // auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
-            // auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
-            // detector->setExternalObject("supports_log", supports_log);
-            // detector->setExternalObject("supports_phys", supports_phys);
 
         } else {
             /*  Detector

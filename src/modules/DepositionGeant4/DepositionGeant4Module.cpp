@@ -160,6 +160,7 @@ void DepositionGeant4Module::init() {
         physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
         G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
         opticalPhysics->SetWLSTimeProfile("delta");
+        opticalPhysics->SetFiniteRiseTime(true);
 
         opticalPhysics->SetScintillationYieldFactor(1.0);
         opticalPhysics->SetScintillationExcitationRatio(1.0);
