@@ -87,6 +87,7 @@ namespace allpix {
         double final_momentum_x_;
         double final_momentum_y_;
         double final_momentum_z_;
+        int n_steps_;
         bool store_particles_;
     };
 } // namespace allpix

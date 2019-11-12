@@ -153,9 +153,10 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
-    /*    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+        physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
         G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
         opticalPhysics->SetWLSTimeProfile("delta");
+        opticalPhysics ->SetFiniteRiseTime(true);
 
         opticalPhysics->SetScintillationYieldFactor(1.0);
         opticalPhysics->SetScintillationExcitationRatio(1.0);
@@ -165,9 +166,8 @@ void DepositionGeant4Module::init() {
 
         opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
         opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
-
         physicsList->RegisterPhysics(opticalPhysics);
-    */
+    
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
@@ -260,7 +260,7 @@ void DepositionGeant4Module::init() {
 
         if(type[detector->getType()] == "scintillator") {
 
-            sensitive_scintillator_action_ =
+            auto sensitive_scintillator_action_ =
                 new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());
             auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
             if(logical_volume == nullptr) {
@@ -274,7 +274,7 @@ void DepositionGeant4Module::init() {
             logical_volume->SetSensitiveDetector(sensitive_scintillator_action_);
             scintillator_sensors_.push_back(sensitive_scintillator_action_);
         } else {
-            sensitive_detector_action_ = new SensitiveDetectorActionG4(
+            auto sensitive_detector_action_ = new SensitiveDetectorActionG4(
                 this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
             auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
             if(logical_volume == nullptr) {
@@ -287,39 +287,64 @@ void DepositionGeant4Module::init() {
             logical_volume->SetSensitiveDetector(sensitive_detector_action_);
             detector_sensors_.push_back(sensitive_detector_action_);
         }
+    }
+    // If requested, prepare output plots
+    if(config_.get<bool>("output_plots")) {
+        LOG(TRACE) << "Creating output plots";
 
-        // If requested, prepare output plots
-        if(config_.get<bool>("output_plots")) {
-            LOG(TRACE) << "Creating output plots";
-
+        // Create histograms if needed
+        for(auto& sensor : detector_sensors_) {
             // Plot axis are in kilo electrons - convert from framework units!
-            int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+            int maximum_detector = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale_detectors"), "ke"));
+            int nbins_detector = 5 * maximum_detector;
+            std::string plot_name_detector = "deposited_charge_" + sensor->getName();
 
-            int nbins = 5 * maximum;
+            charge_per_event_[sensor->getName()] =
+                new TH1D(plot_name_detector.c_str(),
+                         "deposited charge per event;deposited charge [ke];events",
+                         nbins_detector,
+                         0,
+                         maximum_detector);
+        }
+        for(auto& sensor : scintillator_sensors_) {
+            // Plot axis are in hits!
+            int maximum_scint_hits = config_.get<int>("output_plots_scale_scintillator_hits", 10000);
+            int nbins_scint_hits = maximum_scint_hits/10;                
+            int maximum_scint_time = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale_scintillator_time", 100), "ns"));
+            int nbins_scint_time = maximum_scint_time;
 
-            // Create histograms if needed
-            if(!detector_sensors_.empty()) {
-                std::string plot_name_detector = "deposited_charge_" + sensitive_detector_action_->getName();
+            std::string plot_name_scintillator_hit = "scintillator_hits_" + sensor->getName();
+            std::string plot_name_scintillator_time = "scintillator_time_" + sensor->getName();
+            std::string plot_name_scintillator_det = "scintillator_detection_hits_" + sensor->getName();
+            std::string plot_name_scintillator_diff = "time_dif_hits_" + sensor->getName();
 
-                charge_per_event_[sensitive_detector_action_->getName()] =
-                    new TH1D(plot_name_detector.c_str(),
-                             "deposited charge per event;deposited charge [ke];events",
-                             nbins,
-                             0,
-                             maximum);
-            }
-            if(!scintillator_sensors_.empty()) {
-                std::string plot_name_scintillator = "scintillator_hits_" + sensitive_scintillator_action_->getName();
-
-                hits_per_event_[sensitive_scintillator_action_->getName()] =
-                    new TH1D(plot_name_scintillator.c_str(),
-                             "scintillator hits per event; scintillator hits ;events",
-                             nbins,
-                             0,
-                             maximum);
-            }
+            hits_per_event_[sensor->getName()] =
+                new TH1D(plot_name_scintillator_hit.c_str(),
+                         "scintillator hits per event; scintillator hits ;events",
+                         nbins_scint_hits,
+                         0,
+                         maximum_scint_hits);                
+            scint_time_[sensor->getName()] =
+                new TH1D(plot_name_scintillator_time.c_str(),
+                         "time of scintillatrion; time(ns) ;events",
+                         nbins_scint_time,
+                         0,
+                         maximum_scint_time);
+            detection_time_[sensor->getName()] =
+                new TH1D(plot_name_scintillator_det.c_str(),
+                         "time of detection; time(ns) ;events",
+                         nbins_scint_time,
+                         0,
+                         maximum_scint_time);
+            time_diff_[sensor->getName()] =
+                new TH1D(plot_name_scintillator_diff.c_str(),
+                         "time diff; time(ns) ;events",
+                         nbins_scint_time,
+                         0,
+                         maximum_scint_time/50);
         }
     }
+    events = 0;
 
     if(!useful_deposition) {
         LOG(ERROR) << "Not a single listener for deposited charges, module is useless!";
@@ -352,7 +377,6 @@ void DepositionGeant4Module::run(unsigned int event_num) {
 
     // Release the stream (if it was suspended)
     RELEASE_STREAM(G4cout);
-
     track_info_manager_->createMCTracks();
 
     // Dispatch the necessary messages
@@ -367,16 +391,32 @@ void DepositionGeant4Module::run(unsigned int event_num) {
     }
     for(auto& sensor : scintillator_sensors_) {
         sensor->dispatchMessages();
-
+        if(sensor->getScintillatorHits() != 0) {
+            events +=1;
+        }
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
             double hits = static_cast<double>(sensor->getScintillatorHits());
-            hits_per_event_[sensor->getName()]->Fill(hits);
+            std::vector<double> time_diff , scint_time, det_time = {};
+
+            scint_time = sensor->getScintillationTime();
+            det_time = sensor->getDetectionTime();
+            std::transform(det_time.begin(), det_time.end(), scint_time.begin(), std::back_inserter(time_diff), [&](double l, double r)
+            {
+                return (l - r);
+            });
+            if(hits != 0){
+                hits_per_event_[sensor->getName()]->Fill(hits);
+            }
+            for(auto& time : scint_time) {scint_time_[sensor->getName()]->Fill(time);}
+            for(auto& time : det_time) {detection_time_[sensor->getName()]->Fill(time);}
+            for(auto& time : time_diff) {time_diff_[sensor->getName()]->Fill(time);}
         }
     }
-
+    LOG(TRACE) << "Dispatching TrackInfoManager Message";
     track_info_manager_->dispatchMessage(this, messenger_);
     track_info_manager_->resetTrackInfoManager();
+
 }
 
 void DepositionGeant4Module::finalize() {
@@ -398,6 +438,15 @@ void DepositionGeant4Module::finalize() {
         }
         for(auto& plot : hits_per_event_) {
             plot.second->Write();
+        }        
+        for(auto& plot : scint_time_) {
+            plot.second->Write();
+        }        
+        for(auto& plot : detection_time_) {
+            plot.second->Write();
+        }
+        for(auto& plot : time_diff_) {
+            plot.second->Write();
         }
     }
 
@@ -413,6 +462,8 @@ void DepositionGeant4Module::finalize() {
         size_t average_hits = total_hits / scintillator_sensors_.size() / last_event_num_;
         LOG(WARNING) << "Registered total of " << total_hits << " hits in " << scintillator_sensors_.size()
                      << " photocathodes(s) (average of " << average_hits << " per photocathodes for every event)";
+        LOG(WARNING) << "Scintillator got hit in " << events << " events out of " << last_event_num_ ;
+
     } else {
         LOG(WARNING) << "No hits registered in the scintillators";
     }

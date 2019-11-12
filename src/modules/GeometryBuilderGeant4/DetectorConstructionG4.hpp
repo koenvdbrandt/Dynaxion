@@ -61,6 +61,11 @@ namespace allpix {
                        G4int& k);
         // void SurfaceProperties();
         std::shared_ptr<G4LogicalVolume> housing_log;
+        std::shared_ptr<G4LogicalVolume> sensor_log;
+        std::shared_ptr<G4VPhysicalVolume> sensor_phys;
+        std::shared_ptr<G4VPhysicalVolume> housing_phys;
+        std::shared_ptr<G4VPhysicalVolume> scint_phys;
+        
         std::vector<G4ThreeVector> PMT_positions;
         G4double housing_reflectivity;
 

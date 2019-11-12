@@ -55,7 +55,18 @@ namespace allpix {
          * event.
          */
         unsigned int getScintillatorHits();
-
+        /**
+         * @brief Get the name of the sensitive device bound to this action
+         */
+        std::vector<double> getScintillationTime();
+        /**
+         * @brief Get the name of the sensitive device bound to this action
+         */
+        std::vector<double> getDetectionTime();
+        /**
+         * @brief Get the name of the sensitive device bound to this action
+         */
+        std::vector<double> getTimeDiff();
         /**
          * @brief Get the name of the sensitive device bound to this action
          */
@@ -87,7 +98,11 @@ namespace allpix {
         // Statistics of total and per-event deposited charge
         unsigned int total_scint_hits_{};
         unsigned int scint_hits_{};
-
+        std::vector<double> pre_time_;
+        std::vector<double> post_time_;
+        std::vector<double> scint_time_;
+        std::vector<double> det_time_;
+        std::vector<double> time_diff_;
         // Set of deposited charges in this event
         std::vector<DepositedCharge> deposits_;
 

@@ -156,6 +156,9 @@ void GeometryConstructionG4::init_materials() {
     materials_["tungsten"] = nistman->FindOrBuildMaterial("G4_W");
     materials_["lithium"] = nistman->FindOrBuildMaterial("G4_Li");
     materials_["beryllium"] = nistman->FindOrBuildMaterial("G4_Be");
+    materials_["al2o3"] = nistman->FindOrBuildMaterial("G4_ALUMINUM_OXIDE");
+    materials_["teflon"] = nistman->FindOrBuildMaterial("G4_TEFLON");
+    
 
     // Create required elements:
     G4Element* H = new G4Element("Hydrogen", "H", 1., 1.01 * CLHEP::g / CLHEP::mole);
@@ -243,16 +246,16 @@ void GeometryConstructionG4::init_materials() {
     assert(sizeof(cebr3_ABSL) == sizeof(cebr3_Energy));
     auto CeBr3_mt = new G4MaterialPropertiesTable();
     CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
-    CeBr3_mt->AddProperty("SLOWCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
     CeBr3_mt->AddProperty("RINDEX", cebr3_Energy, cebr3_RIND, cebr3num);
     CeBr3_mt->AddProperty("ABSLENGTH", cebr3_Energy, cebr3_ABSL, cebr3num);
-    CeBr3_mt->AddConstProperty("SCINTILLATIONYIELD", 60000. / CLHEP::MeV);
+    CeBr3_mt->AddConstProperty("SCINTILLATIONYIELD", 68000. / CLHEP::MeV);
     CeBr3_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
-    CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 1. * CLHEP::ns);
-    CeBr3_mt->AddConstProperty("SLOWTIMECONSTANT", 1. * CLHEP::ns);
+    CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 18. * CLHEP::ns);
     CeBr3_mt->AddConstProperty("YIELDRATIO", 1.0);
+    //https://www.berkeleynucleonics.com/sites/default/files/products/resources/cebr3_fast_timing_study_below_120_ps.pdf
+    CeBr3_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.7* CLHEP::ns);
     CeBr3->SetMaterialPropertiesTable(CeBr3_mt);
-    CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
+    //CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
 
     G4Material* Glass = new G4Material("Glass", 1.032 * CLHEP::g / CLHEP::cm3, 2);
     Glass->AddElement(C, 0.915);
@@ -280,6 +283,7 @@ void GeometryConstructionG4::init_materials() {
     glass_mt->AddProperty("ABSLENGTH", cebr3_Energy, glass_AbsLength, cebr3num);
     glass_mt->AddProperty("RINDEX", cebr3_Energy, glass_RIND, cebr3num);
     Glass->SetMaterialPropertiesTable(glass_mt);
+
 }
 
 void GeometryConstructionG4::check_overlaps() {

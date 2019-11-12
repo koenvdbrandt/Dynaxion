@@ -36,10 +36,10 @@ void ParticleDistributionsModule::init() {
     }
     energy_distribution_ = new TH1F("energy_distribution", "energy_distribution", 1000, 0, 15);
     zx_distribution_ = new TH2F("zx_distribution", "zx_distribution", 100, -1, 1, 100, -1, 1);
-    scint_hit_ = new TH2F("scint_hit", "scint_hit", 100, -5, 5, 100, -5, 5);
+    scint_hit_ = new TH2F("scint_hit", "scint_hit", 100, -3, 3, 100, -3, 3);
     zy_distribution_ = new TH2F("zy_distribution", "zy_distribution", 100, -1, 1, 100, -1, 1);
     xyz_distribution_ = new TH3F("xyz_distribution", "xyz_distribution", 100, -1, 1, 100, -1, 1, 100, -1, 1);
-    scint_hit_3D_ = new TH3F("scint_hit_3D", "scint_hit_3D", 100, -5, 5, 100, -5, 5, 100, -6, -4);
+    scint_hit_3D_ = new TH3F("scint_hit_3D", "scint_hit_3D", 100, -3, 3, 100, -3, 3, 100, -3, 3);
     xyz_energy_distribution_ =
         new TH3F("xyz_energy_distribution", "xyz_energy_distribution", 100, -12., 12, 100, -12, 12, 100, -12, 12);
 
@@ -63,6 +63,7 @@ void ParticleDistributionsModule::init() {
     simple_tree_->Branch("final_momentum_x", &final_momentum_x_);
     simple_tree_->Branch("final_momentum_y", &final_momentum_y_);
     simple_tree_->Branch("final_momentum_z", &final_momentum_z_);
+    simple_tree_->Branch("n_steps", &n_steps_);
 }
 
 void ParticleDistributionsModule::run(unsigned int) {
@@ -70,8 +71,10 @@ void ParticleDistributionsModule::run(unsigned int) {
     // Make a store for desired MC tracks
     std::vector<MCTrack> saved_tracks;
     std::vector<MCTrack> proton_track;
+    double PID_lower = config_.get<double>("PID_lower", 0);
+    double PID_upper = config_.get<double>("PID_upper", 10000000000);
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() == 0 && particle.getEndPoint().Y() <= -23.99999) {
+        if(particle.getParticleID() >= PID_lower &&  particle.getParticleID() <= PID_upper) {
             proton_track.insert(proton_track.end(), particle);
         }
     }
@@ -119,6 +122,7 @@ void ParticleDistributionsModule::run(unsigned int) {
         final_momentum_x_ = final_momentum.X();
         final_momentum_y_ = final_momentum.Y();
         final_momentum_z_ = final_momentum.Z();
+        n_steps_ = proton.getNumberOfSteps();
         simple_tree_->Fill();
 
         if(store_particles_) {

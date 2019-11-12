@@ -29,6 +29,8 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
     }
     setImplantSize(implant_size);
 
+    // Sensor shape
+    setSensorShape(config.get<std::string>("sensor_shape", "sqaure"));
     // Sensor thickness
     setSensorThickness(config.get<double>("sensor_thickness"));
     // Excess around the sensor from the pixel grid

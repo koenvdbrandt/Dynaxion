@@ -14,12 +14,14 @@ using namespace allpix;
 TrackInfoManager::TrackInfoManager() : counter_(1) {}
 
 std::unique_ptr<TrackInfoG4> TrackInfoManager::makeTrackInfo(const G4Track* const track) {
+
     auto custom_id = counter_++;
     auto G4ParentID = track->GetParentID();
     auto parent_track_id = G4ParentID == 0 ? G4ParentID : g4_to_custom_id_.at(G4ParentID);
     g4_to_custom_id_[track->GetTrackID()] = custom_id;
     track_id_to_parent_id_[custom_id] = parent_track_id;
     return std::make_unique<TrackInfoG4>(custom_id, parent_track_id, track);
+    
 }
 
 void TrackInfoManager::setTrackInfoToBeStored(int track_id) {
@@ -80,6 +82,7 @@ void TrackInfoManager::createMCTracks() {
                                     track_info->getCreationProcessName(),
                                     track_info->getCreationProcessType(),
                                     track_info->getParticleID(),
+                                    track_info->getNumberOfSteps(),
                                     track_info->getKineticEnergyInitial(),
                                     track_info->getKineticEnergyFinal(),
                                     track_info->getTotalEnergyInitial(),

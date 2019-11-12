@@ -65,13 +65,12 @@ namespace allpix {
     private:
         Messenger* messenger_;
         GeometryManager* geo_manager_;
+        double events;
 
         // The track manager which this module uses to assign custom track IDs and manage & create MCTracks
         std::unique_ptr<TrackInfoManager> track_info_manager_;
 
         // Handling of the charge deposition in all the sensitive devices
-        SensitiveDetectorActionG4* sensitive_detector_action_;
-        SensitiveScintillatorActionG4* sensitive_scintillator_action_;
         std::vector<SensitiveDetectorActionG4*> detector_sensors_;
         std::vector<SensitiveScintillatorActionG4*> scintillator_sensors_;
 
@@ -86,6 +85,9 @@ namespace allpix {
         // Vector of histogram pointers for debugging plots
         std::map<std::string, TH1D*> charge_per_event_;
         std::map<std::string, TH1D*> hits_per_event_;
+        std::map<std::string, TH1D*> scint_time_;
+        std::map<std::string, TH1D*> detection_time_;
+        std::map<std::string, TH1D*> time_diff_;
     };
 } // namespace allpix
 
