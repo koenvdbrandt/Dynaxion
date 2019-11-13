@@ -29,10 +29,11 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
     }
     setImplantSize(implant_size);
 
-    // Sensor shape
-    setSensorShape(config.get<std::string>("sensor_shape", "sqaure"));
     // Sensor thickness
     setSensorThickness(config.get<double>("sensor_thickness"));
+    // Sensor material
+    setSensorMaterial(config.get<std::string>("sensor_material", "silicon"));
+
     // Excess around the sensor from the pixel grid
     auto default_sensor_excess = config.get<double>("sensor_excess", 0);
     setSensorExcessTop(config.get<double>("sensor_excess_top", default_sensor_excess));
@@ -147,9 +148,4 @@ std::vector<DetectorModel::SupportLayer> DetectorModel::getSupportLayers() const
     }
 
     return ret_layers;
-}
-
-std::string DetectorModel::getActiveMaterial() {
-    auto config = reader_.getHeaderConfiguration();
-    return active_material_ = config.get<std::string>("active_material", "silicon");
 }

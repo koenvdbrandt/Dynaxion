@@ -13,10 +13,12 @@
 #include <memory>
 #include <utility>
 
+#include "G4LogicalVolume.hh"
 #include "G4Material.hh"
 #include "G4VSolid.hh"
 #include "G4VUserDetectorConstruction.hh"
 
+#include "G4OpticalSurface.hh"
 #include "core/geometry/GeometryManager.hpp"
 
 namespace allpix {

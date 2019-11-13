@@ -44,21 +44,14 @@ namespace allpix {
         void build(std::map<std::string, G4Material*> materials_) override;
 
     private:
-        // PMT stuff
-        // void SurfaceProperties();
-        std::shared_ptr<G4LogicalVolume> housing_log;
-        std::shared_ptr<G4LogicalVolume> sensor_log;
-        std::shared_ptr<G4VPhysicalVolume> sensor_phys;
-        std::shared_ptr<G4VPhysicalVolume> housing_phys;
-        std::shared_ptr<G4VPhysicalVolume> scint_phys;
+        std::shared_ptr<G4VSolid> housing_solid_;
+        std::shared_ptr<G4VSolid> scint_solid_;
 
-        std::vector<G4ThreeVector> PMT_positions;
-        // G4double housing_reflectivity;
+        std::shared_ptr<G4VPhysicalVolume> housing_phys_;
+        std::shared_ptr<G4VPhysicalVolume> scint_phys_;
+        std::shared_ptr<G4VPhysicalVolume> sensor_phys_;
 
-        // Logical volumes
-        //
-        std::shared_ptr<G4LogicalVolume> PMT_log;
-        std::shared_ptr<G4LogicalVolume> photo_cath_log;
+        G4double housing_reflectivity_;
 
         GeometryManager* geo_manager_;
 

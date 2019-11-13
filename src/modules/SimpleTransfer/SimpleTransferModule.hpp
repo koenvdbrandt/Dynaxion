@@ -7,6 +7,9 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
+#ifndef ALLPIX_SIMPLE_TRANSFER_MODULE_H
+#define ALLPIX_SIMPLE_TRANSFER_MODULE_H
+
 #include <map>
 #include <memory>
 #include <string>
@@ -88,3 +91,5 @@ namespace allpix {
         std::set<Pixel::Index, pixel_cmp> unique_pixels_;
     };
 } // namespace allpix
+
+#endif /* ALLPIX_SIMPLE_TRANSFER_MODULE_H */

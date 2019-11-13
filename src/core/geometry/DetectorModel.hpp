@@ -282,12 +282,6 @@ namespace allpix {
             return getCenter() + offset;
         }
         /**
-         * @brief Set the shape of the sensor
-         * @param val Shape of the sensor
-         */
-        void setSensorShape(std::string val) { sensor_shape_ = val; }
-
-        /**
          * @brief Set the thickness of the sensor
          * @param val Thickness of the sensor
          */
@@ -312,7 +306,16 @@ namespace allpix {
          * @param val Sensor right excess
          */
         void setSensorExcessLeft(double val) { sensor_excess_.at(3) = val; }
-
+        /**
+         * @brief Set the material of the sensor
+         * @param val Sensor material
+         */
+        void setSensorMaterial(std::string val) { sensor_material_ = std::move(val); }
+        /**
+         * @brief Get the material of the sensor
+         * @return Sensor material
+         */
+        virtual std::string getSensorMaterial() const { return sensor_material_; }
         /* CHIP */
         /**
          * @brief Get size of the chip
@@ -383,12 +386,10 @@ namespace allpix {
         }
 
         std::string getActiveMaterial();
-        std::string getSensorShape() const { return sensor_shape_; }
 
     protected:
         std::string type_;
-        std::string active_material_;
-        std::string sensor_shape_;
+        std::string sensor_material_;
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;

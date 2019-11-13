@@ -2,7 +2,7 @@
  * @file
  * @brief Implements the handling of the sensitive device
  * @remarks Based on code from John Idarraga
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -45,7 +45,7 @@ SensitiveScintillatorActionG4::SensitiveScintillatorActionG4(Module* module,
     G4SDManager* sd_man_g4 = G4SDManager::GetSDMpointer();
     sd_man_g4->AddNewDetector(this);
 
-    // Seed the random generator for Fano fluctuations with the seed received
+    // Seed the random generator for Fano fluctuations with the seed received!!!!!!!!!!
     random_generator_.seed(random_seed);
 }
 
@@ -58,15 +58,15 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     // Get Transportaion Matrix
     G4TouchableHandle theTouchable = step->GetPostStepPoint()->GetTouchableHandle();
 
-    // Put the charge deposit in the middle of the step
-    const G4ThreeVector& end_pos = postStepPoint->GetPosition();
-    auto mid_time = (preStepPoint->GetGlobalTime() + postStepPoint->GetGlobalTime()) / 2;
+    // Put the hit and the time at the end of the step
+    auto& end_pos = postStepPoint->GetPosition();
+    double end_time = postStepPoint->GetGlobalTime();
 
-    // Calculate the charge deposit at a local position
+    // Calculate the hit at a local position
     auto deposit_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(end_pos));
     auto deposit_position_g4 = theTouchable->GetHistory()->GetTopTransform().TransformPoint(end_pos);
     // Define a scintillator hit
-    auto scint_hit = static_cast<unsigned int>(edep / edep);
+    // auto scint_hit = static_cast<unsigned int>(edep);
 
     auto sensor_center = detector_->getModel()->getSensorCenter();
 
@@ -83,25 +83,20 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
     // Save begin point when track is seen for the first time
     if(track_begin_.find(trackID) == track_begin_.end()) {
         track_info_manager_->setTrackInfoToBeStored(trackID);
-        // LOG(WARNING) << "steps after trackinfo in Loop = " <<  step->GetTrack()->GetCurrentStepNumber();
-        auto start_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(preStepPoint->GetPosition()));
+        ROOT::Math::XYZPoint start_position =
+            detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(preStepPoint->GetPosition()));
         track_begin_.emplace(trackID, start_position);
         track_parents_.emplace(trackID, parentTrackID);
-        track_time_.emplace(trackID, mid_time);
+        track_time_.emplace(trackID, end_time);
         track_pdg_.emplace(trackID, step->GetTrack()->GetDynamicParticle()->GetPDGcode());
-        // if(edep != 0){pre_time_.emplace_back(pre_time);}
     }
-    // LOG(WARNING) << "steps after trackinfo outside Loop = " <<  step->GetTrack()->GetCurrentStepNumber();
 
     // Update current end point with the current last step
     auto end_position = detector_->getLocalPosition(static_cast<ROOT::Math::XYZPoint>(postStepPoint->GetPosition()));
     track_end_[trackID] = end_position;
-    // std::transform(pre_time_.begin(), pre_time_.end(), post_time_.begin(), time_diff_.begin(), std::minus<double>());
-    // Add new deposit if the charge is more than zero
-    // Only let the scintillator repsont to optical photons
-    if(scint_hit == 0 || track_pdg_[trackID] != 0) {
-        if(track_pdg_[trackID] != 0)
-            LOG(WARNING) << "Scintillator does not respond to particles which are not optical photons";
+
+    // Add new hit if the number of hits is more than zero
+    if(edep == 0) {
         return false;
     }
 
@@ -109,20 +104,17 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
 
     // Deposit electron
     // FIXME: Charge carrier?
-    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, scint_hit, mid_time);
+    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, 0, end_time, edep);
     deposit_to_id_.push_back(trackID);
-
+    // auto start_pos = track_begin_[trackID];
+    // FIXME: edep or wavelenght?
     auto start_time = userTrackInfo->getStartTime();
     auto start_position = userTrackInfo->getStartPoint();
-    pre_time_.emplace_back(start_time);
-    post_time_.emplace_back(mid_time);
-    // FIXME: edep or wavelenght?
-
-    LOG(DEBUG) << "Scintillator " << detector_->getName() << " got hit. Optical photon, first spotted at"
-               << Units::display(start_position, {"mm", "um"}) << "at time " << Units::display(start_time, {"ns", "ps"})
-               << "deposited " << edep * 1000000 << " eV Energy at " << Units::display(end_pos, {"mm", "um"})
+    LOG(DEBUG) << "Scintillator " << detector_->getName() << " got hit. Optical photon, frist spotted at position "
+               << Units::display(start_position, {"mm", "um"}) << "and time" << Units::display(start_time, {"ns", "ps"})
+               << ", deposited " << Units::display(edep, {"eV"}) << " eV Energy at " << Units::display(end_pos, {"mm", "um"})
                << " locally on " << Units::display(deposit_position, {"mm", "um"}) << " in " << detector_->getName()
-               << " after " << Units::display(mid_time, {"ns", "ps"});
+               << " after " << Units::display(end_time, {"ns", "ps"});
 
     LOG(DEBUG) << "Geant4 transformation to local: " << Units::display(deposit_position_g4loc, {"mm", "um"});
     if((deposit_position_g4loc - deposit_position).mag2() > 0.001) {
@@ -136,22 +128,12 @@ std::string SensitiveScintillatorActionG4::getName() {
     return detector_->getName();
 }
 
-unsigned int SensitiveScintillatorActionG4::getTotalScintillatorHits() {
+unsigned long SensitiveScintillatorActionG4::getTotalScintillatorHits() {
     return total_scint_hits_;
 }
 
-unsigned int SensitiveScintillatorActionG4::getScintillatorHits() {
+unsigned long SensitiveScintillatorActionG4::getScintillatorHits() {
     return scint_hits_;
-}
-std::vector<double> SensitiveScintillatorActionG4::getScintillationTime() {
-    return scint_time_;
-}
-std::vector<double> SensitiveScintillatorActionG4::getDetectionTime() {
-    return det_time_;
-}
-std::vector<double> SensitiveScintillatorActionG4::getTimeDiff() {
-    std::transform(pre_time_.begin(), pre_time_.end(), post_time_.begin(), time_diff_.begin(), std::minus<double>());
-    return time_diff_;
 }
 
 void SensitiveScintillatorActionG4::dispatchMessages() {
@@ -202,40 +184,30 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
     track_time_.clear();
 
     // Send a deposit message if we have any deposits
-    unsigned int hits = 0;
-    scint_time_.clear();
-    det_time_.clear();
+    unsigned long hits = 0;
     if(!deposits_.empty()) {
-        for(auto& ch : deposits_) {
-            hits += ch.getCharge();
-            total_scint_hits_ += ch.getCharge();
-        }
+        hits = deposits_.size();
+        total_scint_hits_ += deposits_.size();
         LOG(INFO) << "Registered " << hits << " hits in PM of scintillator " << detector_->getName();
 
-        // Match deposit with mc particle if possible
+        // Match hit with mc particle if possible
         for(size_t i = 0; i < deposits_.size(); ++i) {
             auto track_id = deposit_to_id_.at(i);
             deposits_.at(i).setMCParticle(&mc_particle_message->getData().at(id_to_particle_.at(track_id)));
         }
-        scint_time_ = pre_time_;
-        det_time_ = post_time_;
-
+        // Store the number of hits:
+        scint_hits_ = hits;
         // Create a new charge deposit message
-        auto deposit_message = std::make_shared<DepositedChargeMessage>(std::move(deposits_), detector_);
+        auto scint_hit_message = std::make_shared<ScintillatorHitMessage>(std::move(deposits_), detector_);
 
         // Dispatch the message
-        messenger_->dispatchMessage(module_, deposit_message);
+        messenger_->dispatchMessage(module_, scint_hit_message);
     }
 
-    // Store the number of charge carriers:
-    scint_hits_ = hits;
-
     // Clear deposits for next event
-    deposits_ = std::vector<DepositedCharge>();
+    deposits_ = std::vector<ScintillatorHit>();
 
     // Clear link tables for next event
     deposit_to_id_.clear();
     id_to_particle_.clear();
-    pre_time_.clear();
-    post_time_.clear();
 }

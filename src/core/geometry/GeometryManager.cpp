@@ -439,9 +439,6 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     if(type == "monolithic") {
         return std::make_shared<MonolithicPixelDetectorModel>(name, reader);
     }
-    if(type == "active") {
-        return std::make_shared<ActiveMaterialModel>(name, reader);
-    }
     if(type == "scintillator") {
         return std::make_shared<ScintillatorModel>(name, reader);
     }
