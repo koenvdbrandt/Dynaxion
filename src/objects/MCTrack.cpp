@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of Monte-Carlo track object
- * @copyright Copyright (c) 2018 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2018-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -28,8 +28,8 @@ MCTrack::MCTrack(ROOT::Math::XYZPoint start_point,
     : start_point_(std::move(start_point)), end_point_(std::move(end_point)), initial_momentum_(std::move(initial_momentum)),
       final_momentum_(std::move(final_momentum)), origin_g4_vol_name_(std::move(g4_volume)),
       origin_g4_process_name_(std::move(g4_prod_process_name)), origin_g4_process_type_(g4_prod_process_type),
-      particle_id_(particle_id), n_steps_(n_steps), initial_kin_E_(initial_kin_E), final_kin_E_(final_kin_E), initial_tot_E_(initial_tot_E),
-      final_tot_E_(final_tot_E) {
+      particle_id_(particle_id), n_steps_(n_steps), initial_kin_E_(initial_kin_E), final_kin_E_(final_kin_E),
+      initial_tot_E_(initial_tot_E), final_tot_E_(final_tot_E) {
     setParent(nullptr);
 }
 

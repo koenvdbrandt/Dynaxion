@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Keeping track of the global geometry of independent detectors
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -209,7 +209,20 @@ namespace allpix {
 
         std::vector<std::shared_ptr<BaseBuilder>> getBuilders();
 
-        std::map<std::string, std::string> getDetectorType();
+        /**
+         * @brief Fetch an external object linked to this detector
+         * @param name Name of the external object
+         * @return External object or null pointer if it does not exists
+         */
+        template <typename T> std::shared_ptr<T> getExternalObject(const std::string& name, const std::string& obj_name);
+        /**
+         * @brief Sets an external object linked to this detector
+         * @param name Name of the external object
+         * @param model External object of arbitrary type
+         */
+        template <typename T>
+        void setExternalObject(const std::string& name, std::shared_ptr<T> model, const std::string& obj_name);
+        std::vector<std::string> getExternalObjectNames() { return external_object_names_; };
 
     private:
         /**
@@ -244,8 +257,30 @@ namespace allpix {
         MagneticFieldFunction magnetic_field_function_;
 
         std::vector<std::shared_ptr<BaseBuilder>> builders_;
-        std::map<std::string, std::string> type_;
+
+        std::map<std::type_index, std::map<std::pair<std::string, std::string>, std::shared_ptr<void>>> external_objects_;
+        std::vector<std::string> external_object_names_;
     };
+    /**
+     * If the returned object is not a null pointer it is guaranteed to be of the correct type
+     */
+    template <typename T>
+    std::shared_ptr<T> GeometryManager::getExternalObject(const std::string& name, const std::string& obj_name) {
+        return std::static_pointer_cast<T>(external_objects_[typeid(T)][std::make_pair(name, obj_name)]);
+    }
+
+    /**
+     * Stores external representations of objects in this detector that need to be shared between modules.
+     */
+    template <typename T>
+    void GeometryManager::setExternalObject(const std::string& name, std::shared_ptr<T> model, const std::string& obj_name) {
+        external_objects_[typeid(T)][std::make_pair(name, obj_name)] = std::static_pointer_cast<void>(model);
+        if(std::find(external_object_names_.begin(), external_object_names_.end(), obj_name) ==
+           external_object_names_.end()) {
+            external_object_names_.push_back(obj_name);
+        }
+    }
+
 } // namespace allpix
 
 #endif /* ALLPIX_GEOMETRY_MANAGER_H */

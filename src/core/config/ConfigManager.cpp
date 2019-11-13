@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of config manager
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -93,7 +93,7 @@ void ConfigManager::parse_passive_materials() {
         return;
     }
 
-    // Reading detector file
+    // Reading passive material file
     std::string passive_material_file_name = global_config_.getPath("passive_materials_file", true);
     LOG(TRACE) << "Reading passive material configuration";
 
@@ -153,6 +153,14 @@ bool ConfigManager::loadDetectorOptions(const std::vector<std::string>& options)
     parse_detectors();
     for(auto& config : detector_configs_) {
         optionsApplied = detector_option_parser.applyOptions(config.getName(), config) || optionsApplied;
+    }
+
+    // Apply Passive Material options if needed
+    if(global_config_.has("passive_materials_file")) {
+        parse_passive_materials();
+        for(auto& config : passive_material_configs_) {
+            optionsApplied = detector_option_parser.applyOptions(config.getName(), config) || optionsApplied;
+        }
     }
 
     return optionsApplied;

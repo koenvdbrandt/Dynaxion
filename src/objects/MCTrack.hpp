@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Definition of Monte-Carlo track object
- * @copyright Copyright (c) 2018 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2018-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -43,7 +43,7 @@ namespace allpix {
                 std::string g4_prod_process_name,
                 int g4_prod_process_type,
                 int particle_id,
-                int n_steps,                
+                int n_steps,
                 double initial_kin_E,
                 double final_kin_E,
                 double initial_tot_E,
@@ -175,4 +175,4 @@ namespace allpix {
     using MCTrackMessage = Message<MCTrack>;
 } // namespace allpix
 
-#endif
+#endif /* ALLPIX_MC_TRACK_H */

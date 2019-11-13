@@ -1,8 +1,8 @@
 /**
  * @file
- * @brief Implements the Geant4 geometry construction process
+ * @brief Implements the Geant4 passive material construction process
  * @remarks Code is based on code from Mathieu Benoit
- * @copyright Copyright (c) 2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -21,34 +21,47 @@
 
 #include <G4Box.hh>
 #include <G4IntersectionSolid.hh>
-#include <G4RotationMatrix.hh>
 #include <G4Sphere.hh>
 #include <G4SubtractionSolid.hh>
 #include <G4Tubs.hh>
 #include <G4UnionSolid.hh>
-#include "CLHEP/Vector/Rotation.h"
 
 #include <G4LogicalVolume.hh>
 #include <G4LogicalVolumeStore.hh>
-#include <G4Material.hh>
-#include <G4NistManager.hh>
-#include <G4PVDivision.hh>
 #include <G4PVPlacement.hh>
-#include <G4PhysicalVolumeStore.hh>
-#include <G4StepLimiterPhysics.hh>
+#include <G4RotationMatrix.hh>
 #include <G4ThreeVector.hh>
-#include <G4Tubs.hh>
-#include <G4UserLimits.hh>
-#include <G4VSolid.hh>
-#include <G4VisAttributes.hh>
+
 #include "core/module/exceptions.h"
-#include "core/utils/log.h"
 #include "tools/ROOT.h"
 #include "tools/geant4.h"
 
-using namespace allpix;
+#include "BoxModel.hpp"
+#include "CylinderModel.hpp"
+#include "PassiveMaterialModel.hpp"
+#include "SphereModel.hpp"
+#include "TubeModel.hpp"
 
-PassiveMaterialConstructionG4::PassiveMaterialConstructionG4(Configuration& config) : config_(config) {}
+using namespace allpix;
+using namespace ROOT::Math;
+PassiveMaterialConstructionG4::PassiveMaterialConstructionG4(Configuration& config, GeometryManager* geo_manager)
+    : config_(config), geo_manager_(geo_manager) {
+    name_ = config_.getName();
+    passive_material_type_ = config_.get<std::string>("type");
+    passive_material_location_ = config_.get<XYZPoint>("position");
+    if(passive_material_type_ == "box") {
+        model_ = std::make_shared<BoxModel>(config_);
+    } else if(passive_material_type_ == "cylinder") {
+        model_ = std::make_shared<CylinderModel>(config_);
+    } else if(passive_material_type_ == "tube") {
+        model_ = std::make_shared<TubeModel>(config_);
+    } else if(passive_material_type_ == "sphere") {
+        model_ = std::make_shared<SphereModel>(config_);
+    } else {
+        throw ModuleError("Pasive Material '" + name_ + "' has an incorrect type.");
+    }
+}
+
 /**
  * @brief Version of std::make_shared that does not delete the pointer
  *
@@ -59,192 +72,83 @@ template <typename T, typename... Args> static std::shared_ptr<T> make_shared_no
     return std::shared_ptr<T>(new T(args...), [](T*) {});
 }
 
-void PassiveMaterialConstructionG4::build(G4LogicalVolume* world_log, std::map<std::string, G4Material*> materials_) {
-    /*
-    Get the name of the Passive Material
-    */
-    std::string name = config_.getName();
-    /*
-    Get the world_material
-    */
-    auto world_material = world_log->GetMaterial()->GetName();
+void PassiveMaterialConstructionG4::build(std::map<std::string, G4Material*> materials_) {
     /*
     Get the information for the passive materials
     */
-    auto passive_material_location = config_.get<ROOT::Math::XYZPoint>("position", {0., 0., 0.});
-    auto passive_material_pos = toG4Vector(passive_material_location);
-    auto passive_material = config_.get<std::string>("material", world_material);
+    auto passive_material = config_.get<std::string>("material");
+    auto orientation_vector = config_.get<XYZVector>("orientation");
+    auto mother_volume = config_.get<std::string>("mother_volume", "World");
+    G4LogicalVolumeStore* log_volume_store = G4LogicalVolumeStore::GetInstance();
+    mother_log_volume_ = log_volume_store->GetVolume(mother_volume);
+    if(mother_log_volume_ == nullptr) {
+        throw InvalidValueError(config_, "mother_volume", "mother_volume does not exist");
+    }
 
-    std::transform(passive_material.begin(), passive_material.end(), passive_material.begin(), ::tolower);
-
-    auto orientation_vector = config_.get<ROOT::Math::XYZVector>("orientation", {0., 0., 0.});
-
-    /*
-        // Calculate possible detector misalignment to be added !! Have to figure out the random_generater from
-       GeoManager.cpp
-        auto misalignment = [&](auto residuals) {
-        double dx = std::normal_distribution<double>(0, residuals.x())(random_generator);
-        double dy = std::normal_distribution<double>(0, residuals.y())(random_generator);
-        double dz = std::normal_distribution<double>(0, residuals.z())(random_generator);
-        return DisplacementVector3D<Cartesian3D<double>>(dx, dy, dz);
-        };
-        orientation_vector += misalignment(config_.get<ROOT::Math::XYZVector>("alignment_precision_orientation", {0., 0.,
-       0.}));
-    */
-
-    ROOT::Math::Rotation3D orientation;
+    Rotation3D orientation;
 
     auto orientation_mode = config_.get<std::string>("orientation_mode", "xyz");
     if(orientation_mode == "zyx") {
         // First angle given in the configuration file is around z, second around y, last around x:
         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
-        orientation = ROOT::Math::RotationZYX(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
+        orientation = RotationZYX(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
     } else if(orientation_mode == "xyz") {
         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
         // First angle given in the configuration file is around x, second around y, last around z:
-        orientation = ROOT::Math::RotationZ(orientation_vector.z()) * ROOT::Math::RotationY(orientation_vector.y()) *
-                      ROOT::Math::RotationX(orientation_vector.x());
+        orientation =
+            RotationZ(orientation_vector.z()) * RotationY(orientation_vector.y()) * RotationX(orientation_vector.x());
     } else if(orientation_mode == "zxz") {
         LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
         // First angle given in the configuration file is around z, second around x, last around z:
-        orientation = ROOT::Math::EulerAngles(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
+        orientation = EulerAngles(orientation_vector.x(), orientation_vector.y(), orientation_vector.z());
     } else {
         throw InvalidValueError(config_, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
     }
-
     std::vector<double> copy_vec(9);
     orientation.GetComponents(copy_vec.begin(), copy_vec.end());
-    ROOT::Math::XYZPoint vx, vy, vz;
+    XYZPoint vx, vy, vz;
     orientation.GetComponents(vx, vy, vz);
     auto rotWrapper = std::make_shared<G4RotationMatrix>(copy_vec.data());
-    // auto wrapperGeoTranslation = toG4Vector((0.,0.,0.));
-    // wrapperGeoTranslation *= *rotWrapper;
-    G4ThreeVector posWrapper = toG4Vector(passive_material_location); // - wrapperGeoTranslation;
+    G4ThreeVector posWrapper = toG4Vector(passive_material_location_);
     G4Transform3D transform_phys(*rotWrapper, posWrapper);
+    std::transform(passive_material.begin(), passive_material.end(), passive_material.begin(), ::tolower);
 
-    if(config_.get<std::string>("type") == "box") {
-        auto box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
-        auto box_thickness = config_.get<double>("thickness", 0);
-        auto box_volume = std::make_shared<G4Box>(name + "_volume", box_size.x() / 2, box_size.y() / 2, box_thickness / 2);
-        solids_.push_back(box_volume);
+    LOG(TRACE) << "Creating Geant4 model for '" << name_ << "' of type '" << passive_material_type_ << "'";
+    LOG(TRACE) << " -Material\t\t:\t " << passive_material << "( " << materials_[passive_material]->GetName() << " )";
+    LOG(TRACE) << " -Position\t\t:\t " << Units::display(passive_material_location_, {"mm", "um"});
 
-        // Place the logical volume of the box
-        auto box_log = make_shared_no_delete<G4LogicalVolume>(box_volume.get(), materials_[passive_material], name + "_log");
-
-        // Place the physical volume of the box
-        auto box_phys_ =
-            make_shared_no_delete<G4PVPlacement>(transform_phys, box_log.get(), name + "_phys", world_log, false, 0, true);
+    // Get the solid from the Model
+    auto solid = std::shared_ptr<G4VSolid>(model_->getSolid());
+    if(solid == nullptr) {
+        throw ModuleError("Pasive Material '" + name_ + "' does not have a solid associated with its model");
     }
+    solids_.push_back(solid);
 
-    if(config_.get<std::string>("type") == "cylinder") {
-        auto cylinder_inner_radius = config_.get<double>("inner_radius", 0);
-        auto cylinder_outer_radius = config_.get<double>("outer_radius", 0);
-        auto cylinder_height = config_.get<double>("height", 0);
-        auto cylinder_starting_angle = config_.get<double>("starting_angle", 0);
-        auto cylinder_arc_length = config_.get<double>("arc_length", 0);
-        auto cylinder_volume = std::make_shared<G4Tubs>(name + "_volume",
-                                                        cylinder_inner_radius,
-                                                        cylinder_outer_radius,
-                                                        cylinder_height,
-                                                        cylinder_starting_angle * CLHEP::pi,
-                                                        cylinder_arc_length * CLHEP::pi);
-        solids_.push_back(cylinder_volume);
+    // Place the logical volume of the passive material
+    auto log_volume = make_shared_no_delete<G4LogicalVolume>(solid.get(), materials_[passive_material], name_ + "_log");
+    geo_manager_->setExternalObject("passive_material_log", log_volume, name_);
 
-        // Place the logical volume of the cylinder
-        auto cylinder_log =
-            make_shared_no_delete<G4LogicalVolume>(cylinder_volume.get(), materials_[passive_material], name + "_log");
-
-        // Place the physical volume of the cylinder
-        auto cylinder_phys_ = make_shared_no_delete<G4PVPlacement>(
-            transform_phys, cylinder_log.get(), name + "_phys", world_log, false, 0, true);
-
-        auto filling_material = config_.get<std::string>("filling_material", "");
-
-        if(filling_material != "") {
-            // if(cylinder_length == 2){
-            auto cylinder_filling_volume = std::make_shared<G4Tubs>(name + "_filling_volume",
-                                                                    0,
-                                                                    cylinder_inner_radius,
-                                                                    cylinder_height,
-                                                                    cylinder_starting_angle * CLHEP::pi,
-                                                                    cylinder_arc_length * CLHEP::pi);
-            solids_.push_back(cylinder_filling_volume);
-
-            // Place the logical volume of the filling material
-            auto cylinder_filling_log = make_shared_no_delete<G4LogicalVolume>(
-                cylinder_filling_volume.get(), materials_[filling_material], name + "_filling_log");
-
-            // Place the physical volume of the filling material
-            auto cylinder_filling_phys_ = make_shared_no_delete<G4PVPlacement>(
-                transform_phys, cylinder_filling_log.get(), name + "_filling_phys", world_log, false, 0, true);
-            //}
-            // else{ throw ModuleError("Cylinder '" + name + "' is not closed! Can't fill it with material");}
-        }
-    }
+    // Place the physical volume of the passive material
+    auto phys_volume = make_shared_no_delete<G4PVPlacement>(
+        transform_phys, log_volume.get(), name_ + "_phys", mother_log_volume_, false, 0, true);
+    geo_manager_->setExternalObject("passive_material_phys", phys_volume, name_);
+    LOG(TRACE) << " Constructed passive material " << name_ << " successfully";
 }
 
-std::vector<ROOT::Math::XYZPoint> PassiveMaterialConstructionG4::addPoints() {
-    ROOT::Math::XYZPoint passive_material_location = config_.get<ROOT::Math::XYZPoint>("position", {0., 0., 0.});
-
-    if(config_.get<std::string>("type") == "box") {
-        ROOT::Math::XYVector box_size = config_.get<ROOT::Math::XYVector>("size", {0, 0});
-        auto box_thickness = config_.get<double>("thickness", 0);
-
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
-                                                  passive_material_location.y() + box_size.y() / 2,
-                                                  passive_material_location.z() + box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
-                                                  passive_material_location.y() + box_size.y() / 2,
-                                                  passive_material_location.z() - box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
-                                                  passive_material_location.y() - box_size.y() / 2,
-                                                  passive_material_location.z() + box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + box_size.x() / 2,
-                                                  passive_material_location.y() - box_size.y() / 2,
-                                                  passive_material_location.z() - box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
-                                                  passive_material_location.y() + box_size.y() / 2,
-                                                  passive_material_location.z() + box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
-                                                  passive_material_location.y() + box_size.y() / 2,
-                                                  passive_material_location.z() - box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
-                                                  passive_material_location.y() - box_size.y() / 2,
-                                                  passive_material_location.z() + box_thickness / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - box_size.x() / 2,
-                                                  passive_material_location.y() - box_size.y() / 2,
-                                                  passive_material_location.z() - box_thickness / 2));
+std::vector<XYZPoint> PassiveMaterialConstructionG4::addPoints() {
+    std::array<int, 8> offset_x = {{1, 1, 1, 1, -1, -1, -1, -1}};
+    std::array<int, 8> offset_y = {{1, 1, -1, -1, 1, 1, -1, -1}};
+    std::array<int, 8> offset_z = {{1, -1, 1, -1, 1, -1, 1, -1}};
+    // Add the min and max points for every type
+    auto max_size = model_->getMaxSize();
+    if(max_size == 0) {
+        throw ModuleError("Pasive Material '" + name_ +
+                          "' does not have a maximum size parameter associated with its model");
     }
-
-    if(config_.get<std::string>("type") == "cylinder") {
-        auto cylinder_outer_radius = config_.get<double>("outer_radius", 0);
-        auto cylinder_height = config_.get<double>("height", 0);
-
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
-                                                  passive_material_location.y() + cylinder_outer_radius,
-                                                  passive_material_location.z() + cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
-                                                  passive_material_location.y() + cylinder_outer_radius,
-                                                  passive_material_location.z() - cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
-                                                  passive_material_location.y() - cylinder_outer_radius,
-                                                  passive_material_location.z() + cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() + cylinder_outer_radius,
-                                                  passive_material_location.y() - cylinder_outer_radius,
-                                                  passive_material_location.z() - cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
-                                                  passive_material_location.y() + cylinder_outer_radius,
-                                                  passive_material_location.z() + cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
-                                                  passive_material_location.y() + cylinder_outer_radius,
-                                                  passive_material_location.z() - cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
-                                                  passive_material_location.y() - cylinder_outer_radius,
-                                                  passive_material_location.z() + cylinder_height / 2));
-        points_.emplace_back(ROOT::Math::XYZPoint(passive_material_location.x() - cylinder_outer_radius,
-                                                  passive_material_location.y() - cylinder_outer_radius,
-                                                  passive_material_location.z() - cylinder_height / 2));
+    for(size_t i = 0; i < 8; ++i) {
+        points_.emplace_back(XYZPoint(passive_material_location_.x() + offset_x.at(i) * max_size / 2,
+                                      passive_material_location_.y() + offset_y.at(i) * max_size / 2,
+                                      passive_material_location_.z() + offset_z.at(i) * max_size / 2));
     }
-
     return points_;
 }

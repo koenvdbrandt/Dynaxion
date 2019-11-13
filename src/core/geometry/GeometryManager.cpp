@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of geometry manager
  *
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -92,9 +92,13 @@ void GeometryManager::load(ConfigManager* conf_manager, std::mt19937_64& seeder)
                 detector_section, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
         }
 
+        // Get the mother volume of the detector
+        auto mother_volume = detector_section.get<std::string>("mother_volume", "World");
+
         // Create the detector and add it without model
         // NOTE: cannot use make_shared here due to the private constructor
-        auto detector = std::shared_ptr<Detector>(new Detector(detector_section.getName(), position, orientation));
+        auto detector =
+            std::shared_ptr<Detector>(new Detector(detector_section.getName(), position, orientation, mother_volume));
         addDetector(detector);
 
         // Add a link to the detector to add the model later
@@ -427,7 +431,6 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     }
     // Create a map of the detector type for each model
     std::string type = config.get<std::string>("type");
-    type_[name] = type;
 
     // Instantiate the correct detector model
     if(type == "hybrid") {
@@ -447,9 +450,7 @@ std::shared_ptr<DetectorModel> GeometryManager::parse_config(const std::string& 
     // FIXME: The model can probably be silently ignored if we have more model readers later
     throw InvalidValueError(config, "type", "model type is not supported");
 }
-std::map<std::string, std::string> GeometryManager::getDetectorType() {
-    return type_;
-}
+
 /*
  * After closing the geometry new parts of the geometry cannot be added anymore. All the models for the detectors in the
  * configuration are resolved to requested type (and an error is thrown if this is not possible). Also if a parameter is

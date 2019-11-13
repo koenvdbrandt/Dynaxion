@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of Geant4 deposition module
  * @remarks Based on code from Mathieu Benoit
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -68,8 +68,27 @@ DepositionGeant4Module::DepositionGeant4Module(Configuration& config, Messenger*
     config_.setAlias("source_energy", "beam_energy");
     config_.setAlias("source_energy_spread", "beam_energy_spread");
 
+    // If macro, parse for positions of sources and add these as points to the GeoManager to extend the world:
+    if(config.get<std::string>("source_type") == "macro") {
+        std::ifstream file(config.getPath("file_name", true));
+        std::string line;
+        while(std::getline(file, line)) {
+            if(line.rfind("/gps/position", 0) == 0 || line.rfind("/gps/pos/centre") == 0) {
+                LOG(TRACE) << "Macro contains source position: \"" << line << "\"";
+                std::stringstream sstr(line);
+                std::string command, units;
+                double pos_x, pos_y, pos_z;
+                sstr >> command >> pos_x >> pos_y >> pos_z >> units;
+                ROOT::Math::XYZPoint source_position(
+                    Units::get(pos_x, units), Units::get(pos_y, units), Units::get(pos_z, units));
+                LOG(DEBUG) << "Found source positioned at " << Units::display(source_position, {"mm", "cm"});
+                geo_manager_->addPoint(source_position);
+            }
+        }
+    }
+
     // Add the particle source position to the geometry
-    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("source_position"));
+    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("source_position", ROOT::Math::XYZPoint()));
 }
 
 /**
@@ -95,7 +114,7 @@ void DepositionGeant4Module::init() {
 
         for(auto& detector : geo_manager_->getDetectors()) {
             // Get logical volume
-            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
+            auto logical_volume = geo_manager_->getExternalObject<G4LogicalVolume>("sensor_log", detector->getName());
             if(logical_volume == nullptr) {
                 throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
             }
@@ -153,21 +172,21 @@ void DepositionGeant4Module::init() {
     physicsList->RegisterPhysics(new G4RadioactiveDecayPhysics());
 
     // Scintillator stuff
-        physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
-        G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
-        opticalPhysics->SetWLSTimeProfile("delta");
-        opticalPhysics ->SetFiniteRiseTime(true);
+    physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+    G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
+    opticalPhysics->SetWLSTimeProfile("delta");
+    opticalPhysics->SetFiniteRiseTime(true);
 
-        opticalPhysics->SetScintillationYieldFactor(1.0);
-        opticalPhysics->SetScintillationExcitationRatio(1.0);
+    opticalPhysics->SetScintillationYieldFactor(1.0);
+    opticalPhysics->SetScintillationExcitationRatio(1.0);
 
-        opticalPhysics->SetMaxNumPhotonsPerStep(100);
-        opticalPhysics->SetMaxBetaChangePerStep(10.0);
+    opticalPhysics->SetMaxNumPhotonsPerStep(100);
+    opticalPhysics->SetMaxBetaChangePerStep(10.0);
 
-        opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
-        opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
-        physicsList->RegisterPhysics(opticalPhysics);
-    
+    opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
+    opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+    physicsList->RegisterPhysics(opticalPhysics);
+
     // Set the range-cut off threshold for secondary production:
     double production_cut;
     if(config_.has("range_cut")) {
@@ -254,39 +273,36 @@ void DepositionGeant4Module::init() {
             continue;
         }
         useful_deposition = true;
+        /*
+                    auto sensitive_scintillator_action_ =
+                        new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(),
+           getRandomSeed());
+                    auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
+                    if(logical_volume == nullptr) {
+                        throw ModuleError("Scintillator " + detector->getName() + " has no sensitive device (broken Geant4
+           geometry)");
+                    }
+                    // Apply the user limits to this element
+                    logical_volume->SetUserLimits(user_limits_.get());
 
-        // Get a map of the detector type of each model
-        std::map<std::string, std::string> type = geo_manager_->getDetectorType();
-
-        if(type[detector->getType()] == "scintillator") {
-
-            auto sensitive_scintillator_action_ =
-                new SensitiveScintillatorActionG4(this, detector, messenger_, track_info_manager_.get(), getRandomSeed());
-            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
-            if(logical_volume == nullptr) {
-                throw ModuleError("Scintillator " + detector->getName() +
-                                  " has no sensitive device (broken Geant4 geometry)");
-            }
-            // Apply the user limits to this element
-            logical_volume->SetUserLimits(user_limits_.get());
-
-            // Add the sensitive detector action
-            logical_volume->SetSensitiveDetector(sensitive_scintillator_action_);
-            scintillator_sensors_.push_back(sensitive_scintillator_action_);
-        } else {
-            auto sensitive_detector_action_ = new SensitiveDetectorActionG4(
-                this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
-            auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
-            if(logical_volume == nullptr) {
-                throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
-            }
-            // Apply the user limits to this element
-            logical_volume->SetUserLimits(user_limits_.get());
-
-            // Add the sensitive detector action
-            logical_volume->SetSensitiveDetector(sensitive_detector_action_);
-            detector_sensors_.push_back(sensitive_detector_action_);
+                    // Add the sensitive detector action
+                    logical_volume->SetSensitiveDetector(sensitive_scintillator_action_);
+                    scintillator_sensors_.push_back(sensitive_scintillator_action_);
+                }
+                else {*/
+        auto sensitive_detector_action_ = new SensitiveDetectorActionG4(
+            this, detector, messenger_, track_info_manager_.get(), charge_creation_energy, fano_factor, getRandomSeed());
+        auto logical_volume = geo_manager_->getExternalObject<G4LogicalVolume>("sensor_log", detector->getName());
+        if(logical_volume == nullptr) {
+            throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
         }
+        // Apply the user limits to this element
+        logical_volume->SetUserLimits(user_limits_.get());
+
+        // Add the sensitive detector action
+        logical_volume->SetSensitiveDetector(sensitive_detector_action_);
+        detector_sensors_.push_back(sensitive_detector_action_);
+        //}
     }
     // If requested, prepare output plots
     if(config_.get<bool>("output_plots")) {
@@ -299,18 +315,18 @@ void DepositionGeant4Module::init() {
             int nbins_detector = 5 * maximum_detector;
             std::string plot_name_detector = "deposited_charge_" + sensor->getName();
 
-            charge_per_event_[sensor->getName()] =
-                new TH1D(plot_name_detector.c_str(),
-                         "deposited charge per event;deposited charge [ke];events",
-                         nbins_detector,
-                         0,
-                         maximum_detector);
+            charge_per_event_[sensor->getName()] = new TH1D(plot_name_detector.c_str(),
+                                                            "deposited charge per event;deposited charge [ke];events",
+                                                            nbins_detector,
+                                                            0,
+                                                            maximum_detector);
         }
         for(auto& sensor : scintillator_sensors_) {
             // Plot axis are in hits!
             int maximum_scint_hits = config_.get<int>("output_plots_scale_scintillator_hits", 10000);
-            int nbins_scint_hits = maximum_scint_hits/10;                
-            int maximum_scint_time = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale_scintillator_time", 100), "ns"));
+            int nbins_scint_hits = maximum_scint_hits / 10;
+            int maximum_scint_time =
+                static_cast<int>(Units::convert(config_.get<int>("output_plots_scale_scintillator_time", 100), "ns"));
             int nbins_scint_time = maximum_scint_time;
 
             std::string plot_name_scintillator_hit = "scintillator_hits_" + sensor->getName();
@@ -318,30 +334,26 @@ void DepositionGeant4Module::init() {
             std::string plot_name_scintillator_det = "scintillator_detection_hits_" + sensor->getName();
             std::string plot_name_scintillator_diff = "time_dif_hits_" + sensor->getName();
 
-            hits_per_event_[sensor->getName()] =
-                new TH1D(plot_name_scintillator_hit.c_str(),
-                         "scintillator hits per event; scintillator hits ;events",
-                         nbins_scint_hits,
-                         0,
-                         maximum_scint_hits);                
-            scint_time_[sensor->getName()] =
-                new TH1D(plot_name_scintillator_time.c_str(),
-                         "time of scintillatrion; time(ns) ;events",
-                         nbins_scint_time,
-                         0,
-                         maximum_scint_time);
-            detection_time_[sensor->getName()] =
-                new TH1D(plot_name_scintillator_det.c_str(),
-                         "time of detection; time(ns) ;events",
-                         nbins_scint_time,
-                         0,
-                         maximum_scint_time);
-            time_diff_[sensor->getName()] =
-                new TH1D(plot_name_scintillator_diff.c_str(),
-                         "time diff; time(ns) ;events",
-                         nbins_scint_time,
-                         0,
-                         maximum_scint_time/50);
+            hits_per_event_[sensor->getName()] = new TH1D(plot_name_scintillator_hit.c_str(),
+                                                          "scintillator hits per event; scintillator hits ;events",
+                                                          nbins_scint_hits,
+                                                          0,
+                                                          maximum_scint_hits);
+            scint_time_[sensor->getName()] = new TH1D(plot_name_scintillator_time.c_str(),
+                                                      "time of scintillatrion; time(ns) ;events",
+                                                      nbins_scint_time,
+                                                      0,
+                                                      maximum_scint_time);
+            detection_time_[sensor->getName()] = new TH1D(plot_name_scintillator_det.c_str(),
+                                                          "time of detection; time(ns) ;events",
+                                                          nbins_scint_time,
+                                                          0,
+                                                          maximum_scint_time);
+            time_diff_[sensor->getName()] = new TH1D(plot_name_scintillator_diff.c_str(),
+                                                     "time diff; time(ns) ;events",
+                                                     nbins_scint_time,
+                                                     0,
+                                                     maximum_scint_time / 50);
         }
     }
     events = 0;
@@ -392,31 +404,37 @@ void DepositionGeant4Module::run(unsigned int event_num) {
     for(auto& sensor : scintillator_sensors_) {
         sensor->dispatchMessages();
         if(sensor->getScintillatorHits() != 0) {
-            events +=1;
+            events += 1;
         }
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
             double hits = static_cast<double>(sensor->getScintillatorHits());
-            std::vector<double> time_diff , scint_time, det_time = {};
+            std::vector<double> time_diff, scint_time, det_time = {};
 
             scint_time = sensor->getScintillationTime();
             det_time = sensor->getDetectionTime();
-            std::transform(det_time.begin(), det_time.end(), scint_time.begin(), std::back_inserter(time_diff), [&](double l, double r)
-            {
-                return (l - r);
-            });
-            if(hits != 0){
+            std::transform(det_time.begin(),
+                           det_time.end(),
+                           scint_time.begin(),
+                           std::back_inserter(time_diff),
+                           [&](double l, double r) { return (l - r); });
+            if(hits != 0) {
                 hits_per_event_[sensor->getName()]->Fill(hits);
             }
-            for(auto& time : scint_time) {scint_time_[sensor->getName()]->Fill(time);}
-            for(auto& time : det_time) {detection_time_[sensor->getName()]->Fill(time);}
-            for(auto& time : time_diff) {time_diff_[sensor->getName()]->Fill(time);}
+            for(auto& time : scint_time) {
+                scint_time_[sensor->getName()]->Fill(time);
+            }
+            for(auto& time : det_time) {
+                detection_time_[sensor->getName()]->Fill(time);
+            }
+            for(auto& time : time_diff) {
+                time_diff_[sensor->getName()]->Fill(time);
+            }
         }
     }
     LOG(TRACE) << "Dispatching TrackInfoManager Message";
     track_info_manager_->dispatchMessage(this, messenger_);
     track_info_manager_->resetTrackInfoManager();
-
 }
 
 void DepositionGeant4Module::finalize() {
@@ -438,10 +456,10 @@ void DepositionGeant4Module::finalize() {
         }
         for(auto& plot : hits_per_event_) {
             plot.second->Write();
-        }        
+        }
         for(auto& plot : scint_time_) {
             plot.second->Write();
-        }        
+        }
         for(auto& plot : detection_time_) {
             plot.second->Write();
         }
@@ -462,7 +480,7 @@ void DepositionGeant4Module::finalize() {
         size_t average_hits = total_hits / scintillator_sensors_.size() / last_event_num_;
         LOG(WARNING) << "Registered total of " << total_hits << " hits in " << scintillator_sensors_.size()
                      << " photocathodes(s) (average of " << average_hits << " per photocathodes for every event)";
-        LOG(WARNING) << "Scintillator got hit in " << events << " events out of " << last_event_num_ ;
+        LOG(WARNING) << "Scintillator got hit in " << events << " events out of " << last_event_num_;
 
     } else {
         LOG(WARNING) << "No hits registered in the scintillators";

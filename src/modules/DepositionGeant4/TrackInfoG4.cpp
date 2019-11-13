@@ -89,4 +89,3 @@ std::string TrackInfoG4::getCreationProcessName() const {
 double TrackInfoG4::getStartTime() const {
     return start_time_;
 }
-

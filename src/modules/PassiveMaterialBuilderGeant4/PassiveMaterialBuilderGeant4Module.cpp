@@ -1,7 +1,7 @@
 /**
  * @file
- * @brief Implementation of Geant4 geometry construction module
- * @copyright Copyright (c) 2019 CERN and the Allpix Squared authors.
+ * @brief Implementation of Geant4 passive material construction module
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -14,67 +14,48 @@
 #include <string>
 #include <utility>
 
-#include <G4RunManager.hh>
-#include <G4UImanager.hh>
-#include <G4UIterminal.hh>
-#include <G4Version.hh>
-#include <G4VisManager.hh>
-
-#include <Math/Vector3D.h>
-
-#include "tools/ROOT.h"
-#include "tools/geant4.h"
-
-#include "core/config/ConfigReader.hpp"
-#include "core/config/exceptions.h"
-#include "core/geometry/GeometryManager.hpp"
-
 #include "PassiveMaterialConstructionG4.hpp"
 #include "core/config/ConfigReader.hpp"
-#include "core/utils/log.h"
+#include "core/geometry/GeometryManager.hpp"
 
 using namespace allpix;
-using namespace ROOT;
 
 PassiveMaterialBuilderGeant4Module::PassiveMaterialBuilderGeant4Module(Configuration& config,
                                                                        Messenger*,
                                                                        GeometryManager* geo_manager)
-    : Module(config), geo_manager_(geo_manager), run_manager_g4_(nullptr) {}
+    : Module(config), geo_manager_(geo_manager) {}
 
-/**
- * @brief Checks if a particular Geant4 dataset is available in the environment
- * @throws ModuleError If a certain Geant4 dataset is not set or not available
- */
 void PassiveMaterialBuilderGeant4Module::init() {
 
-    // Suppress all output (also stdout due to a part in Geant4 where G4cout is not used)
-    SUPPRESS_STREAM(std::cout);
+    // Suppress output from G4
     SUPPRESS_STREAM(G4cout);
 
-    // Create the G4 run manager
-    run_manager_g4_ = G4RunManager::GetRunManager();
-
-    // Release stdout again
-    RELEASE_STREAM(std::cout);
-
     ConfigManager* conf_manager = getConfigManager();
-    for(auto& passive_material_section : conf_manager->getPassiveMaterialConfigurations()) {
-        std::shared_ptr<PassiveMaterialConstructionG4> passive_material_builder =
-            std::make_shared<PassiveMaterialConstructionG4>(passive_material_section);
+    std::set<std::string> passive_material_names;
 
+    LOG(TRACE) << "Adding " << conf_manager->getPassiveMaterialConfigurations().size()
+               << " passive material(s) to the list of builders.";
+
+    for(auto& passive_material_section : conf_manager->getPassiveMaterialConfigurations()) {
+        auto name = passive_material_section.getName();
+        if(passive_material_names.find(name) != passive_material_names.end()) {
+            throw ModuleError("Passive Material with name '" + name +
+                              "' is already registered, Passive Material names should be unique");
+        }
+        passive_material_names.insert(name);
+
+        std::shared_ptr<PassiveMaterialConstructionG4> passive_material_builder =
+            std::make_shared<PassiveMaterialConstructionG4>(passive_material_section, geo_manager_);
+
+        // Add the passive materials to objects that will be built in GeometryBuilderGeant4 Module
         geo_manager_->addBuilder(passive_material_builder);
 
-        // Add the max and min points of the passive material to the world volume
-        auto add_points = new PassiveMaterialConstructionG4(passive_material_section);
-        points_ = add_points->addPoints();
-        for(auto& point : points_) {
+        // Add the min and max points to the world volume
+        for(auto& point : passive_material_builder->addPoints()) {
+            LOG(TRACE) << "adding point " << Units::display(point, {"mm", "um"}) << "to the geometry";
             geo_manager_->addPoint(point);
         }
     }
-
-    // Run the geometry construct function in GeometryConstructionG4
-    // LOG(TRACE) << "Building Geant4 geometry";
-    // run_manager_g4_->InitializeGeometry();
 
     // Release output from G4
     RELEASE_STREAM(G4cout);

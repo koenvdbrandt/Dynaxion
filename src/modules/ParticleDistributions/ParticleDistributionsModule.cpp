@@ -45,7 +45,7 @@ void ParticleDistributionsModule::init() {
 
     config_.setDefault<bool>("store_particles", false);
     store_particles_ = config_.get<bool>("store_particles");
-    simple_tree_ = new TTree("protons", "protons");
+    /* simple_tree_ = new TTree("protons", "protons");
     simple_tree_->Branch("initial_energy", &initial_energy_);
     simple_tree_->Branch("final_energy", &final_energy_);
     simple_tree_->Branch("initial_wavelength", &initial_wavelength_);
@@ -63,7 +63,7 @@ void ParticleDistributionsModule::init() {
     simple_tree_->Branch("final_momentum_x", &final_momentum_x_);
     simple_tree_->Branch("final_momentum_y", &final_momentum_y_);
     simple_tree_->Branch("final_momentum_z", &final_momentum_z_);
-    simple_tree_->Branch("n_steps", &n_steps_);
+    simple_tree_->Branch("n_steps", &n_steps_);*/
 }
 
 void ParticleDistributionsModule::run(unsigned int) {
@@ -74,7 +74,7 @@ void ParticleDistributionsModule::run(unsigned int) {
     double PID_lower = config_.get<double>("PID_lower", 0);
     double PID_upper = config_.get<double>("PID_upper", 10000000000);
     for(auto& particle : message_->getData()) {
-        if(particle.getParticleID() >= PID_lower &&  particle.getParticleID() <= PID_upper) {
+        if(particle.getParticleID() >= PID_lower && particle.getParticleID() <= PID_upper) {
             proton_track.insert(proton_track.end(), particle);
         }
     }
@@ -123,7 +123,7 @@ void ParticleDistributionsModule::run(unsigned int) {
         final_momentum_y_ = final_momentum.Y();
         final_momentum_z_ = final_momentum.Z();
         n_steps_ = proton.getNumberOfSteps();
-        simple_tree_->Fill();
+        // simple_tree_->Fill();
 
         if(store_particles_) {
             saved_tracks.push_back(proton);
@@ -147,5 +147,5 @@ void ParticleDistributionsModule::finalize() {
     xyz_distribution_->Write();
     scint_hit_3D_->Write();
     xyz_energy_distribution_->Write();
-    simple_tree_->Write();
+    // simple_tree_->Write();
 }

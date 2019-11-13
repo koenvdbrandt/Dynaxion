@@ -2,7 +2,7 @@
  * @file
  * @brief Implements the Geant4 geometry construction process
  * @remarks Code is based on code from Mathieu Benoit
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -71,6 +71,8 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     }
 
     world_material_ = materials_[world_material];
+    // Add world_material to the list of materials to be called from other modules
+    materials_["world_material"] = world_material_;
     LOG(TRACE) << "Material of world is " << world_material_->GetName();
 
     // Calculate world size
@@ -119,9 +121,9 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     auto builders = geo_manager_->getBuilders();
 
     for(const auto& builder : builders) {
-        auto g4_builder = std::dynamic_pointer_cast<GeometryBuilder<G4LogicalVolume, G4Material>>(builder);
+        auto g4_builder = std::dynamic_pointer_cast<GeometryBuilder<G4Material>>(builder);
         if(g4_builder != nullptr) {
-            g4_builder->build(world_log_.get(), materials_);
+            g4_builder->build(materials_);
         }
     }
 
@@ -158,7 +160,6 @@ void GeometryConstructionG4::init_materials() {
     materials_["beryllium"] = nistman->FindOrBuildMaterial("G4_Be");
     materials_["al2o3"] = nistman->FindOrBuildMaterial("G4_ALUMINUM_OXIDE");
     materials_["teflon"] = nistman->FindOrBuildMaterial("G4_TEFLON");
-    
 
     // Create required elements:
     G4Element* H = new G4Element("Hydrogen", "H", 1., 1.01 * CLHEP::g / CLHEP::mole);
@@ -252,10 +253,10 @@ void GeometryConstructionG4::init_materials() {
     CeBr3_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
     CeBr3_mt->AddConstProperty("FASTTIMECONSTANT", 18. * CLHEP::ns);
     CeBr3_mt->AddConstProperty("YIELDRATIO", 1.0);
-    //https://www.berkeleynucleonics.com/sites/default/files/products/resources/cebr3_fast_timing_study_below_120_ps.pdf
-    CeBr3_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.7* CLHEP::ns);
+    // https://www.berkeleynucleonics.com/sites/default/files/products/resources/cebr3_fast_timing_study_below_120_ps.pdf
+    CeBr3_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.7 * CLHEP::ns);
     CeBr3->SetMaterialPropertiesTable(CeBr3_mt);
-    //CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
+    // CeBr3->GetIonisation()->SetBirksConstant(0.126 * CLHEP::mm / CLHEP::MeV);
 
     G4Material* Glass = new G4Material("Glass", 1.032 * CLHEP::g / CLHEP::cm3, 2);
     Glass->AddElement(C, 0.915);
@@ -283,7 +284,6 @@ void GeometryConstructionG4::init_materials() {
     glass_mt->AddProperty("ABSLENGTH", cebr3_Energy, glass_AbsLength, cebr3num);
     glass_mt->AddProperty("RINDEX", cebr3_Energy, glass_RIND, cebr3num);
     Glass->SetMaterialPropertiesTable(glass_mt);
-
 }
 
 void GeometryConstructionG4::check_overlaps() {

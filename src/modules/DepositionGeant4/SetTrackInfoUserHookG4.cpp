@@ -28,5 +28,4 @@ void SetTrackInfoUserHookG4::PostUserTrackingAction(const G4Track* aTrack) {
     auto theTrack = const_cast<G4Track*>(aTrack); // NOLINT
     theTrack->SetUserInformation(nullptr);
     track_info_mgr_ptr_->storeTrackInfo(std::move(userInfoOwningPtr));
-
 }

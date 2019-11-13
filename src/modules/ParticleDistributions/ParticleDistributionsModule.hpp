@@ -68,7 +68,7 @@ namespace allpix {
         TH3F* xyz_energy_distribution_;
 
         // ntuple variables
-        TTree* simple_tree_;
+        // TTree* simple_tree_;
         double initial_energy_;
         double final_energy_;
         double initial_wavelength_;

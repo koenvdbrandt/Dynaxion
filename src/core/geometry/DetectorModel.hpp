@@ -2,7 +2,7 @@
  * @file
  * @brief Base of detector models
  *
- * @copyright Copyright (c) 2017 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -257,17 +257,17 @@ namespace allpix {
          * Calculated from \ref DetectorModel::getGridSize "pixel grid size", sensor excess and sensor thickness
          */
         virtual ROOT::Math::XYZVector getSensorSize() const {
-            //if(sensor_shape_ == "square"){
-                ROOT::Math::XYZVector excess_thickness((sensor_excess_.at(1) + sensor_excess_.at(3)),
-                                                    (sensor_excess_.at(0) + sensor_excess_.at(2)),
-                                                    sensor_thickness_);
- /*            }
-            if(sensor_shape_ == "cylinder"){
-                ROOT::Math::XYZVector excess_thickness((sensor_excess_.at(1) + sensor_excess_.at(3)),
-                                                    (sensor_excess_.at(0) + sensor_excess_.at(2)),
-                                                    sensor_thickness_);
-            }*/
-        return getGridSize() + excess_thickness;                
+            // if(sensor_shape_ == "square"){
+            ROOT::Math::XYZVector excess_thickness((sensor_excess_.at(1) + sensor_excess_.at(3)),
+                                                   (sensor_excess_.at(0) + sensor_excess_.at(2)),
+                                                   sensor_thickness_);
+            /*            }
+                       if(sensor_shape_ == "cylinder"){
+                           ROOT::Math::XYZVector excess_thickness((sensor_excess_.at(1) + sensor_excess_.at(3)),
+                                                               (sensor_excess_.at(0) + sensor_excess_.at(2)),
+                                                               sensor_thickness_);
+                       }*/
+            return getGridSize() + excess_thickness;
         }
 
         /**
@@ -383,7 +383,8 @@ namespace allpix {
         }
 
         std::string getActiveMaterial();
-        std::string getSensorShape() const {return sensor_shape_;}
+        std::string getSensorShape() const { return sensor_shape_; }
+
     protected:
         std::string type_;
         std::string active_material_;
