@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 
+#include "core/config/ConfigReader.hpp"
 #include "core/config/exceptions.h"
 #include "core/geometry/ScintillatorModel.hpp"
 #include "core/messenger/Messenger.hpp"
@@ -44,16 +45,27 @@ ScintillatorHitConverterModule::ScintillatorHitConverterModule(Configuration& co
 }
 
 void ScintillatorHitConverterModule::init() {
-    //
-    // DO I STILL NEED THIS?
-    //
-    // if(std::dynamic_pointer_cast<ScintillatorModel>(detector_->getModel()) == nullptr) {
-    //    throw ModuleError("The detector " + detector_->getName() +
-    //                     " is not a scintillator. Use other method of propagation");
-    //}
+    // Reading detector file
+    std::ifstream file(config_.getPath("quantum_efficiency", true));
+    std::string line;
+    LOG(INFO) << "Reading Quantum Efficiency File";
+    while(std::getline(file, line)) {
+        line = allpix::trim(line);
+        if(!isdigit(line[0])) {
+            continue;
+        }
+        auto values = allpix::from_string<ROOT::Math::XYVector>(line);
+        LOG(TRACE) << "Input(energy , efficiency)= " << values;
+        wavelength_.push_back(values.x());
+        efficiency_.push_back(values.y());
+    }
 }
 
 void ScintillatorHitConverterModule::run(unsigned int) {
+
+    if(efficiency_.empty()) {
+        throw ModuleError("Quantum efficiency of specific detector is not given!");
+    }
 
     // Create vector of propagated charges to output
     std::vector<DepositedCharge> deposited_charges;
@@ -61,10 +73,25 @@ void ScintillatorHitConverterModule::run(unsigned int) {
     // Loop over all scint_hits
     for(auto& scint_hits : scint_hit_message_->getData()) {
 
-        auto charge = scint_hits.getChargeDeposit();
-        (void)charge;
+        auto charge = scint_hits.getCharge();
+        auto wavelength = (0.0012398) / charge;
+        auto low = wavelength_.size();
+        auto high = wavelength_.size();
+        for(std::vector<double>::size_type i = 0; i != wavelength_.size(); i++) {
+            if(wavelength_[i] <= wavelength && (low == wavelength_.size() || wavelength_[low] < wavelength_[i])) {
+                low = i;
+            } else if(wavelength <= wavelength_[i] && (high == wavelength_.size() || wavelength_[i] < wavelength_[high])) {
+                high = i;
+            }
+        }
+        auto quantum_efficiency = (wavelength_[low] * efficiency_[low] + wavelength_[high] * efficiency_[high]) /
+                                  (wavelength_[high] + wavelength_[low]);
+
+        LOG(TRACE) << "quantum_efficiency of the photocathode = " << quantum_efficiency << " for wavelenght " << wavelength
+                   << "nm";
+
         // FIXME:: Funtion of QE dependant on wavelength
-        auto quantum_efficiency = config_.get<double>("quantum_efficiency");
+        // auto quantum_efficiency = 1;
         if(quantum_efficiency > 1.0) {
             throw ModuleError("Quantum efficiency must be between 0.0 and 1.0");
         }
@@ -72,7 +99,7 @@ void ScintillatorHitConverterModule::run(unsigned int) {
         LOG(DEBUG) << "Random variable = " << rand;
 
         if(quantum_efficiency < rand) {
-            LOG(DEBUG) << "Optical Photon did not get recognized by the Scintillator";
+            LOG(DEBUG) << "Optical Photon did not get recognized by the Photocathode";
             continue;
         }
         unsigned int transferred_charge = 1;
@@ -82,13 +109,17 @@ void ScintillatorHitConverterModule::run(unsigned int) {
                                        transferred_charge,
                                        scint_hits.getEventTime());
     }
-    LOG(INFO) << "Total scintillator hits: " << scint_hit_message_->getData().size()
-              << " (lost: " << scint_hit_message_->getData().size() - scint_hit_message_->getData().size() << ", "
-              << (deposited_charges.size() * 100 / scint_hit_message_->getData().size()) << "%)";
-    LOG(DEBUG) << "Total count of propagated charge carriers: " << deposited_charges.size();
+    total_received_ += scint_hit_message_->getData().size();
+    total_propagated_ += deposited_charges.size();
+    LOG(TRACE) << "Photocathode Hits for this event: " << scint_hit_message_->getData().size()
+               << " (propagated: " << deposited_charges.size() << ", "
+               << (deposited_charges.size() * 100 / scint_hit_message_->getData().size()) << "%)";
     // Create a new message with deposited charges
     auto deposited_charge_message = std::make_shared<DepositedChargeMessage>(std::move(deposited_charges), detector_);
     // Dispatch the message with deposited charges
     messenger_->dispatchMessage(this, deposited_charge_message);
 }
-void ScintillatorHitConverterModule::finalize() {}
+void ScintillatorHitConverterModule::finalize() {
+    LOG(INFO) << "Total Photocathode Hits: " << total_received_ << " (propagated: " << total_propagated_ << ", "
+              << (total_propagated_ * 100 / total_received_) << "%)";
+}

@@ -17,17 +17,6 @@
 namespace allpix {
     /**
      * @ingroup Objects
-     * @brief Flags to distinguish between eletron and hole charge carriers
-     */
-    enum class CarrierType : int8_t { ELECTRON = -1, HOLE = 1 };
-
-    inline std::ostream& operator<<(std::ostream& os, const CarrierType type) {
-        os << (type == CarrierType::ELECTRON ? "\"e\"" : "\"h\"");
-        return os;
-    }
-
-    /**
-     * @ingroup Objects
      * @brief Base object for charge deposits and propagated charges in the sensor
      */
     class SensorCharge : public Object {

@@ -16,23 +16,23 @@ using namespace allpix;
 DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std::move(type)), reader_(std::move(reader)) {
     using namespace ROOT::Math;
     auto config = reader_.getHeaderConfiguration();
-
-    // Number of pixels
-    setNPixels(config.get<DisplacementVector2D<Cartesian2D<int>>>("number_of_pixels"));
-    // Size of the pixels
-    auto pixel_size = config.get<XYVector>("pixel_size");
-    setPixelSize(pixel_size);
+    sensor_size_ = config.get<ROOT::Math::XYZVector>("sensor_size", ROOT::Math::XYZVector());
+    if(sensor_size_ == ROOT::Math::XYZVector()) {
+        // Number of pixels
+        setNPixels(config.get<DisplacementVector2D<Cartesian2D<int>>>("number_of_pixels"));
+        // Size of the pixels
+        setPixelSize(config.get<XYVector>("pixel_size"));
+        // Sensor thickness
+        setSensorThickness(config.get<double>("sensor_thickness"));
+    }
+    // Sensor material
+    setSensorMaterial(config.get<std::string>("sensor_material", "silicon"));
     // Size of the collection diode implant on each pixels, defaults to the full pixel size when not specified
-    auto implant_size = config.get<XYVector>("implant_size", pixel_size);
-    if(implant_size.x() > pixel_size.x() || implant_size.y() > pixel_size.y()) {
+    auto implant_size = config.get<XYVector>("implant_size", pixel_size_);
+    if(implant_size.x() > pixel_size_.x() || implant_size.y() > pixel_size_.y()) {
         throw InvalidValueError(config, "implant_size", "implant size cannot be larger than pixel pitch");
     }
     setImplantSize(implant_size);
-
-    // Sensor thickness
-    setSensorThickness(config.get<double>("sensor_thickness"));
-    // Sensor material
-    setSensorMaterial(config.get<std::string>("sensor_material", "silicon"));
 
     // Excess around the sensor from the pixel grid
     auto default_sensor_excess = config.get<double>("sensor_excess", 0);

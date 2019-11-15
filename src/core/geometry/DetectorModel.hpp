@@ -384,6 +384,7 @@ namespace allpix {
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;
+        ROOT::Math::XYZVector sensor_size_;
 
         double sensor_thickness_{};
         std::array<double, 4> sensor_excess_{};

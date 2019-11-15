@@ -104,7 +104,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
 
     // Deposit electron
     // FIXME: Charge carrier?
-    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, 0, end_time, edep);
+    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, edep, end_time);
     deposit_to_id_.push_back(trackID);
     // auto start_pos = track_begin_[trackID];
     // FIXME: edep or wavelenght?

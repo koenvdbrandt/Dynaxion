@@ -16,20 +16,43 @@ using namespace allpix;
 ScintillatorHit::ScintillatorHit(ROOT::Math::XYZPoint local_position,
                                  ROOT::Math::XYZPoint global_position,
                                  CarrierType type,
-                                 unsigned int charge,
+                                 double charge,
                                  double event_time,
-                                 double charge_deposit,
                                  const MCParticle* mc_particle)
-    : SensorCharge(std::move(local_position), std::move(global_position), type, charge, event_time),
-      charge_deposit_(charge_deposit) {
+
+    : local_position_(std::move(local_position)), global_position_(std::move(global_position)), type_(type), charge_(charge),
+      event_time_(event_time) {
     setMCParticle(mc_particle);
 }
 
-/**
- * @throws MissingReferenceException If the pointed object is not in scope
- *
- * Object is stored as TRef and can only be accessed if pointed object is in scope
- */
+ROOT::Math::XYZPoint ScintillatorHit::getLocalPosition() const {
+    return local_position_;
+}
+
+ROOT::Math::XYZPoint ScintillatorHit::getGlobalPosition() const {
+    return global_position_;
+}
+
+CarrierType ScintillatorHit::getType() const {
+    return type_;
+}
+
+double ScintillatorHit::getCharge() const {
+    return charge_;
+}
+
+double ScintillatorHit::getEventTime() const {
+    return event_time_;
+}
+
+void ScintillatorHit::print(std::ostream& out) const {
+    out << "Type: " << (type_ == CarrierType::ELECTRON ? "\"e\"" : "\"h\"") << "\nCharge: " << charge_ << " e"
+        << "\nLocal Position: (" << local_position_.X() << ", " << local_position_.Y() << ", " << local_position_.Z()
+        << ") mm\n"
+        << "Global Position: (" << global_position_.X() << ", " << global_position_.Y() << ", " << global_position_.Z()
+        << ") mm\n";
+}
+
 const MCParticle* ScintillatorHit::getMCParticle() const {
     auto mc_particle = dynamic_cast<MCParticle*>(mc_particle_.GetObject());
     if(mc_particle == nullptr) {
@@ -40,13 +63,4 @@ const MCParticle* ScintillatorHit::getMCParticle() const {
 
 void ScintillatorHit::setMCParticle(const MCParticle* mc_particle) {
     mc_particle_ = const_cast<MCParticle*>(mc_particle); // NOLINT
-}
-
-double ScintillatorHit::getChargeDeposit() const {
-    return charge_deposit_;
-}
-
-void ScintillatorHit::print(std::ostream& out) const {
-    out << "--- Deposited charge information\n";
-    SensorCharge::print(out);
 }

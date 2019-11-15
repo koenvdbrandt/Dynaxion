@@ -22,7 +22,16 @@
 
 namespace allpix {
     template <typename T> class Message;
+    /**
+     * @ingroup Objects
+     * @brief Flags to distinguish between eletron and hole charge carriers
+     */
+    enum class CarrierType : int8_t { ELECTRON = -1, HOLE = 1 };
 
+    inline std::ostream& operator<<(std::ostream& os, const CarrierType type) {
+        os << (type == CarrierType::ELECTRON ? "\"e\"" : "\"h\"");
+        return os;
+    }
     /**
      * @ingroup Objects
      * @brief Base class for internal objects

@@ -301,33 +301,52 @@ void GeometryConstructionG4::build_detectors() {
             auto scint_shape = scint_model->getScintShape();
             auto scint_size = scint_model->getScintSize();
             auto scint_material = scint_model->getScintMaterial();
-            auto housing_shape = scint_model->getHousingShape();
-            auto housing_thickness = scint_model->getHousingThickness();
             auto housing_material = scint_model->getHousingMaterial();
+            auto housing_thickness = scint_model->getHousingThickness();
             housing_reflectivity_ = scint_model->getHousingReflectivity();
 
-            /*   Housing
-                   the housing of the scintillator
-                   housing works like the wrapper. There was some issue whith placing the housing in a wrapper
-                   where the scintillation effect stopped working when not hit at exactly the middle of the scintillator
-           */
+            // Check is scintillator has the correct properties
+            LOG(DEBUG) << " GetMatPropTable:";
+            auto scint_prop_table = materials_[scint_material]->GetMaterialPropertiesTable();
+            LOG(DEBUG) << " GotMatPropTable:";
+            if(scint_prop_table == nullptr) {
+                throw ModuleError("Cannot construct a scintillator of material '" + scint_material +
+                                  "'. Material doesn't have a property table");
+            } else if(scint_prop_table->GetProperty("FASTCOMPONENT") == nullptr ||
+                      scint_prop_table->GetProperty("ABSLENGTH") == nullptr ||
+                      scint_prop_table->GetProperty("RINDEX") == nullptr ||
+                      !scint_prop_table->ConstPropertyExists("SCINTILLATIONYIELD")) {
+                throw ModuleError("Cannot construct a scintillator of material '" + scint_material +
+                                  "'. Material misses one of the following Material Properties: 'FASTCOMPONENT', "
+                                  "'ABSLENGTH', 'RINDEX' , 'SCINTILLATIONYIELD' ");
+            }
 
-            // Create the volume containing the housing
-            if(housing_shape == "box") {
+            // Create the solids of the housing and the scintillator
+            if(scint_shape == "box") {
                 housing_solid_ = std::make_shared<G4Box>("housing_" + name + "_solid",
                                                          scint_size.x() / 2.0 + housing_thickness,
                                                          scint_size.y() / 2.0 + housing_thickness,
                                                          scint_size.z() / 2.0 + housing_thickness + sensor_size.z() / 2.0);
-            } else if(housing_shape == "cylinder") {
+                scint_solid_ = std::make_shared<G4Box>(
+                    "scint_" + name, scint_size.x() / 2.0, scint_size.y() / 2.0, scint_size.z() / 2.0);
+            } else if(scint_shape == "cylinder") {
                 housing_solid_ = std::make_shared<G4Tubs>("housing_" + name + "_solid",
                                                           0,
                                                           scint_size.x() / 2.0 + housing_thickness,
                                                           scint_size.z() / 2.0 + sensor_size.z() / 2.0 + housing_thickness,
                                                           0,
                                                           2 * CLHEP::pi);
+                scint_solid_ = std::make_shared<G4Tubs>(
+                    "scint_" + name, 0, scint_size.x() / 2.0, scint_size.z() / 2.0, 0, 2 * CLHEP::pi);
             }
             solids_.push_back(housing_solid_);
+            solids_.push_back(scint_solid_);
 
+            /*   Housing
+                   the housing of the scintillator
+                   housing works like the wrapper. There was some issue whith placing the housing in a wrapper
+                   where the scintillation effect stopped working when not hit at exactly the middle of the scintillator
+           */
             // Create the housing logical volume
             auto housing_log = make_shared_no_delete<G4LogicalVolume>(
                 housing_solid_.get(), materials_[housing_material], "housing_" + name + "_log");
@@ -339,15 +358,6 @@ void GeometryConstructionG4::build_detectors() {
             /* Scintillator
             * the scintillator is the part that creates the optical photons
             */
-            if(scint_shape == "box") {
-                // Create the scintillator box and logical volume
-                scint_solid_ = std::make_shared<G4Box>(
-                    "scint_" + name, scint_size.x() / 2.0, scint_size.y() / 2.0, scint_size.z() / 2.0);
-            } else if(scint_shape == "cylinder") {
-                scint_solid_ = std::make_shared<G4Tubs>(
-                    "scint_" + name, 0, scint_size.x() / 2.0, scint_size.z() / 2.0, 0, 2 * CLHEP::pi);
-            }
-            solids_.push_back(scint_solid_);
             auto scint_log = make_shared_no_delete<G4LogicalVolume>(
                 scint_solid_.get(), materials_[scint_material], "scint_" + name + "_log");
             detector->setExternalObject("scint_log", scint_log);
