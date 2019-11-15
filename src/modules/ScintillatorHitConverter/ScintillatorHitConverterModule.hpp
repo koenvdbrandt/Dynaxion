@@ -75,8 +75,8 @@ namespace allpix {
         std::mt19937_64 random_generator_;
 
         // Deposits for the bound detector in this event
-        double total_propagated_{};
-        double total_received_{};
+        size_t total_propagated_{};
+        size_t total_received_{};
         std::shared_ptr<ScintillatorHitMessage> scint_hit_message_;
     };
 } // namespace allpix
