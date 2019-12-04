@@ -303,9 +303,7 @@ void GeometryConstructionG4::build_detectors() {
             auto photocathode_surface_value = scint_model->getHousingSurfaceValue();
 
             // Check is scintillator has the correct properties
-            LOG(DEBUG) << " GetMatPropTable:";
             auto scint_prop_table = materials_[scint_material]->GetMaterialPropertiesTable();
-            LOG(DEBUG) << " GotMatPropTable:";
             if(scint_prop_table == nullptr) {
                 throw ModuleError("Cannot construct a scintillator of material '" + scint_material +
                                   "'. Material doesn't have a property table");
