@@ -55,7 +55,7 @@ namespace allpix {
          * event.
          */
         unsigned long getScintillatorHits();
-
+        std::vector<double> getEnergies();
         /**
          * @brief Get the name of the sensitive device bound to this action
          */
@@ -90,6 +90,7 @@ namespace allpix {
 
         // Set of deposited charges in this event!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
         std::vector<ScintillatorHit> deposits_;
+        std::vector<double> energies_{};
 
         // List of begin points for tracks
         std::map<int, ROOT::Math::XYZPoint> track_begin_;

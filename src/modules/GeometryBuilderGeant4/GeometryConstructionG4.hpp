@@ -74,8 +74,6 @@ namespace allpix {
         std::shared_ptr<G4VPhysicalVolume> housing_phys_;
         std::shared_ptr<G4VPhysicalVolume> scint_phys_;
         std::shared_ptr<G4VPhysicalVolume> sensor_phys_;
-
-        G4double housing_reflectivity_;
     };
 } // namespace allpix
 

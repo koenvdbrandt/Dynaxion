@@ -39,16 +39,13 @@ ScintillatorHitConverterModule::ScintillatorHitConverterModule(Configuration& co
 
     // Require deposits message for single detector
     messenger_->bindSingle(this, &ScintillatorHitConverterModule::scint_hit_message_, MsgFlags::REQUIRED);
-
-    // Set default value for config variables
-    config_.setDefault<double>("quantum_efficiency", 1.0);
 }
 
 void ScintillatorHitConverterModule::init() {
     // Reading detector file
     std::ifstream file(config_.getPath("quantum_efficiency", true));
     std::string line;
-    LOG(INFO) << "Reading Quantum Efficiency File";
+    LOG(INFO) << "Reading Quantum Efficiency File '" << config_.get<std::string>("quantum_efficiency") << "'";
     while(std::getline(file, line)) {
         line = allpix::trim(line);
         if(!isdigit(line[0])) {
@@ -57,6 +54,9 @@ void ScintillatorHitConverterModule::init() {
         auto values = allpix::from_string<ROOT::Math::XYVector>(line);
         LOG(TRACE) << "Input(energy , efficiency)= " << values;
         wavelength_.push_back(values.x());
+        if(!std::is_sorted(wavelength_.begin(), wavelength_.end())) {
+            throw ModuleError("Quantum efficiency input is not sorted! Please sort the list of given wavelengths.");
+        }
         efficiency_.push_back(values.y());
     }
 }
@@ -72,11 +72,11 @@ void ScintillatorHitConverterModule::run(unsigned int) {
 
     // Loop over all scint_hits
     for(auto& scint_hits : scint_hit_message_->getData()) {
-
         auto charge = scint_hits.getCharge();
         auto wavelength = (0.0012398) / charge;
         auto low = wavelength_.size();
         auto high = wavelength_.size();
+
         for(std::vector<double>::size_type i = 0; i != wavelength_.size(); i++) {
             if(wavelength_[i] <= wavelength && (low == wavelength_.size() || wavelength_[low] < wavelength_[i])) {
                 low = i;
@@ -84,6 +84,16 @@ void ScintillatorHitConverterModule::run(unsigned int) {
                 high = i;
             }
         }
+        // Give an error if the provided quantum efficiency file does not include the wavelength range of the photons
+        // produced
+        if(low == wavelength_.size()) {
+            throw ModuleError("Wavelength of incident photon ('" + to_string(wavelength) +
+                              "nm') is lower than specified in the quantum efficiency file!");
+        } else if(high == wavelength_.size()) {
+            throw ModuleError("Wavelength of incident photon ('" + to_string(wavelength) +
+                              "nm') is higher than specified in the quantum efficiency file!");
+        }
+
         auto quantum_efficiency = (wavelength_[low] * efficiency_[low] + wavelength_[high] * efficiency_[high]) /
                                   (wavelength_[high] + wavelength_[low]);
 
@@ -120,6 +130,10 @@ void ScintillatorHitConverterModule::run(unsigned int) {
     messenger_->dispatchMessage(this, deposited_charge_message);
 }
 void ScintillatorHitConverterModule::finalize() {
-    LOG(INFO) << "Total Photocathode Hits: " << total_received_ << " (propagated: " << total_propagated_ << ", "
-              << (total_propagated_ * 100 / total_received_) << "%)";
+    if(total_received_ > 0) {
+        LOG(INFO) << "Total Photocathode Hits: " << total_received_ << " (propagated: " << total_propagated_ << ", "
+                  << (total_propagated_ * 100 / total_received_) << "%)";
+    } else {
+        LOG(WARNING) << "No Photocathode hits registered";
+    }
 }

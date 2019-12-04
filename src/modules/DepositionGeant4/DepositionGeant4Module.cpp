@@ -301,10 +301,18 @@ void DepositionGeant4Module::init() {
                 plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
         }
         for(auto& sensor : scintillator_sensors_) {
-            std::string plot_name_scintillator = "scintillator_hits_" + sensor->getName();
+            std::string plot_name_scintillator_hits = "scintillator_hits_" + sensor->getName();
+            std::string plot_name_wavelenghts = "wavelengths_" + sensor->getName();
+            std::string plot_name_charges = "charges_" + sensor->getName();
 
-            hits_per_event_[sensor->getName()] = new TH1D(
-                plot_name_scintillator.c_str(), "scintillator hits per event; scintillator hits ;events", nbins, 0, maximum);
+            hits_per_event_[sensor->getName()] = new TH1D(plot_name_scintillator_hits.c_str(),
+                                                          "scintillator hits per event; scintillator hits ;events",
+                                                          nbins,
+                                                          0,
+                                                          maximum);
+            charges_[sensor->getName()] = new TH1D(plot_name_charges.c_str(), "charges; charges ;events", nbins, 0, 0.00001);
+            wavelengths_[sensor->getName()] =
+                new TH1D(plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts ;events", nbins, 0, 1000);
         }
     }
 
@@ -359,6 +367,11 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         if(config_.get<bool>("output_plots")) {
             auto hits = static_cast<double>(sensor->getScintillatorHits());
             hits_per_event_[sensor->getName()]->Fill(hits);
+
+            for(auto& charge : sensor->getEnergies()) {
+                charges_[sensor->getName()]->Fill(charge);
+                wavelengths_[sensor->getName()]->Fill((0.0012398) / charge);
+            }
         }
     }
 
@@ -384,6 +397,12 @@ void DepositionGeant4Module::finalize() {
             plot.second->Write();
         }
         for(auto& plot : hits_per_event_) {
+            plot.second->Write();
+        }
+        for(auto& plot : charges_) {
+            plot.second->Write();
+        }
+        for(auto& plot : wavelengths_) {
             plot.second->Write();
         }
     }

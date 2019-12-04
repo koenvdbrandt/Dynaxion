@@ -84,6 +84,8 @@ namespace allpix {
         // Vector of histogram pointers for debugging plots
         std::map<std::string, TH1D*> charge_per_event_;
         std::map<std::string, TH1D*> hits_per_event_;
+        std::map<std::string, TH1D*> charges_;
+        std::map<std::string, TH1D*> wavelengths_;
     };
 } // namespace allpix
 

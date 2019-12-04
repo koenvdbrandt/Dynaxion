@@ -195,51 +195,39 @@ void GeometryConstructionG4::init_materials() {
     CeBr3->AddElement(Ce, 1);
     CeBr3->AddElement(Br, 3);
     materials_["cebr3"] = CeBr3;
-    //***Material properties tables or CeBr3
-
-    // Info CeBr3 from https://www.advatech-uk.co.uk/CeBr3%20Enission%20Spectrum.jpg
-    G4double cebr3_Energy[] = {3.96 * CLHEP::eV,
-                               3.81 * CLHEP::eV,
-                               3.67 * CLHEP::eV,
-                               3.54 * CLHEP::eV,
-                               3.42 * CLHEP::eV,
-                               3.31 * CLHEP::eV,
-                               3.20 * CLHEP::eV,
-                               3.10 * CLHEP::eV,
-                               3.0 * CLHEP::eV,
-                               2.92 * CLHEP::eV,
-                               2.83 * CLHEP::eV,
-                               2.76 * CLHEP::eV,
-                               2.68 * CLHEP::eV,
-                               2.61 * CLHEP::eV};
-    const G4int cebr3num = sizeof(cebr3_Energy) / sizeof(G4double);
-    G4double cebr3_SCINT[] = {0.01, 0.02, 0.04, 0.13, 0.36, 0.98, 0.98, 0.34, 0.20, 0.12, 0.08, 0.03, 0.02, 0.01};
-    assert(sizeof(cebr3_SCINT) == sizeof(cebr3_Energy));
+    // Material properties tables of CeBr3
+    // Provided by Scionix
+    G4double cebr3[] = {320, 330, 340, 345, 350, 355, 360, 365, 370, 371, 372, 375, 377.5, 380, 385,
+                        389, 390, 391, 392, 395, 400, 405, 410, 415, 420, 425, 430, 435,   440};
+    G4double conv_factor = 0.0012398;
+    const G4int size = sizeof(cebr3) / sizeof(G4double);
+    G4double cebr3_ch[size] = {0};
+    for(auto i = 0; i < size; i++) {
+        cebr3_ch[i] = (conv_factor) / cebr3[i];
+    }
+    // Provided by Scionix
+    G4double cebr3_SC[] = {0.000, 0.000, 0.001, 0.030, 0.098, 0.199, 0.434, 0.779, 0.957, 0.961,
+                           0.955, 0.906, 0.866, 0.849, 0.823, 0.804, 0.796, 0.781, 0.760, 0.696,
+                           0.541, 0.370, 0.224, 0.120, 0.059, 0.029, 0.012, 0.004, 0.001};
+    assert(sizeof(cebr3_SC) == sizeof(cebr3_ch));
 
     // info from
     // https://www.researchgate.net/figure/The-calculated-optical-constants-of-CeCl-3-and-CeBr-3-a-refractive-index-b_fig7_256855384
-    G4double cebr3_RIND[] = {2.40, 2.38, 2.35, 2.33, 2.30, 2.28, 2.25, 2.23, 2.20, 2.17, 2.10, 2.05, 2.10, 2.10};
-    assert(sizeof(cebr3_RIND) == sizeof(cebr3_Energy));
-    // Info from http://www.freepatentsonline.com/7405404.pdf
-    G4double cebr3_ABSL[] = {2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm,
-                             2.1 * CLHEP::cm};
-    assert(sizeof(cebr3_ABSL) == sizeof(cebr3_Energy));
+    G4double cebr3_RIND[] = {2.5,  2.48, 2.46, 2.55, 2.42, 2.40, 2.41, 2.42, 2.42, 2.42, 2.42, 2.43, 2.43, 2.43, 2.43,
+                             2.44, 2.44, 2.44, 2.44, 2.44, 2.44, 2.45, 2.46, 2.47, 2.48, 2.49, 2.50, 2.51, 2.52};
+    assert(sizeof(cebr3_RIND) == sizeof(cebr3_ch));
+    // Info from https://www.advatech-uk.co.uk/cebr3.html -> Mass attenuation coeff = abs_length
+    G4double cebr3_ABSL[] = {100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
+                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
+                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
+                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
+                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
+                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm};
+    assert(sizeof(cebr3_ABSL) == sizeof(cebr3_ch));
     auto CeBr3_mt = new G4MaterialPropertiesTable();
-    CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_Energy, cebr3_SCINT, cebr3num);
-    CeBr3_mt->AddProperty("RINDEX", cebr3_Energy, cebr3_RIND, cebr3num);
-    CeBr3_mt->AddProperty("ABSLENGTH", cebr3_Energy, cebr3_ABSL, cebr3num);
+    CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_ch, cebr3_SC, size);
+    CeBr3_mt->AddProperty("RINDEX", cebr3_ch, cebr3_RIND, size);
+    CeBr3_mt->AddProperty("ABSLENGTH", cebr3_ch, cebr3_ABSL, size);
     // Info https://www.ipen.br/biblioteca/cd/ieee/2004/DATA/3R04-1.PDF
     CeBr3_mt->AddConstProperty("SCINTILLATIONYIELD", 68000. / CLHEP::MeV);
     // ??
@@ -303,7 +291,16 @@ void GeometryConstructionG4::build_detectors() {
             auto scint_material = scint_model->getScintMaterial();
             auto housing_material = scint_model->getHousingMaterial();
             auto housing_thickness = scint_model->getHousingThickness();
-            housing_reflectivity_ = scint_model->getHousingReflectivity();
+            auto housing_reflectivity = scint_model->getHousingReflectivity();
+            auto housing_surface_model = static_cast<G4OpticalSurfaceModel>(scint_model->getHousingSurfaceModel());
+            auto housing_surface_type = static_cast<G4SurfaceType>(scint_model->getHousingSurfaceType());
+            auto housing_surface_finish = static_cast<G4OpticalSurfaceFinish>(scint_model->getHousingSurfaceFinish());
+            auto housing_surface_value = scint_model->getHousingSurfaceValue();
+            auto photocathode_surface_model = static_cast<G4OpticalSurfaceModel>(scint_model->getPhotocathodeSurfaceModel());
+            auto photocathode_surface_type = static_cast<G4SurfaceType>(scint_model->getPhotocathodeSurfaceType());
+            auto photocathode_surface_finish =
+                static_cast<G4OpticalSurfaceFinish>(scint_model->getPhotocathodeSurfaceFinish());
+            auto photocathode_surface_value = scint_model->getHousingSurfaceValue();
 
             // Check is scintillator has the correct properties
             LOG(DEBUG) << " GetMatPropTable:";
@@ -319,6 +316,24 @@ void GeometryConstructionG4::build_detectors() {
                 throw ModuleError("Cannot construct a scintillator of material '" + scint_material +
                                   "'. Material misses one of the following Material Properties: 'FASTCOMPONENT', "
                                   "'ABSLENGTH', 'RINDEX' , 'SCINTILLATIONYIELD' ");
+            }
+
+            // Check if the optical surface options match
+            if(housing_surface_model > 1 || photocathode_surface_model > 1) {
+                throw ModuleError("Optical surface model must be either 0 or 1");
+            } else if(housing_surface_type > 2 || photocathode_surface_type > 2) {
+                throw ModuleError("Optical surface type must be 0,1 or 2");
+            } else if(housing_surface_finish > 29 || photocathode_surface_finish > 29) {
+                throw ModuleError("Optical surface can't be larger than 29");
+            }
+
+            else if((housing_surface_type == 2 && housing_surface_finish < 6) ||
+                    (housing_surface_type == 2 && housing_surface_finish < 6)) {
+                throw ModuleError("For optical surface type Dielectric-LUT the surface finish must be between 6 and 29");
+            } else if((housing_surface_type != 2 && housing_surface_finish > 5) ||
+                      (housing_surface_type != 2 && housing_surface_finish > 5)) {
+                throw ModuleError("For optical surface type Dielectric-Metal and Dielectric-Dielectric the surface finish "
+                                  "must be between 0 and 5");
             }
 
             // Create the solids of the housing and the scintillator
@@ -405,25 +420,25 @@ void GeometryConstructionG4::build_detectors() {
                                        2.83 * CLHEP::eV,
                                        2.76 * CLHEP::eV,
                                        2.68 * CLHEP::eV,
-                                       2.61 * CLHEP::eV};
+                                       1.77 * CLHEP::eV};
             const G4int num = sizeof(cebr3_Energy) / sizeof(G4double);
 
             // Housing Properties
-            G4double reflectivity[] = {housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_,
-                                       housing_reflectivity_};
+            G4double reflectivity[] = {housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity,
+                                       housing_reflectivity};
             assert(sizeof(reflectivity) == sizeof(cebr3_Energy));
             G4double efficiency[] = {
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -432,8 +447,12 @@ void GeometryConstructionG4::build_detectors() {
             auto scintHsngPT = new G4MaterialPropertiesTable();
             scintHsngPT->AddProperty("REFLECTIVITY", cebr3_Energy, reflectivity, num);
             scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, efficiency, num);
-            G4OpticalSurface* OpScintHousingSurface =
-                new G4OpticalSurface("HousingSurface", unified, polishedteflonair, dielectric_metal);
+
+            auto OpScintHousingSurface = new G4OpticalSurface("HousingSurface",
+                                                              housing_surface_model,
+                                                              housing_surface_finish,
+                                                              housing_surface_type,
+                                                              housing_surface_value);
             OpScintHousingSurface->SetMaterialPropertiesTable(scintHsngPT);
 
             // Photocathode Properties
@@ -448,8 +467,11 @@ void GeometryConstructionG4::build_detectors() {
             photocath_mt->AddProperty("EFFICIENCY", cebr3_Energy, photocath_EFF, num);
             photocath_mt->AddProperty("REALRINDEX", cebr3_Energy, photocath_ReR, num);
             photocath_mt->AddProperty("IMAGINARYRINDEX", cebr3_Energy, photocath_ImR, num);
-            G4OpticalSurface* photocath_opsurf =
-                new G4OpticalSurface("photocath_opsurf", glisur, polished, dielectric_metal);
+            auto photocath_opsurf = new G4OpticalSurface("photocath_opsurf",
+                                                         photocathode_surface_model,
+                                                         photocathode_surface_finish,
+                                                         photocathode_surface_type,
+                                                         photocathode_surface_value);
             photocath_opsurf->SetMaterialPropertiesTable(photocath_mt);
 
             //  Create logical skin surfaces
