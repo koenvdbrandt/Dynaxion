@@ -328,10 +328,10 @@ void GeometryConstructionG4::build_detectors() {
             }
 
             else if((housing_surface_type == 2 && housing_surface_finish < 6) ||
-                    (housing_surface_type == 2 && housing_surface_finish < 6)) {
+                    (photocathode_surface_type == 2 && photocathode_surface_finish < 6)) {
                 throw ModuleError("For optical surface type Dielectric-LUT the surface finish must be between 6 and 29");
             } else if((housing_surface_type != 2 && housing_surface_finish > 5) ||
-                      (housing_surface_type != 2 && housing_surface_finish > 5)) {
+                      (photocathode_surface_type != 2 && photocathode_surface_finish > 5)) {
                 throw ModuleError("For optical surface type Dielectric-Metal and Dielectric-Dielectric the surface finish "
                                   "must be between 0 and 5");
             }
