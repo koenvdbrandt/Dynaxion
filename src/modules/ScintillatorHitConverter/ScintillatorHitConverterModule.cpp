@@ -48,7 +48,7 @@ void ScintillatorHitConverterModule::init() {
     LOG(INFO) << "Reading Quantum Efficiency File '" << config_.get<std::string>("quantum_efficiency") << "'";
     while(std::getline(file, line)) {
         line = allpix::trim(line);
-        if(!isdigit(line[0])) {
+        if(isdigit(line[0]) == 0) {
             continue;
         }
         auto values = allpix::from_string<ROOT::Math::XYVector>(line);
