@@ -256,9 +256,8 @@ void GeometryConstructionG4::build_detectors() {
         auto sensor_material = model->getSensorMaterial();
         LOG(DEBUG) << "Creating Geant4 model for " << name;
         LOG(DEBUG) << " Wrapper dimensions of model: " << Units::display(model->getSize(), {"mm", "um"});
-        LOG(TRACE) << " Sensor dimensions: " << model->getSensorSize();
+        LOG(TRACE) << " Sensor dimensions: " << Units::display(model->getSensorSize(), {"mm", "um"});
         LOG(TRACE) << " Sensor material: " << sensor_material;
-        LOG(TRACE) << " Chip dimensions: " << model->getChipSize();
         LOG(DEBUG) << " Global position and orientation of the detector:";
 
         // Get position and orientation
@@ -276,14 +275,13 @@ void GeometryConstructionG4::build_detectors() {
         detector->setExternalObject("rotation_matrix", rotWrapper);
         G4Transform3D transform_phys(*rotWrapper, posWrapper);
 
-        LOG(DEBUG) << " Center of the geometry parts relative to the detector wrapper geometric center:";
-
         auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
         if(scint_model != nullptr) {
             /*  Scintillator
                     Creates a housing box with a scintillator and a sensor in it
                     Support layer is optional
                  */
+
             // Get parameters from model
             auto sensor_size = scint_model->getSensorSize();
             auto scint_shape = scint_model->getScintShape();
@@ -333,6 +331,19 @@ void GeometryConstructionG4::build_detectors() {
                 throw ModuleError("For optical surface type Dielectric-Metal and Dielectric-Dielectric the surface finish "
                                   "must be between 0 and 5");
             }
+
+            // Mode specific parameters
+            LOG(TRACE) << " Scintillator Model Parameters for detector " << name;
+            LOG(TRACE) << " Scintillator dimensions: " << Units::display(scint_size, {"mm", "um"});
+            LOG(TRACE) << " Scintillator material: " << scint_material;
+            LOG(TRACE) << " Housing dimensions: "
+                       << Units::display(
+                              ROOT::Math::XYZVector(scint_size.x() / 2.0 + housing_thickness,
+                                                    scint_size.y() / 2.0 + housing_thickness,
+                                                    scint_size.z() / 2.0 + housing_thickness + sensor_size.z() / 2.0),
+                              {"mm", "um"});
+            LOG(TRACE) << " Housing material: " << housing_material;
+            LOG(DEBUG) << " Center of the geometry parts relative to the detector wrapper geometric center:";
 
             // Create the solids of the housing and the scintillator
             if(scint_shape == "box") {
@@ -480,6 +491,11 @@ void GeometryConstructionG4::build_detectors() {
             /*  Detector
                     Creates a detector with a sensitive sensor with pixels, a chip and an optional support layer
                 */
+
+            LOG(TRACE) << " Pixel Detector Model Parameters for detector " << name;
+            LOG(TRACE) << " Chip dimensions: " << model->getChipSize();
+            LOG(DEBUG) << " Center of the geometry parts relative to the detector wrapper geometric center:";
+
             // Create the wrapper box and logical volume
             auto wrapper_box = std::make_shared<G4Box>(
                 "wrapper_" + name, model->getSize().x() / 2.0, model->getSize().y() / 2.0, model->getSize().z() / 2.0);
