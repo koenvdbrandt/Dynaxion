@@ -81,7 +81,6 @@ void TrackInfoManager::createMCTracks() {
                                     track_info->getCreationProcessName(),
                                     track_info->getCreationProcessType(),
                                     track_info->getParticleID(),
-                                    track_info->getNumberOfSteps(),
                                     track_info->getKineticEnergyInitial(),
                                     track_info->getKineticEnergyFinal(),
                                     track_info->getTotalEnergyInitial(),

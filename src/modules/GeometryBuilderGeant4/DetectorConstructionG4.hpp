@@ -51,8 +51,6 @@ namespace allpix {
         std::shared_ptr<G4VPhysicalVolume> scint_phys_;
         std::shared_ptr<G4VPhysicalVolume> sensor_phys_;
 
-        G4double housing_reflectivity_;
-
         GeometryManager* geo_manager_;
 
         // Storage of internal objects

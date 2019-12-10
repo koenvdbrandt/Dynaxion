@@ -43,7 +43,6 @@ namespace allpix {
                 std::string g4_prod_process_name,
                 int g4_prod_process_type,
                 int particle_id,
-                int n_steps,
                 double initial_kin_E,
                 double final_kin_E,
                 double initial_tot_E,

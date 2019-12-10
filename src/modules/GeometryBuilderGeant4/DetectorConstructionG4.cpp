@@ -66,7 +66,7 @@ template <typename T, typename... Args> static std::shared_ptr<T> make_shared_no
     return std::shared_ptr<T>(new T(args...), [](T*) {});
 }
 
-void GeometryConstructionG4::build_detectors() {
+void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_) {
     // Loop through all detectors and construct them
     std::vector<std::shared_ptr<Detector>> detectors = geo_manager_->getDetectors();
     LOG(TRACE) << "Building " << detectors.size() << " device(s)";
@@ -74,6 +74,7 @@ void GeometryConstructionG4::build_detectors() {
     for(auto& detector : detectors) {
         // Get pointer to the model of the detector
         auto model = detector->getModel();
+        auto mother_volume = detector->getMotherVolume();
 
         std::string name = detector->getName();
         auto sensor_material = model->getSensorMaterial();
@@ -82,6 +83,13 @@ void GeometryConstructionG4::build_detectors() {
         LOG(TRACE) << " Sensor dimensions: " << Units::display(model->getSensorSize(), {"mm", "um"});
         LOG(TRACE) << " Sensor material: " << sensor_material;
         LOG(DEBUG) << " Global position and orientation of the detector:";
+
+        G4LogicalVolumeStore* log_volume_store = G4LogicalVolumeStore::GetInstance();
+        auto mother_log_volume = log_volume_store->GetVolume(mother_volume);
+
+        if(mother_log_volume == nullptr) {
+            throw ModuleError("Cannot place detector in volume '" + mother_volume + "' because it does not exist");
+        }
 
         // Get position and orientation
         auto position = detector->getPosition();
@@ -95,7 +103,7 @@ void GeometryConstructionG4::build_detectors() {
         auto wrapperGeoTranslation = toG4Vector(model->getCenter() - model->getGeometricalCenter());
         wrapperGeoTranslation *= *rotWrapper;
         G4ThreeVector posWrapper = toG4Vector(position) - wrapperGeoTranslation;
-        detector->setExternalObject("rotation_matrix", rotWrapper);
+        geo_manager_->setExternalObject("rotation_matrix", rotWrapper, name);
         G4Transform3D transform_phys(*rotWrapper, posWrapper);
 
         auto scint_model = std::dynamic_pointer_cast<ScintillatorModel>(model);
@@ -112,7 +120,7 @@ void GeometryConstructionG4::build_detectors() {
             auto scint_material = scint_model->getScintMaterial();
             auto housing_material = scint_model->getHousingMaterial();
             auto housing_thickness = scint_model->getHousingThickness();
-            auto housing_reflectivity = scint_model->getHousingReflectivity();
+            auto housing_reflectivity_ = scint_model->getHousingReflectivity();
             auto housing_surface_model = static_cast<G4OpticalSurfaceModel>(scint_model->getHousingSurfaceModel());
             auto housing_surface_type = static_cast<G4SurfaceType>(scint_model->getHousingSurfaceType());
             auto housing_surface_finish = static_cast<G4OpticalSurfaceFinish>(scint_model->getHousingSurfaceFinish());
@@ -197,17 +205,17 @@ void GeometryConstructionG4::build_detectors() {
             // Create the housing logical volume
             auto housing_log = make_shared_no_delete<G4LogicalVolume>(
                 housing_solid_.get(), materials_[housing_material], "housing_" + name + "_log");
-            detector->setExternalObject("housing_log", housing_log);
+            geo_manager_->setExternalObject("housing_log", housing_log, name);
             housing_phys_ = make_shared_no_delete<G4PVPlacement>(
-                transform_phys, housing_log.get(), "housing_" + name + "_phys", world_log_.get(), false, 0, true);
-            detector->setExternalObject("housing_phys", housing_phys_);
+                transform_phys, housing_log.get(), "housing_" + name + "_phys", mother_log_volume, false, 0, true);
+            geo_manager_->setExternalObject("housing_phys", housing_phys_, name);
 
             /* Scintillator
             * the scintillator is the part that creates the optical photons
             */
             auto scint_log = make_shared_no_delete<G4LogicalVolume>(
                 scint_solid_.get(), materials_[scint_material], "scint_" + name + "_log");
-            detector->setExternalObject("scint_log", scint_log);
+            geo_manager_->setExternalObject("scint_log", scint_log, name);
 
             // Place the scintillator box inside the housing
             ROOT::Math::XYZVector scint_displacement = {0, 0, sensor_size.z() / 2.0};
@@ -215,7 +223,7 @@ void GeometryConstructionG4::build_detectors() {
             LOG(DEBUG) << "  - Scintillator\t\t:\t" << Units::display(scint_pos, {"mm", "um"});
             scint_phys_ = make_shared_no_delete<G4PVPlacement>(
                 nullptr, scint_pos, scint_log.get(), "scint_" + name + "_phys", housing_log.get(), false, 0, true);
-            detector->setExternalObject("scint_phys", scint_phys_);
+            geo_manager_->setExternalObject("scint_phys", scint_phys_, name);
 
             /* SENSOR
             * the sensitive photocathode is the part that collects the optical photons
@@ -226,7 +234,7 @@ void GeometryConstructionG4::build_detectors() {
             solids_.push_back(sensor_box);
             auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
                 sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
-            detector->setExternalObject("sensor_log", sensor_log);
+            geo_manager_->setExternalObject("sensor_log", sensor_log, name);
 
             // Place the sensor box
             ROOT::Math::XYZVector sensor_displacement = {0, 0, -scint_size.z() / 2.0};
@@ -234,7 +242,7 @@ void GeometryConstructionG4::build_detectors() {
             LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
             sensor_phys_ = make_shared_no_delete<G4PVPlacement>(
                 nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", housing_log.get(), false, 0, true);
-            detector->setExternalObject("sensor_phys", sensor_phys_);
+            geo_manager_->setExternalObject("sensor_phys", sensor_phys_, name);
 
             // FIXME:: Find somewhere to store this information for multiple scintillators
 
@@ -256,21 +264,21 @@ void GeometryConstructionG4::build_detectors() {
             const G4int num = sizeof(cebr3_Energy) / sizeof(G4double);
 
             // Housing Properties
-            G4double reflectivity[] = {housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity,
-                                       housing_reflectivity};
+            G4double reflectivity[] = {housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_,
+                                       housing_reflectivity_};
             assert(sizeof(reflectivity) == sizeof(cebr3_Energy));
             G4double efficiency[] = {
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -323,14 +331,14 @@ void GeometryConstructionG4::build_detectors() {
             auto wrapper_box = std::make_shared<G4Box>(
                 "wrapper_" + name, model->getSize().x() / 2.0, model->getSize().y() / 2.0, model->getSize().z() / 2.0);
             solids_.push_back(wrapper_box);
-            auto wrapper_log =
-                make_shared_no_delete<G4LogicalVolume>(wrapper_box.get(), world_material_, "wrapper_" + name + "_log");
-            detector->setExternalObject("wrapper_log", wrapper_log);
+            auto wrapper_log = make_shared_no_delete<G4LogicalVolume>(
+                wrapper_box.get(), materials_["world_material"], "wrapper_" + name + "_log");
+            geo_manager_->setExternalObject("wrapper_log", wrapper_log, name);
 
             // Place the wrapper
             auto wrapper_phys = make_shared_no_delete<G4PVPlacement>(
-                transform_phys, wrapper_log.get(), "wrapper_" + name + "_phys", world_log_.get(), false, 0, true);
-            detector->setExternalObject("wrapper_phys", wrapper_phys);
+                transform_phys, wrapper_log.get(), "wrapper_" + name + "_phys", mother_log_volume, false, 0, true);
+            geo_manager_->setExternalObject("wrapper_phys", wrapper_phys, name);
 
             /* SENSOR
             * the sensitive detector is the part that collects the deposits
@@ -344,14 +352,14 @@ void GeometryConstructionG4::build_detectors() {
             solids_.push_back(sensor_box);
             auto sensor_log = make_shared_no_delete<G4LogicalVolume>(
                 sensor_box.get(), materials_[sensor_material], "sensor_" + name + "_log");
-            detector->setExternalObject("sensor_log", sensor_log);
+            geo_manager_->setExternalObject("sensor_log", sensor_log, name);
 
             // Place the sensor box
             auto sensor_pos = toG4Vector(model->getSensorCenter() - model->getGeometricalCenter());
             LOG(DEBUG) << "  - Sensor\t\t:\t" << Units::display(sensor_pos, {"mm", "um"});
             sensor_phys_ = make_shared_no_delete<G4PVPlacement>(
                 nullptr, sensor_pos, sensor_log.get(), "sensor_" + name + "_phys", wrapper_log.get(), false, 0, true);
-            detector->setExternalObject("sensor_phys", sensor_phys_);
+            geo_manager_->setExternalObject("sensor_phys", sensor_phys_, name);
 
             // Create the pixel box and logical volume
             auto pixel_box = std::make_shared<G4Box>("pixel_" + name,
@@ -361,7 +369,7 @@ void GeometryConstructionG4::build_detectors() {
             solids_.push_back(pixel_box);
             auto pixel_log =
                 make_shared_no_delete<G4LogicalVolume>(pixel_box.get(), materials_["silicon"], "pixel_" + name + "_log");
-            detector->setExternalObject("pixel_log", pixel_log);
+            geo_manager_->setExternalObject("pixel_log", pixel_log, name);
 
             // Create the parameterization for the pixel grid
             std::shared_ptr<G4VPVParameterisation> pixel_param =
@@ -371,7 +379,7 @@ void GeometryConstructionG4::build_detectors() {
                                                        -model->getGridSize().x() / 2.0,
                                                        -model->getGridSize().y() / 2.0,
                                                        0);
-            detector->setExternalObject("pixel_param", pixel_param);
+            geo_manager_->setExternalObject("pixel_param", pixel_param, name);
 
             // WARNING: do not place the actual parameterization, only use it if we need it
 
@@ -391,14 +399,14 @@ void GeometryConstructionG4::build_detectors() {
                 // Create the logical volume for the chip
                 auto chip_log =
                     make_shared_no_delete<G4LogicalVolume>(chip_box.get(), materials_["silicon"], "chip_" + name + "_log");
-                detector->setExternalObject("chip_log", chip_log);
+                geo_manager_->setExternalObject("chip_log", chip_log, name);
 
                 // Place the chip
                 auto chip_pos = toG4Vector(model->getChipCenter() - model->getGeometricalCenter());
                 LOG(DEBUG) << "  - Chip\t\t:\t" << Units::display(chip_pos, {"mm", "um"});
                 auto chip_phys = make_shared_no_delete<G4PVPlacement>(
                     nullptr, chip_pos, chip_log.get(), "chip_" + name + "_phys", wrapper_log.get(), false, 0, true);
-                detector->setExternalObject("chip_phys", chip_phys);
+                geo_manager_->setExternalObject("chip_phys", chip_phys, name);
             }
 
             /*
@@ -462,8 +470,8 @@ void GeometryConstructionG4::build_detectors() {
 
                 ++support_idx;
             }
-            detector->setExternalObject("supports_log", supports_log);
-            detector->setExternalObject("supports_phys", supports_phys);
+            geo_manager_->setExternalObject("supports_log", supports_log, name);
+            geo_manager_->setExternalObject("supports_phys", supports_phys, name);
 
             // Build the bump bonds only for hybrid pixel detectors
             auto hybrid_model = std::dynamic_pointer_cast<HybridPixelDetectorModel>(model);
@@ -486,8 +494,8 @@ void GeometryConstructionG4::build_detectors() {
 
                 // Create the logical wrapper volume
                 auto bumps_wrapper_log = make_shared_no_delete<G4LogicalVolume>(
-                    bump_box.get(), world_material_, "bumps_wrapper_" + name + "_log");
-                detector->setExternalObject("bumps_wrapper_log", bumps_wrapper_log);
+                    bump_box.get(), materials_["world_material"], "bumps_wrapper_" + name + "_log");
+                geo_manager_->setExternalObject("bumps_wrapper_log", bumps_wrapper_log, name);
 
                 // Place the general bumps volume
                 G4ThreeVector bumps_pos = toG4Vector(hybrid_model->getBumpsCenter() - hybrid_model->getGeometricalCenter());
@@ -500,7 +508,7 @@ void GeometryConstructionG4::build_detectors() {
                                                                                false,
                                                                                0,
                                                                                true);
-                detector->setExternalObject("bumps_wrapper_phys", bumps_wrapper_phys);
+                geo_manager_->setExternalObject("bumps_wrapper_phys", bumps_wrapper_phys, name);
 
                 // Create the individual bump solid
                 auto bump_sphere = std::make_shared<G4Sphere>(
@@ -515,7 +523,7 @@ void GeometryConstructionG4::build_detectors() {
                 // Create the logical volume for the individual bumps
                 auto bumps_cell_log =
                     make_shared_no_delete<G4LogicalVolume>(bump.get(), materials_["solder"], "bumps_" + name + "_log");
-                detector->setExternalObject("bumps_cell_log", bumps_cell_log);
+                geo_manager_->setExternalObject("bumps_cell_log", bumps_cell_log, name);
 
                 // Place the bump bonds grid
                 std::shared_ptr<G4VPVParameterisation> bumps_param = std::make_shared<Parameterization2DG4>(
@@ -527,7 +535,7 @@ void GeometryConstructionG4::build_detectors() {
                     -(hybrid_model->getNPixels().y() * hybrid_model->getPixelSize().y()) / 2.0 +
                         (hybrid_model->getBumpsCenter().y() - hybrid_model->getCenter().y()),
                     0);
-                detector->setExternalObject("bumps_param", bumps_param);
+                geo_manager_->setExternalObject("bumps_param", bumps_param, name);
 
                 std::shared_ptr<G4PVParameterised> bumps_param_phys =
                     std::make_shared<ParameterisedG4>("bumps_" + name + "_phys",
@@ -537,7 +545,7 @@ void GeometryConstructionG4::build_detectors() {
                                                       hybrid_model->getNPixels().x() * hybrid_model->getNPixels().y(),
                                                       bumps_param.get(),
                                                       false);
-                detector->setExternalObject("bumps_param_phys", bumps_param_phys);
+                geo_manager_->setExternalObject("bumps_param_phys", bumps_param_phys, name);
             }
 
             // ALERT: NO COVER LAYER YET

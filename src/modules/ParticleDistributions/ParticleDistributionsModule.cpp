@@ -62,8 +62,7 @@ void ParticleDistributionsModule::init() {
     simple_tree_->Branch("initial_momentum_z", &initial_momentum_z_);
     simple_tree_->Branch("final_momentum_x", &final_momentum_x_);
     simple_tree_->Branch("final_momentum_y", &final_momentum_y_);
-    simple_tree_->Branch("final_momentum_z", &final_momentum_z_);
-    simple_tree_->Branch("n_steps", &n_steps_);*/
+    simple_tree_->Branch("final_momentum_z", &final_momentum_z_);*/
 }
 
 void ParticleDistributionsModule::run(unsigned int) {
@@ -122,7 +121,6 @@ void ParticleDistributionsModule::run(unsigned int) {
         final_momentum_x_ = final_momentum.X();
         final_momentum_y_ = final_momentum.Y();
         final_momentum_z_ = final_momentum.Z();
-        n_steps_ = proton.getNumberOfSteps();
         // simple_tree_->Fill();
 
         if(store_particles_) {
