@@ -104,7 +104,7 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
 
     // Deposit electron
     // FIXME: Charge carrier?
-    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, 0, end_time, edep);
+    deposits_.emplace_back(deposit_position, global_deposit_position, CarrierType::ELECTRON, edep, end_time);
     deposit_to_id_.push_back(trackID);
     // auto start_pos = track_begin_[trackID];
     // FIXME: edep or wavelenght?
@@ -121,6 +121,8 @@ G4bool SensitiveScintillatorActionG4::ProcessHits(G4Step* step, G4TouchableHisto
         LOG(ERROR) << "Difference G4 to internal: "
                    << Units::display((deposit_position_g4loc - deposit_position), {"mm", "um"});
     }
+    // Pass the energy of each particle
+    energies_.push_back(edep);
     return true;
 }
 
@@ -134,6 +136,10 @@ unsigned long SensitiveScintillatorActionG4::getTotalScintillatorHits() {
 
 unsigned long SensitiveScintillatorActionG4::getScintillatorHits() {
     return scint_hits_;
+}
+
+std::vector<double> SensitiveScintillatorActionG4::getEnergies() {
+    return energies_;
 }
 
 void SensitiveScintillatorActionG4::dispatchMessages() {

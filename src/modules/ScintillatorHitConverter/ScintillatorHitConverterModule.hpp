@@ -63,18 +63,20 @@ namespace allpix {
         void finalize() override;
 
     private:
+        // std::list<Configuration> quantum_efficiency_;
         Messenger* messenger_;
         std::shared_ptr<const Detector> detector_;
+
         std::shared_ptr<DetectorModel> model_;
 
+        std::vector<double> efficiency_{};
+        std::vector<double> wavelength_{};
         // Random generator for diffusion calculation
         std::mt19937_64 random_generator_;
 
-        // Config parameters: Check whether plots should be generated
-        // bool output_plots_;
-        // double integration_time_{};
-
         // Deposits for the bound detector in this event
+        size_t total_propagated_{};
+        size_t total_received_{};
         std::shared_ptr<ScintillatorHitMessage> scint_hit_message_;
     };
 } // namespace allpix

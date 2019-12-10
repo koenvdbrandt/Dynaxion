@@ -10,17 +10,19 @@
 #ifndef ALLPIX_SCINTILLATOR_HIT_H
 #define ALLPIX_SCINTILLATOR_HIT_H
 
+#include <Math/Point3D.h>
 #include <TRef.h>
 
 #include "MCParticle.hpp"
-#include "SensorCharge.hpp"
+
+#include "Object.hpp"
 
 namespace allpix {
     /**
      * @ingroup Objects
      * @brief Charge deposit in sensor of detector
      */
-    class ScintillatorHit : public SensorCharge {
+    class ScintillatorHit : public Object {
 
     public:
         /**
@@ -35,11 +37,35 @@ namespace allpix {
         ScintillatorHit(ROOT::Math::XYZPoint local_position,
                         ROOT::Math::XYZPoint global_position,
                         CarrierType type,
-                        unsigned int charge,
+                        double charge,
                         double event_time,
-                        double charge_deposit,
                         const MCParticle* mc_particle = nullptr);
+        /**
+         * @brief Get local position of the set of charges in the sensor
+         * @return Local position of charges
+         */
+        ROOT::Math::XYZPoint getLocalPosition() const;
 
+        /**
+         * @brief Get the global position of the set of charges in the sensor
+         */
+        ROOT::Math::XYZPoint getGlobalPosition() const;
+
+        /**
+         * @brief Get the type of charge carrier
+         * @return Type of charge carrier
+         */
+        CarrierType getType() const;
+        /**
+         * @brief Get total amount of charges stored
+         * @return Total charge stored
+         */
+        double getCharge() const;
+        /**
+         * @brief Get time after start of event
+         * @return Time from start event
+         */
+        double getEventTime() const;
         /**
          * @brief Get related Monte-Carlo particle
          * @return Pointer to possible Monte-Carlo particle
@@ -52,9 +78,6 @@ namespace allpix {
          * @warning Special method because MCParticle is only known after deposit creation, should not be replaced later.
          */
         void setMCParticle(const MCParticle* mc_particle);
-
-        double getChargeDeposit() const;
-
         /**
          * @brief Print an ASCII representation of DepositedCharge to the given stream
          * @param out Stream to print to
@@ -64,15 +87,20 @@ namespace allpix {
         /**
          * @brief ROOT class definition
          */
-        ClassDefOverride(ScintillatorHit, 2);
+        ClassDefOverride(ScintillatorHit, 1);
         /**
          * @brief Default constructor for ROOT I/O
          */
         ScintillatorHit() = default;
 
     private:
+        ROOT::Math::XYZPoint local_position_;
+        ROOT::Math::XYZPoint global_position_;
+
+        CarrierType type_{};
+        double charge_{};
+        double event_time_{};
         TRef mc_particle_;
-        double charge_deposit_;
     };
 
     /**

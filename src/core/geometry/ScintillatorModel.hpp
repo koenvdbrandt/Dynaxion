@@ -33,21 +33,35 @@ namespace allpix {
     public:
         explicit ScintillatorModel(std::string type, const ConfigReader& reader) : DetectorModel(std::move(type), reader) {
             auto config = reader.getHeaderConfiguration();
-            // Excess around the chip from the pixel grid
             setScintShape(config.get<std::string>("scintillator_shape", "box"));
             if(scint_shape_ == "box") {
                 setScintSize(config.get<ROOT::Math::XYZVector>("scintillator_size"));
             }
             if(scint_shape_ == "cylinder") {
-                setScintRadius(config.get<double>("scintillator_radius"));
-                setScintHeight(config.get<double>("scintillator_height"));
-                setScintSize({2 * scint_radius_, 2 * scint_radius_, scint_height_});
+                auto scint_size = config.get<ROOT::Math::XYVector>("scintillator_size");
+                setScintSize({scint_size.x(), scint_size.x(), scint_size.y()});
             }
-            setScintMaterial(config.get<std::string>("scintillator_material", "vacuum"));
-            setHousingShape(config.get<std::string>("housing_shape", scint_shape_));
+            setScintMaterial(config.get<std::string>("scintillator_material"));
             setHousingThickness(config.get<double>("housing_thickness"));
             setHousingReflectivity(config.get<double>("housing_reflectivity", 0));
             setHousingMaterial(config.get<std::string>("housing_material", "vacuum"));
+            // FIXME Need something to require scintillator size
+            auto sensor_size = config.get<ROOT::Math::XYZVector>("sensor_size");
+            (void)sensor_size;
+            // Set defaults for unused DetectorModel values
+
+            setNPixels({1, 1});
+            setPixelSize({sensor_size_.x(), sensor_size_.y()});
+            setSensorThickness(sensor_size_.z());
+            // Set Optical Surface properties
+            setHousingSurfaceModel(config.get<int>("housing_surface_model", 0));
+            setHousingSurfaceType(config.get<int>("housing_surface_type", 0));
+            setHousingSurfaceFinish(config.get<int>("housing_surface_finish", 0));
+            setHousingSurfaceValue(config.get<double>("housing_surface_value", 1));
+            setPhotocathodeSurfaceModel(config.get<int>("photocathode_surface_model", 0));
+            setPhotocathodeSurfaceType(config.get<int>("photocathode_surface_type", 0));
+            setPhotocathodeSurfaceFinish(config.get<int>("photocathode_surface_finish", 0));
+            setPhotocathodeSurfaceValue(config.get<double>("photocathode_surface_value", 1));
         }
 
         /**
@@ -60,27 +74,6 @@ namespace allpix {
          * @param val housing thickness
          */
         std::string getScintShape() const { return scint_shape_; }
-        /**
-        * @brief Set the thickness of the housing of the scintillator
-        * @param val housing thickness
-        */
-        void setScintHeight(double val) { scint_height_ = val; }
-        /**
-         * @brief Set the thickness of the housing of the scintillator
-         * @param val housing thickness
-         */
-        double getScintHeight() const { return scint_height_; }
-        /**
-        * @brief Set the thickness of the housing of the scintillator
-        * @param val housing thickness
-        */
-        void setScintRadius(double val) { scint_radius_ = val; }
-        /**
-         * @brief Set the thickness of the housing of the scintillator
-         * @param val housing thickness
-         */
-        double getScintRadius() const { return scint_radius_; }
-
         /**
          * @brief Set the size of the scintillator
          * @param val Size of scintillator
@@ -116,11 +109,6 @@ namespace allpix {
          * @param val Hhousing material
          */
         void setHousingMaterial(std::string val) { housing_material_ = std::move(val); }
-        /**
-        * @brief Set the photo mulitplier type which is used by the scintillator
-        * @param val Photo multiplier type
-        */
-        void setHousingShape(std::string val) { housing_shape_ = std::move(val); }
 
         /**
          * @brief Get the thickness of the housing of the scintillator
@@ -137,11 +125,24 @@ namespace allpix {
          * @return Housing material
          */
         std::string getHousingMaterial() const { return housing_material_; }
-        /**
-         * @brief Set the photo mulitplier type which is used by the scintillator
-         * @return Photo multiplier type
-         */
-        std::string getHousingShape() const { return housing_shape_; }
+
+        void setHousingSurfaceModel(int val) { housing_surface_model_ = val; }
+        void setHousingSurfaceType(int val) { housing_surface_type_ = val; }
+        void setHousingSurfaceFinish(int val) { housing_surface_finish_ = val; }
+        void setHousingSurfaceValue(double val) { housing_surface_value_ = val; }
+        void setPhotocathodeSurfaceModel(int val) { photocathode_surface_model_ = val; }
+        void setPhotocathodeSurfaceType(int val) { photocathode_surface_type_ = val; }
+        void setPhotocathodeSurfaceFinish(int val) { photocathode_surface_finish_ = val; }
+        void setPhotocathodeSurfaceValue(double val) { photocathode_surface_value_ = val; }
+
+        int getHousingSurfaceModel() const { return housing_surface_model_; }
+        int getHousingSurfaceType() const { return housing_surface_type_; }
+        int getHousingSurfaceFinish() const { return housing_surface_finish_; }
+        double getHousingSurfaceValue() const { return housing_surface_value_; }
+        int getPhotocathodeSurfaceModel() const { return photocathode_surface_model_; }
+        int getPhotocathodeSurfaceType() const { return photocathode_surface_type_; }
+        int getPhotocathodeSurfaceFinish() const { return photocathode_surface_finish_; }
+        double getPhotocathodeSurfaceValue() const { return photocathode_surface_value_; }
 
         /**
          * @brief Get size of the Detector
@@ -165,15 +166,22 @@ namespace allpix {
         // Scintillator stuff
         std::string scint_shape_;
         ROOT::Math::XYZVector scint_size_;
-        double scint_radius_;
-        double scint_height_;
         std::string scint_material_;
 
         // Housing stuff
-        std::string housing_shape_;
         double housing_thickness_{};
         double housing_reflectivity_{};
         std::string housing_material_;
+
+        // Optical surface stuff
+        int housing_surface_model_{};
+        int housing_surface_type_{};
+        int housing_surface_finish_{};
+        double housing_surface_value_{};
+        int photocathode_surface_model_{};
+        int photocathode_surface_type_{};
+        int photocathode_surface_finish_{};
+        double photocathode_surface_value_{};
     };
 } // namespace allpix
 
