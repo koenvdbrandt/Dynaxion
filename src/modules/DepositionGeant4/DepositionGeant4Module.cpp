@@ -289,15 +289,15 @@ void DepositionGeant4Module::init() {
         LOG(TRACE) << "Creating output plots";
 
         // Plot axis are in kilo electrons - convert from framework units!
-        int maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge", 100), "ke"));
-        int maximum_hits = config_.get<int>("output_scale_hits", 10000);
-        int maximum_wavelength = static_cast<int>(Units::convert(config_.get<int>("output_scale_wavelength", 1000), "nm"));
-        int maximum_time = static_cast<int>(Units::convert(config_.get<int>("output_scale_time", 200), "ns"));
+        auto maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge", 100), "ke"));
+        auto maximum_hits = config_.get<int>("output_scale_hits", 10000);
+        auto maximum_wavelength = static_cast<int>(Units::convert(config_.get<int>("output_scale_wavelength", 1000), "nm"));
+        auto maximum_time = static_cast<int>(Units::convert(config_.get<int>("output_scale_time", 200), "ns"));
 
-        int nbins_charge = 5 * maximum_charge;
-        int nbins_hits = 2 * maximum_hits;
-        int nbins_wavelength = 1 * maximum_wavelength;
-        int nbins_time = 5 * maximum_time;
+        auto nbins_charge = 5 * maximum_charge;
+        auto nbins_hits = 2 * maximum_hits;
+        auto nbins_wavelength = 1 * maximum_wavelength;
+        auto nbins_time = 5 * maximum_time;
 
         // Create histograms if needed
         for(auto& sensor : detector_sensors_) {
