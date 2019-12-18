@@ -289,7 +289,7 @@ void DepositionGeant4Module::init() {
         LOG(TRACE) << "Creating output plots";
 
         // Plot axis are in kilo electrons - convert from framework units!
-        int maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge"), "ke"));
+        int maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge", 100), "ke"));
         int maximum_hits = config_.get<int>("output_scale_hits", 10000);
         int maximum_wavelength = static_cast<int>(Units::convert(config_.get<int>("output_scale_wavelength", 1000), "nm"));
         int maximum_time = static_cast<int>(Units::convert(config_.get<int>("output_scale_time", 200), "ns"));
