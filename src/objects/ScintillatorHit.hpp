@@ -30,15 +30,18 @@ namespace allpix {
          * @param local_position Local position of the deposit in the sensor
          * @param global_position Global position of the propagated set of charges in the sensor
          * @param type Type of the carrier
-         * @param charge Total charge of the deposit
+         * @param energy Total energy of the deposit
+         * @param wavelength Total wavelength of the deposit
          * @param event_time Time of deposition after event start
          * @param mc_particle Optional pointer to related MC particle
          */
         ScintillatorHit(ROOT::Math::XYZPoint local_position,
                         ROOT::Math::XYZPoint global_position,
                         CarrierType type,
-                        double charge,
-                        double event_time,
+                        double energy,
+                        double wavelength,
+                        double emission_time,
+                        double detection_time,
                         const MCParticle* mc_particle = nullptr);
         /**
          * @brief Get local position of the set of charges in the sensor
@@ -57,15 +60,25 @@ namespace allpix {
          */
         CarrierType getType() const;
         /**
-         * @brief Get total amount of charges stored
+         * @brief Get energy of the optical photon
          * @return Total charge stored
          */
-        double getCharge() const;
+        double getEnergy() const;
         /**
-         * @brief Get time after start of event
+         * @brief Get wavelength of the optical photon
+         * @return Total charge stored
+         */
+        double getWavelength() const;
+        /**
+         * @brief Get time of emmision after start of event
          * @return Time from start event
          */
-        double getEventTime() const;
+        double getEmissionTime() const;
+        /**
+         * @brief Get time of detection after start of event
+         * @return Time from start event
+         */
+        double getDetectionTime() const;
         /**
          * @brief Get related Monte-Carlo particle
          * @return Pointer to possible Monte-Carlo particle
@@ -98,8 +111,10 @@ namespace allpix {
         ROOT::Math::XYZPoint global_position_;
 
         CarrierType type_{};
-        double charge_{};
-        double event_time_{};
+        double energy_{};
+        double wavelength_{};
+        double emission_time_{};
+        double detection_time_{};
         TRef mc_particle_;
     };
 

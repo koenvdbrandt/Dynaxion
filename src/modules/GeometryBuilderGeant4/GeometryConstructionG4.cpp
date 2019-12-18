@@ -217,12 +217,12 @@ void GeometryConstructionG4::init_materials() {
                              2.44, 2.44, 2.44, 2.44, 2.44, 2.44, 2.45, 2.46, 2.47, 2.48, 2.49, 2.50, 2.51, 2.52};
     assert(sizeof(cebr3_RIND) == sizeof(cebr3_ch));
     // Info from https://www.advatech-uk.co.uk/cebr3.html -> Mass attenuation coeff = abs_length
-    G4double cebr3_ABSL[] = {100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
-                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
-                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
-                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
-                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm,
-                             100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm, 100 * CLHEP::cm};
+    G4double cebr3_ABSL[] = {10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm,
+                             10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm,
+                             10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm,
+                             10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm,
+                             10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm,
+                             10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm, 10000 * CLHEP::cm};
     assert(sizeof(cebr3_ABSL) == sizeof(cebr3_ch));
     auto CeBr3_mt = new G4MaterialPropertiesTable();
     CeBr3_mt->AddProperty("FASTCOMPONENT", cebr3_ch, cebr3_SC, size);
@@ -294,11 +294,13 @@ void GeometryConstructionG4::build_detectors() {
             auto housing_surface_type = static_cast<G4SurfaceType>(scint_model->getHousingSurfaceType());
             auto housing_surface_finish = static_cast<G4OpticalSurfaceFinish>(scint_model->getHousingSurfaceFinish());
             auto housing_surface_value = scint_model->getHousingSurfaceValue();
+            auto housing_surface_rindex = scint_model->getHousingSurfaceRIndex();
             auto photocathode_surface_model = static_cast<G4OpticalSurfaceModel>(scint_model->getPhotocathodeSurfaceModel());
             auto photocathode_surface_type = static_cast<G4SurfaceType>(scint_model->getPhotocathodeSurfaceType());
             auto photocathode_surface_finish =
                 static_cast<G4OpticalSurfaceFinish>(scint_model->getPhotocathodeSurfaceFinish());
             auto photocathode_surface_value = scint_model->getHousingSurfaceValue();
+            auto photocathode_surface_rindex = scint_model->getHousingSurfaceRIndex();
 
             // Check is scintillator has the correct properties
             auto scint_prop_table = materials_[scint_material]->GetMaterialPropertiesTable();
@@ -321,6 +323,14 @@ void GeometryConstructionG4::build_detectors() {
                 throw ModuleError("Optical surface type must be 0,1 or 2");
             } else if(housing_surface_finish > 29 || photocathode_surface_finish > 29) {
                 throw ModuleError("Optical surface can't be larger than 29");
+            } else if(housing_surface_finish == 8 || housing_surface_finish == 16 || housing_surface_finish == 24 ||
+                      photocathode_surface_finish == 8 || photocathode_surface_finish == 16 ||
+                      photocathode_surface_finish == 24) {
+                throw ModuleError("Optical surface can't be 8, 16 or 24 due to an error in Geant4");
+            } else if(((housing_surface_finish == 2 || housing_surface_finish == 5) && housing_surface_rindex == 0) ||
+                      ((photocathode_surface_finish == 2 || photocathode_surface_finish == 5) &&
+                       photocathode_surface_rindex == 0)) {
+                throw ModuleError("If your finish is -backpainted, a refractive index of the surface is required.");
             }
 
             else if((housing_surface_type == 2 && housing_surface_finish < 6) ||
@@ -449,14 +459,34 @@ void GeometryConstructionG4::build_detectors() {
                                        housing_reflectivity,
                                        housing_reflectivity};
             assert(sizeof(reflectivity) == sizeof(cebr3_Energy));
-            G4double efficiency[] = {
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            };
+            G4double housing_efficiency[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
             assert(sizeof(efficiency) == sizeof(cebr3_Energy));
             auto scintHsngPT = new G4MaterialPropertiesTable();
             scintHsngPT->AddProperty("REFLECTIVITY", cebr3_Energy, reflectivity, num);
-            scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, efficiency, num);
-
+            scintHsngPT->AddProperty("EFFICIENCY", cebr3_Energy, housing_efficiency, num);
+            if(housing_surface_rindex != 0) {
+                G4double housing_rindex[] = {
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                    housing_surface_rindex,
+                };
+                scintHsngPT->AddProperty("RINDEX", cebr3_Energy, housing_rindex, num);
+            }
             auto OpScintHousingSurface = new G4OpticalSurface("HousingSurface",
                                                               housing_surface_model,
                                                               housing_surface_finish,
@@ -476,6 +506,28 @@ void GeometryConstructionG4::build_detectors() {
             photocath_mt->AddProperty("EFFICIENCY", cebr3_Energy, photocath_EFF, num);
             photocath_mt->AddProperty("REALRINDEX", cebr3_Energy, photocath_ReR, num);
             photocath_mt->AddProperty("IMAGINARYRINDEX", cebr3_Energy, photocath_ImR, num);
+            if(photocathode_surface_rindex != 0) {
+                G4double photocathode_rindex[] = {
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                    photocathode_surface_rindex,
+                };
+                photocath_mt->AddProperty("RINDEX", cebr3_Energy, photocathode_rindex, num);
+            }
             auto photocath_opsurf = new G4OpticalSurface("photocath_opsurf",
                                                          photocathode_surface_model,
                                                          photocathode_surface_finish,

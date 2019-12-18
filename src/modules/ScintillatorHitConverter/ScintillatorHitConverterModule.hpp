@@ -71,6 +71,12 @@ namespace allpix {
 
         std::vector<double> efficiency_{};
         std::vector<double> wavelength_{};
+
+        // Output plot for drift time
+        bool output_plots_;
+        TH1D* wavelength_before_;
+        TH1D* wavelength_after_;
+        TH1D* photo_electrons_;
         // Random generator for diffusion calculation
         std::mt19937_64 random_generator_;
 

@@ -289,30 +289,52 @@ void DepositionGeant4Module::init() {
         LOG(TRACE) << "Creating output plots";
 
         // Plot axis are in kilo electrons - convert from framework units!
-        int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+        int maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge"), "ke"));
+        int maximum_hits = static_cast<int>(config_.get<int>("output_scale_hits", 10000));
+        int maximum_wavelength = static_cast<int>(config_.get<int>("output_scale_wavelength", 1000));
+        int maximum_time = static_cast<int>(Units::convert(config_.get<int>("output_scale_time", 200), "ns"));
 
-        int nbins = 5 * maximum;
+        int nbins_charge = 5 * maximum_charge;
+        int nbins_hits = 2 * maximum_hits;
+        int nbins_wavelength = 1 * maximum_wavelength;
+        int nbins_time = 5 * maximum_time;
 
         // Create histograms if needed
         for(auto& sensor : detector_sensors_) {
             std::string plot_name_detector = "deposited_charge_" + sensor->getName();
 
-            charge_per_event_[sensor->getName()] = new TH1D(
-                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+            charge_per_event_[sensor->getName()] = new TH1D(plot_name_detector.c_str(),
+                                                            "deposited charge per event;deposited charge [ke];events",
+                                                            nbins_charge,
+                                                            0,
+                                                            maximum_charge);
         }
         for(auto& sensor : scintillator_sensors_) {
             std::string plot_name_scintillator_hits = "scintillator_hits_" + sensor->getName();
             std::string plot_name_wavelenghts = "wavelengths_" + sensor->getName();
-            std::string plot_name_charges = "charges_" + sensor->getName();
+            std::string plot_name_energies = "energies_" + sensor->getName();
+            std::string plot_name_emission_time = "emission_time_" + sensor->getName();
+            std::string plot_name_detection_time = "detection_time_" + sensor->getName();
+            std::string plot_name_travel_time = "travel_time_" + sensor->getName();
 
             hits_per_event_[sensor->getName()] = new TH1D(plot_name_scintillator_hits.c_str(),
                                                           "scintillator hits per event; scintillator hits ;events",
-                                                          nbins,
+                                                          nbins_hits,
                                                           0,
-                                                          maximum);
-            charges_[sensor->getName()] = new TH1D(plot_name_charges.c_str(), "charges; charges ;events", nbins, 0, 0.00001);
-            wavelengths_[sensor->getName()] =
-                new TH1D(plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts ;events", nbins, 0, 1000);
+                                                          maximum_hits);
+            energies_[sensor->getName()] = new TH1D(plot_name_energies.c_str(),
+                                                    "energies; energies ;photons",
+                                                    nbins_wavelength,
+                                                    0,
+                                                    1 / (100 * maximum_wavelength));
+            wavelengths_[sensor->getName()] = new TH1D(
+                plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts ;photons", nbins_wavelength, 0, maximum_wavelength);
+            emission_time_[sensor->getName()] = new TH1D(
+                plot_name_emission_time.c_str(), "emission_time; emission_time ;photons", nbins_time, 0, maximum_time);
+            detection_time_[sensor->getName()] = new TH1D(
+                plot_name_detection_time.c_str(), "detection_time; detection_time ;photons", nbins_time, 0, maximum_time);
+            travel_time_[sensor->getName()] =
+                new TH1D(plot_name_travel_time.c_str(), "travel_time; travel_time ;photons", nbins_time, 0, maximum_time);
         }
     }
 
@@ -361,18 +383,21 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         }
     }
     for(auto& sensor : scintillator_sensors_) {
-        sensor->dispatchMessages();
 
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
-            auto hits = static_cast<double>(sensor->getScintillatorHits());
+            auto hits = static_cast<double>(sensor->getDeposits().size());
             hits_per_event_[sensor->getName()]->Fill(hits);
 
-            for(auto& charge : sensor->getEnergies()) {
-                charges_[sensor->getName()]->Fill(charge);
-                wavelengths_[sensor->getName()]->Fill((0.0012398) / charge);
+            for(auto& deposits : sensor->getDeposits()) {
+                energies_[sensor->getName()]->Fill(deposits.getEnergy());
+                wavelengths_[sensor->getName()]->Fill(deposits.getWavelength());
+                emission_time_[sensor->getName()]->Fill(deposits.getEmissionTime());
+                detection_time_[sensor->getName()]->Fill(deposits.getDetectionTime());
+                travel_time_[sensor->getName()]->Fill(deposits.getDetectionTime() - deposits.getEmissionTime());
             }
         }
+        sensor->dispatchMessages();
     }
 
     track_info_manager_->dispatchMessage(this, messenger_);
@@ -399,10 +424,19 @@ void DepositionGeant4Module::finalize() {
         for(auto& plot : hits_per_event_) {
             plot.second->Write();
         }
-        for(auto& plot : charges_) {
+        for(auto& plot : energies_) {
             plot.second->Write();
         }
         for(auto& plot : wavelengths_) {
+            plot.second->Write();
+        }
+        for(auto& plot : emission_time_) {
+            plot.second->Write();
+        }
+        for(auto& plot : detection_time_) {
+            plot.second->Write();
+        }
+        for(auto& plot : travel_time_) {
             plot.second->Write();
         }
     }

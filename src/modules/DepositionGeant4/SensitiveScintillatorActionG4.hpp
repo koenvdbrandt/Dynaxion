@@ -50,12 +50,10 @@ namespace allpix {
         unsigned long getTotalScintillatorHits();
 
         /**
-         * @brief Get the number of hits deposited in the sensitive device for this event only.
-         * @warning The correct number is only available after dispatching the message, before it refers to the previous
-         * event.
+         * @brief Get the information of all deposited hits in the sensitive device for this event only.
+         * @warning The correct number is only available before dispatching the message, after it refers to an empty vector.
          */
-        unsigned long getScintillatorHits();
-        std::vector<double> getEnergies();
+        std::vector<ScintillatorHit> getDeposits();
         /**
          * @brief Get the name of the sensitive device bound to this action
          */
@@ -86,7 +84,6 @@ namespace allpix {
 
         // Statistics of total and per-event registered hits
         unsigned long total_scint_hits_{};
-        unsigned long scint_hits_{};
 
         // Set of deposited charges in this event!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
         std::vector<ScintillatorHit> deposits_;

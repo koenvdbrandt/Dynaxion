@@ -16,12 +16,14 @@ using namespace allpix;
 ScintillatorHit::ScintillatorHit(ROOT::Math::XYZPoint local_position,
                                  ROOT::Math::XYZPoint global_position,
                                  CarrierType type,
-                                 double charge,
-                                 double event_time,
+                                 double energy,
+                                 double wavelength,
+                                 double emission_time,
+                                 double detection_time,
                                  const MCParticle* mc_particle)
 
-    : local_position_(std::move(local_position)), global_position_(std::move(global_position)), type_(type), charge_(charge),
-      event_time_(event_time) {
+    : local_position_(std::move(local_position)), global_position_(std::move(global_position)), type_(type), energy_(energy),
+      wavelength_(wavelength), emission_time_(emission_time), detection_time_(detection_time) {
     setMCParticle(mc_particle);
 }
 
@@ -37,16 +39,25 @@ CarrierType ScintillatorHit::getType() const {
     return type_;
 }
 
-double ScintillatorHit::getCharge() const {
-    return charge_;
+double ScintillatorHit::getEnergy() const {
+    return energy_;
 }
 
-double ScintillatorHit::getEventTime() const {
-    return event_time_;
+double ScintillatorHit::getWavelength() const {
+    return wavelength_;
+}
+
+double ScintillatorHit::getEmissionTime() const {
+    return emission_time_;
+}
+
+double ScintillatorHit::getDetectionTime() const {
+    return detection_time_;
 }
 
 void ScintillatorHit::print(std::ostream& out) const {
-    out << "Type: " << (type_ == CarrierType::ELECTRON ? "\"e\"" : "\"h\"") << "\nCharge: " << charge_ << " e"
+    out << "Type: " << (type_ == CarrierType::ELECTRON ? "\"e\"" : "\"h\"") << "\nEnergy " << energy_
+        << " eV (Wavelength = " << wavelength_ << "nm"
         << "\nLocal Position: (" << local_position_.X() << ", " << local_position_.Y() << ", " << local_position_.Z()
         << ") mm\n"
         << "Global Position: (" << global_position_.X() << ", " << global_position_.Y() << ", " << global_position_.Z()

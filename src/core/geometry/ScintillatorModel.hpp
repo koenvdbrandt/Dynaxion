@@ -58,10 +58,12 @@ namespace allpix {
             setHousingSurfaceType(config.get<int>("housing_surface_type", 0));
             setHousingSurfaceFinish(config.get<int>("housing_surface_finish", 0));
             setHousingSurfaceValue(config.get<double>("housing_surface_value", 1));
+            setHousingSurfaceRIndex(config.get<double>("housing_surface_refractive_index", 0));
             setPhotocathodeSurfaceModel(config.get<int>("photocathode_surface_model", 0));
             setPhotocathodeSurfaceType(config.get<int>("photocathode_surface_type", 0));
             setPhotocathodeSurfaceFinish(config.get<int>("photocathode_surface_finish", 0));
             setPhotocathodeSurfaceValue(config.get<double>("photocathode_surface_value", 1));
+            setPhotocathodeSurfaceRIndex(config.get<double>("photocathode_surface_refractive_index", 0));
         }
 
         /**
@@ -130,19 +132,23 @@ namespace allpix {
         void setHousingSurfaceType(int val) { housing_surface_type_ = val; }
         void setHousingSurfaceFinish(int val) { housing_surface_finish_ = val; }
         void setHousingSurfaceValue(double val) { housing_surface_value_ = val; }
+        void setHousingSurfaceRIndex(double val) { housing_surface_refractive_index_ = val; }
         void setPhotocathodeSurfaceModel(int val) { photocathode_surface_model_ = val; }
         void setPhotocathodeSurfaceType(int val) { photocathode_surface_type_ = val; }
         void setPhotocathodeSurfaceFinish(int val) { photocathode_surface_finish_ = val; }
         void setPhotocathodeSurfaceValue(double val) { photocathode_surface_value_ = val; }
+        void setPhotocathodeSurfaceRIndex(double val) { photocathode_surface_refractive_index_ = val; }
 
         int getHousingSurfaceModel() const { return housing_surface_model_; }
         int getHousingSurfaceType() const { return housing_surface_type_; }
         int getHousingSurfaceFinish() const { return housing_surface_finish_; }
         double getHousingSurfaceValue() const { return housing_surface_value_; }
+        double getHousingSurfaceRIndex() const { return housing_surface_refractive_index_; }
         int getPhotocathodeSurfaceModel() const { return photocathode_surface_model_; }
         int getPhotocathodeSurfaceType() const { return photocathode_surface_type_; }
         int getPhotocathodeSurfaceFinish() const { return photocathode_surface_finish_; }
         double getPhotocathodeSurfaceValue() const { return photocathode_surface_value_; }
+        double getPhotocathodeSurfaceRIndex() const { return photocathode_surface_refractive_index_; }
 
         /**
          * @brief Get size of the Detector
@@ -178,10 +184,12 @@ namespace allpix {
         int housing_surface_type_{};
         int housing_surface_finish_{};
         double housing_surface_value_{};
+        double housing_surface_refractive_index_{};
         int photocathode_surface_model_{};
         int photocathode_surface_type_{};
         int photocathode_surface_finish_{};
         double photocathode_surface_value_{};
+        double photocathode_surface_refractive_index_{};
     };
 } // namespace allpix
 

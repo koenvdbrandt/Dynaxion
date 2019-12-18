@@ -67,37 +67,19 @@ namespace allpix {
         std::shared_ptr<const Detector> detector_;
         std::shared_ptr<DetectorModel> model_;
 
+        int gain_stages_;
+
         // Random generator for diffusion calculation
         std::mt19937_64 random_generator_;
 
         // Config parameters: Check whether plots should be generated
         bool output_plots_;
-        double integration_time_{};
-
-        // Carrier type to be propagated
-        // CarrierType propagate_type_;
-        // Side to propagate too
-        // double top_z_;
-
-        // Precalculated values for electron and hole mobility
-        double hole_Vm_;
-        double hole_Ec_;
-        double hole_Beta_;
-        double electron_Vm_;
-        double electron_Ec_;
-        double electron_Beta_;
-
-        // Calculated slope of the electric field
-        // double slope_efield_;
-
-        // Precalculated value for Boltzmann constant:
-        double boltzmann_kT_;
 
         // Output plot for drift time
-        TH1D* drift_time_histo_;
+        TH1D* photo_electrons_before_;
+        TH1D* photo_electrons_after_;
 
         // Deposits for the bound detector in this event
-        // std::shared_ptr<ScintillatorHitMessage> scintillator_message_;
         std::shared_ptr<DepositedChargeMessage> deposits_message_;
         std::shared_ptr<PropagatedChargeMessage> propagated_charge_message_;
     };

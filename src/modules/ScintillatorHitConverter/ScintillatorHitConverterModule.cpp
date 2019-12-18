@@ -59,6 +59,48 @@ void ScintillatorHitConverterModule::init() {
         }
         efficiency_.push_back(values.y());
     }
+    /* 2 ways of reading in files.
+    //Either give input in (wavelenght,efficiency) (TOP)
+    //Or input as {wavelength, wavelength. ...} {eff, eff, ..} (BOTTOM)
+    */
+
+    /*   while(std::getline(file, line)) {
+            line = allpix::trim(line);
+            if(isdigit(line[0]) == 0) {
+                continue;
+            }
+            if(!wavelength_.empty()){
+                efficiency_ = allpix::split<double>(line);
+            }
+            if(wavelength_.empty()){
+                wavelength_ = allpix::split<double>(line);
+            }
+
+
+        }
+        for(std::vector<double>::size_type i = 0; i != wavelength_.size(); i++){
+            LOG(TRACE) << "Input(energy , efficiency)= (" << wavelength_[i] << ", " << efficiency_[i] << ")";
+        }
+        if(!std::is_sorted(wavelength_.begin(), wavelength_.end())) {
+            throw ModuleError("Quantum efficiency input is not sorted! Please sort the list of given wavelengths.");
+        }
+        else if(sizeof(wavelength_) != sizeof(efficiency_)){
+            throw ModuleError("Wavelength and efficiency have a different size. Please check the quantum efficiency file");
+        }*/
+
+    output_plots_ = config_.get<bool>("output_plots");
+    if(output_plots_) {
+        auto max_wavelength = static_cast<int>(config_.get<double>("output_scale_wavelength", 1000));
+        auto max_electrons = static_cast<int>(config_.get<double>("output_scale_photo_electrons", 10000));
+        auto nbins_electrons = 5 * max_electrons;
+        wavelength_before_ =
+            new TH1D("wavelength_before", "Wavelength; Wavelength;deposits", max_wavelength, 0., max_wavelength);
+        wavelength_after_ =
+            new TH1D("wavelength_after", "Wavelength; Wavelength;deposits", max_wavelength, 0., max_wavelength);
+
+        photo_electrons_ = new TH1D(
+            "photo_electrons produced", "Photo electrons; Photo electrons;events", nbins_electrons, 0., max_electrons);
+    }
 }
 
 void ScintillatorHitConverterModule::run(unsigned int) {
@@ -72,8 +114,13 @@ void ScintillatorHitConverterModule::run(unsigned int) {
 
     // Loop over all scint_hits
     for(auto& scint_hits : scint_hit_message_->getData()) {
-        auto charge = scint_hits.getCharge();
-        auto wavelength = (0.0012398) / charge;
+        auto wavelength = scint_hits.getWavelength();
+
+        // Plot the initial wavelength distribution
+        if(output_plots_) {
+            wavelength_before_->Fill(wavelength);
+        }
+
         auto low = wavelength_.size();
         auto high = wavelength_.size();
 
@@ -117,13 +164,23 @@ void ScintillatorHitConverterModule::run(unsigned int) {
                                        scint_hits.getGlobalPosition(),
                                        scint_hits.getType(),
                                        transferred_charge,
-                                       scint_hits.getEventTime());
+                                       scint_hits.getDetectionTime());
+
+        // Plot the wavelength distribution of the photons that created a photo-electron
+        if(output_plots_) {
+            wavelength_after_->Fill(wavelength);
+        }
     }
     total_received_ += scint_hit_message_->getData().size();
     total_propagated_ += deposited_charges.size();
     LOG(TRACE) << "Photocathode Hits for this event: " << scint_hit_message_->getData().size()
                << " (propagated: " << deposited_charges.size() << ", "
                << (deposited_charges.size() * 100 / scint_hit_message_->getData().size()) << "%)";
+    // Plot the number of photo-electrons created per event
+    if(output_plots_) {
+        photo_electrons_->Fill(deposited_charges.size());
+    }
+
     // Create a new message with deposited charges
     auto deposited_charge_message = std::make_shared<DepositedChargeMessage>(std::move(deposited_charges), detector_);
     // Dispatch the message with deposited charges
@@ -135,5 +192,11 @@ void ScintillatorHitConverterModule::finalize() {
                   << (total_propagated_ * 100 / total_received_) << "%)";
     } else {
         LOG(WARNING) << "No Photocathode hits registered";
+    }
+    if(output_plots_) {
+        // Write output plot
+        wavelength_before_->Write();
+        wavelength_after_->Write();
+        photo_electrons_->Write();
     }
 }
