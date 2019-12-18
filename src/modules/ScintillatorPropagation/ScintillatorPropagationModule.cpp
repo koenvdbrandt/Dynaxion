@@ -126,7 +126,7 @@ void ScintillatorPropagationModule::run(unsigned int) {
               << " (started with  " << initial_deposits << " photons)";
 
     if(output_plots_) {
-        photo_electrons_before_->Fill(initial_deposits);
+        photo_electrons_before_->Fill(static_cast<double>(initial_deposits));
         photo_electrons_after_->Fill(total_charge);
     }
 

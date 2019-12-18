@@ -178,7 +178,7 @@ void ScintillatorHitConverterModule::run(unsigned int) {
                << (deposited_charges.size() * 100 / scint_hit_message_->getData().size()) << "%)";
     // Plot the number of photo-electrons created per event
     if(output_plots_) {
-        photo_electrons_->Fill(deposited_charges.size());
+        photo_electrons_->Fill(static_cast<double>(deposited_charges.size()));
     }
 
     // Create a new message with deposited charges
