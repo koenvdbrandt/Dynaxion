@@ -49,7 +49,7 @@ namespace allpix {
 
     private:
         GeometryManager* geo_manager_;
-        std::vector<Configuration> passive_material_configs_;
+        std::vector<PassiveMaterialConstructionG4> passive_material_constructors_;
         // Geant4 run manager is owned by this module
         std::unique_ptr<G4RunManager> run_manager_g4_;
     };

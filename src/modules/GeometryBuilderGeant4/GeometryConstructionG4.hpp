@@ -31,7 +31,7 @@ namespace allpix {
          * @param geo_manager Pointer to the geometry manager, containing the detectors
          * @param config Configuration object of the geometry builder module
          */
-        GeometryConstructionG4(GeometryManager* geo_manager, Configuration& config, std::vector<Configuration> pm_config);
+        GeometryConstructionG4(GeometryManager* geo_manager, Configuration& config, std::vector<PassiveMaterialConstructionG4> pm_config);
 
         /**
          * @brief Constructs the world geometry with all detectors

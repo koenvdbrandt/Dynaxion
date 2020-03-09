@@ -43,7 +43,7 @@ using namespace allpix;
 
 GeometryConstructionG4::GeometryConstructionG4(GeometryManager* geo_manager,
                                                Configuration& config,
-                                               std::vector<Configuration> pm_config)
+                                               std::vector<PassiveMaterialConstructionG4> pm_config)
     : geo_manager_(geo_manager), config_(config), pm_config_(pm_config) {}
 
 /**
@@ -121,8 +121,7 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     // Build all the geometries that have been added to the GeometryBuilder vector, including Detectors and Target
     LOG(TRACE) << "Building " << pm_config_.size() << " passive material(s).";
     for(auto& pm_conf : pm_config_) {
-        auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
-        pmBuilder->build(materials_);
+        pm_conf->build(materials_);
     }
     auto detBuilder = new DetectorConstructionG4(geo_manager_);
     detBuilder->build(materials_);

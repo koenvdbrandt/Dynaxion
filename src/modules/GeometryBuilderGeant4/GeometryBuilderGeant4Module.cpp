@@ -50,7 +50,6 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
 
         std::ifstream passive_material_file(passive_material_file_name);
         ConfigReader passive_material_reader(passive_material_file, passive_material_file_name);
-        passive_material_configs_ = passive_material_reader.getConfigurations();
 
         std::set<std::string> passive_material_names;
         for(auto& passive_material_section : passive_material_configs_) {
@@ -60,9 +59,10 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
                                   "' is already registered, Passive Material names should be unique");
             }
             passive_material_names.insert(name);
-
+            auto pmConstruction = new PassiveMaterialConstructionG4(passive_material_section, geo_manager_);
+            passive_material_constructors_.emplace_back(pmConstruction);
             // Add the min and max points to the world volume
-            for(auto& point : PassiveMaterialConstructionG4(passive_material_section, geo_manager_).addPoints()) {
+            for(auto& point : pmConstruction.addPoints()) {
                 LOG(TRACE) << "adding point " << Units::display(point, {"mm", "um"}) << "to the geometry";
                 geo_manager_->addPoint(point);
             }
@@ -119,7 +119,7 @@ void GeometryBuilderGeant4Module::init() {
     RELEASE_STREAM(std::cout);
 
     // Set the geometry construction to use
-    auto geometry_construction = new GeometryConstructionG4(geo_manager_, config_, passive_material_configs_);
+    auto geometry_construction = new GeometryConstructionG4(geo_manager_, config_, passive_material_constructors_);
     run_manager_g4_->SetUserInitialization(geometry_construction);
 
     // Run the geometry construct function in GeometryConstructionG4
