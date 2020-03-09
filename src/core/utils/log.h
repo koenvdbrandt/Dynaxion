@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Provides a logger and macros for convenient access
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -284,7 +284,7 @@ namespace allpix {
         if(allpix::LogLevel::level <= allpix::Log::getReportingLevel() && !allpix::Log::getStreams().empty())               \
     allpix::Log().getStream(                                                                                                \
         allpix::LogLevel::level, __FILE_NAME__, std::string(static_cast<const char*>(__func__)), __LINE__)                  \
-        << (GET_LOG_VARIABLE(max_log_count) == 0 ? "[further messages will be suppressed] " : "")
+        << std::string(GET_LOG_VARIABLE(max_log_count) == 0 ? "[further messages will be suppressed] " : "")
 
     /**
      * @brief Suppress an stream from writing any output

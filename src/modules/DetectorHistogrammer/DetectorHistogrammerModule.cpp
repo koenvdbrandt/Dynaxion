@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of detector histogramming module
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -299,8 +299,7 @@ void DetectorHistogrammerModule::run(unsigned int) {
         for(const auto& particle : intersection) {
             auto pitch = detector_->getModel()->getPixelSize();
 
-            auto particlePos = (static_cast<XYZVector>(particle->getLocalStartPoint()) + particle->getLocalEndPoint()) / 2.0;
-            particlePos += track_smearing(track_resolution_);
+            auto particlePos = particle->getLocalReferencePoint() + track_smearing(track_resolution_);
             LOG(DEBUG) << "MCParticle at " << Units::display(particlePos, {"mm", "um"});
 
             auto inPixelPos = XYVector(std::fmod(particlePos.x() + pitch.x() / 2, pitch.x()),
@@ -350,8 +349,7 @@ void DetectorHistogrammerModule::run(unsigned int) {
         auto pitch = detector_->getModel()->getPixelSize();
 
         // Calculate 2D local position of particle:
-        auto particlePos = (static_cast<XYZVector>(particle->getLocalStartPoint()) + particle->getLocalEndPoint()) / 2.0;
-        particlePos += track_smearing(track_resolution_);
+        auto particlePos = particle->getLocalReferencePoint() + track_smearing(track_resolution_);
         auto inPixelPos = XYVector(std::fmod(particlePos.x() + pitch.x() / 2, pitch.x()),
                                    std::fmod(particlePos.y() + pitch.y() / 2, pitch.y()));
         auto inPixel_um_x = static_cast<double>(Units::convert(inPixelPos.x(), "um"));

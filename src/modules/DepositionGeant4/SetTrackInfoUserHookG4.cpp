@@ -1,3 +1,13 @@
+/**
+ * @file
+ * @brief Implements a user hook for Geant4 to assign custom track information via TrackInfoG4 objects
+ *
+ * @copyright Copyright (c) 2018-2020 CERN and the Allpix Squared authors.
+ * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
+ * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
+ * Intergovernmental Organization or submit itself to any jurisdiction.
+ */
+
 #include "SetTrackInfoUserHookG4.hpp"
 #include "TrackInfoG4.hpp"
 
@@ -14,7 +24,7 @@ void SetTrackInfoUserHookG4::PreUserTrackingAction(const G4Track* aTrack) {
      * Note: Stable particles have a lifetime of either -1 or 0. Geant4 has exited states which also have a lifetime of 0.
      *       The ">" sign was chosen to prevent stable particles or instantly decaying exited states
      *       from being killed if the decay_cutoff_time would be set to 0.
-    */
+     */
     if(particle_lifetime > decay_cutoff_time_ && aTrack->GetTrackID() > 1) {
 
         // Only give the warning once to prevent too many errors given per event
