@@ -52,7 +52,7 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
         ConfigReader passive_material_reader(passive_material_file, passive_material_file_name);
         passive_material_configs_ = passive_material_reader.getConfigurations();
 
-        std::set<std::string> passive_material_names;
+/*         std::set<std::string> passive_material_names;
         for(auto& passive_material_section : passive_material_configs_) {
             auto name = passive_material_section.getName();
             if(passive_material_names.find(name) != passive_material_names.end()) {
@@ -66,7 +66,7 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
                 LOG(TRACE) << "adding point " << Units::display(point, {"mm", "um"}) << "to the geometry";
                 geo_manager_->addPoint(point);
             }
-        }
+        }*/
     }
 }
 
@@ -109,14 +109,14 @@ void GeometryBuilderGeant4Module::init() {
 #endif
 
     // Suppress all output (also stdout due to a part in Geant4 where G4cout is not used)
-//    SUPPRESS_STREAM(std::cout);
-//    SUPPRESS_STREAM(G4cout);
+    SUPPRESS_STREAM(std::cout);
+    SUPPRESS_STREAM(G4cout);
 
     // Create the G4 run manager
     run_manager_g4_ = std::make_unique<G4RunManager>();
 
     // Release stdout again
-  //  RELEASE_STREAM(std::cout);
+    RELEASE_STREAM(std::cout);
 
     // Set the geometry construction to use
     auto geometry_construction = new GeometryConstructionG4(geo_manager_, config_, passive_material_configs_);
@@ -127,5 +127,5 @@ void GeometryBuilderGeant4Module::init() {
     run_manager_g4_->InitializeGeometry();
 
     // Release output from G4
-   // RELEASE_STREAM(G4cout);
+    RELEASE_STREAM(G4cout);
 }

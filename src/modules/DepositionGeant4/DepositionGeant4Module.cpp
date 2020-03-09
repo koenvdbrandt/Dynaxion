@@ -98,7 +98,7 @@ void DepositionGeant4Module::init() {
     }
 
     // Suppress all output from G4
-    SUPPRESS_STREAM(G4cout);
+    //SUPPRESS_STREAM(G4cout);
 
     // Get UI manager for sending commands
     G4UImanager* ui_g4 = G4UImanager::GetUIpointer();
@@ -298,7 +298,7 @@ void DepositionGeant4Module::init() {
     ui_g4->ApplyCommand(seed_command);
 
     // Release the output stream
-    RELEASE_STREAM(G4cout);
+    //RELEASE_STREAM(G4cout);
 }
 
 void DepositionGeant4Module::run(unsigned int event_num) {

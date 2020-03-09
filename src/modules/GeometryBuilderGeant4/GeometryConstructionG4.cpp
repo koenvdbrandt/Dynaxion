@@ -124,7 +124,7 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
       //  auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
       //  pmBuilder->build(materials_);
    // }
-    auto detBuilder = new DetectorConstructionG4(geo_manager_);
+    auto detBuilder = make_shared_no_delete<DetectorConstructionG4>(geo_manager_);
     detBuilder->build(materials_);
 
     // Check for overlaps:
@@ -202,12 +202,12 @@ void GeometryConstructionG4::check_overlaps() {
     LOG(TRACE) << "Checking overlaps";
     bool overlapFlag = false;
     // Release Geant4 output for better error description
-    RELEASE_STREAM(G4cout);
+    //RELEASE_STREAM(G4cout);
     for(auto volume : (*phys_volume_store)) {
         overlapFlag = volume->CheckOverlaps(1000, 0., false) || overlapFlag;
     }
     // Supress again to prevent further complications
-    SUPPRESS_STREAM(G4cout);
+    //SUPPRESS_STREAM(G4cout);
     if(overlapFlag) {
         LOG(ERROR) << "Overlapping volumes detected.";
     } else {
