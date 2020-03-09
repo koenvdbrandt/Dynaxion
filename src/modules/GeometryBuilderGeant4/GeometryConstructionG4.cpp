@@ -125,9 +125,10 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
       //  pmBuilder->build(materials_);
    // }
     auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
-    if(detBuilder != nullptr){
-       detBuilder->build(materials_);
-    }
+    (void) detBuilder;
+   // if(detBuilder != nullptr){
+   //    detBuilder->build(materials_);
+   // }
 
     // Check for overlaps:
     check_overlaps();
