@@ -128,7 +128,7 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     detBuilder->build(materials_);
 
     // Check for overlaps:
-    check_overlaps();
+    // check_overlaps();
 
     return world_phys_.get();
 }
