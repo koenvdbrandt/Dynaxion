@@ -120,10 +120,10 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
 
     // Build all the geometries that have been added to the GeometryBuilder vector, including Detectors and Target
     LOG(TRACE) << "Building " << pm_config_.size() << " passive material(s).";
-    //for(auto& pm_conf : pm_config_) {
-      //  auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
-      //  pmBuilder->build(materials_);
-   // }
+    for(auto& pm_conf : pm_config_) {
+        auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
+        pmBuilder->build(materials_);
+    }
    // const auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
   //  (void) detBuilder;
    // if(detBuilder != nullptr){
