@@ -124,8 +124,10 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
       //  auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
       //  pmBuilder->build(materials_);
    // }
-    auto detBuilder = make_shared_no_delete<DetectorConstructionG4>(geo_manager_);
-    detBuilder->build(materials_);
+    auto detBuilder = new DetectorConstructionG4(geo_manager_);
+    if(detBuilder != nullptr){
+       detBuilder->build(materials_);
+    }
 
     // Check for overlaps:
     check_overlaps();
