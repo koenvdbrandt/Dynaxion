@@ -124,8 +124,8 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
       //  auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
       //  pmBuilder->build(materials_);
    // }
-    auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
-    (void) detBuilder;
+   // const auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
+  //  (void) detBuilder;
    // if(detBuilder != nullptr){
    //    detBuilder->build(materials_);
    // }

@@ -52,7 +52,7 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
         ConfigReader passive_material_reader(passive_material_file, passive_material_file_name);
         passive_material_configs_ = passive_material_reader.getConfigurations();
 
-/*         std::set<std::string> passive_material_names;
+        std::set<std::string> passive_material_names;
         for(auto& passive_material_section : passive_material_configs_) {
             auto name = passive_material_section.getName();
             if(passive_material_names.find(name) != passive_material_names.end()) {
@@ -66,7 +66,7 @@ GeometryBuilderGeant4Module::GeometryBuilderGeant4Module(Configuration& config, 
                 LOG(TRACE) << "adding point " << Units::display(point, {"mm", "um"}) << "to the geometry";
                 geo_manager_->addPoint(point);
             }
-        }*/
+        }
     }
 }
 
