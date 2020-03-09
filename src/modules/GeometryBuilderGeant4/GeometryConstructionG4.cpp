@@ -36,8 +36,8 @@
 #include "tools/geant4.h"
 
 #include "DetectorConstructionG4.hpp"
-#include "Parameterization2DG4.hpp"
 #include "PassiveMaterialConstructionG4.hpp"
+#include "Parameterization2DG4.hpp"
 
 using namespace allpix;
 
@@ -118,16 +118,17 @@ G4VPhysicalVolume* GeometryConstructionG4::Construct() {
     world_phys_ = std::make_unique<G4PVPlacement>(
         nullptr, G4ThreeVector(0., 0., 0.), world_log_.get(), "World_log", nullptr, false, 0);
 
+    auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
+    detBuilder->build(materials_);
+
     // Build all the geometries that have been added to the GeometryBuilder vector, including Detectors and Target
     LOG(TRACE) << "Building " << pm_config_.size() << " passive material(s).";
     for(auto& pm_conf : pm_config_) {
         auto pmBuilder = new PassiveMaterialConstructionG4(pm_conf, geo_manager_);
         pmBuilder->build(materials_);
     }
-   // const auto detBuilder = std::make_unique<DetectorConstructionG4>(geo_manager_);
   //  (void) detBuilder;
    // if(detBuilder != nullptr){
-   //    detBuilder->build(materials_);
    // }
 
     // Check for overlaps:
