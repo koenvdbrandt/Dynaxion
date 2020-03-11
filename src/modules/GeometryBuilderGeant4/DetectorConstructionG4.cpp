@@ -76,7 +76,7 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         LOG(TRACE) << " Mother volume: " << mother_volume;
         LOG(DEBUG) << " Global position and orientation of the detector:";
 
-        G4LogicalVolumeStore* log_volume_store = G4LogicalVolumeStore::GetInstance();
+        auto log_volume_store = G4LogicalVolumeStore::GetInstance();
         auto mother_log_volume = log_volume_store->GetVolume(mother_volume);
 
         if(mother_log_volume == nullptr) {
@@ -84,11 +84,11 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         }
 
         // Create the wrapper box and logical volume
-        auto wrapper_box = std::make_shared<G4Box>(
+        auto wrapper_box = new G4Box(
             "wrapper_" + name, model->getSize().x() / 2.0, model->getSize().y() / 2.0, model->getSize().z() / 2.0);
         solids_.push_back(wrapper_box);
         auto wrapper_log = make_shared_no_delete<G4LogicalVolume>(
-            wrapper_box.get(), materials_["world_material"], "wrapper_" + name + "_log");
+            wrapper_box, materials_["world_material"], "wrapper_" + name + "_log");
         geo_manager_->setExternalObject("wrapper_log", wrapper_log, name);
 
         // Get position and orientation
@@ -118,13 +118,13 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         */
 
         // Create the sensor box and logical volume
-        auto sensor_box = std::make_shared<G4Box>("sensor_" + name,
-                                                  model->getSensorSize().x() / 2.0,
-                                                  model->getSensorSize().y() / 2.0,
-                                                  model->getSensorSize().z() / 2.0);
+        auto sensor_box = new G4Box("sensor_" + name,
+                                                       model->getSensorSize().x() / 2.0,
+                                                       model->getSensorSize().y() / 2.0,
+                                                       model->getSensorSize().z() / 2.0);
         solids_.push_back(sensor_box);
         auto sensor_log =
-            make_shared_no_delete<G4LogicalVolume>(sensor_box.get(), materials_["silicon"], "sensor_" + name + "_log");
+            make_shared_no_delete<G4LogicalVolume>(sensor_box, materials_["silicon"], "sensor_" + name + "_log");
         geo_manager_->setExternalObject("sensor_log", sensor_log, name);
 
         // Place the sensor box
@@ -135,13 +135,13 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         geo_manager_->setExternalObject("sensor_phys", sensor_phys, name);
 
         // Create the pixel box and logical volume
-        auto pixel_box = std::make_shared<G4Box>("pixel_" + name,
-                                                 model->getPixelSize().x() / 2.0,
-                                                 model->getPixelSize().y() / 2.0,
-                                                 model->getSensorSize().z() / 2.0);
+        auto pixel_box = new G4Box("pixel_" + name,
+                                                      model->getPixelSize().x() / 2.0,
+                                                      model->getPixelSize().y() / 2.0,
+                                                      model->getSensorSize().z() / 2.0);
         solids_.push_back(pixel_box);
         auto pixel_log =
-            make_shared_no_delete<G4LogicalVolume>(pixel_box.get(), materials_["silicon"], "pixel_" + name + "_log");
+            make_shared_no_delete<G4LogicalVolume>(pixel_box, materials_["silicon"], "pixel_" + name + "_log");
         geo_manager_->setExternalObject("pixel_log", pixel_log, name);
 
         // Create the parameterization for the pixel grid
@@ -163,15 +163,15 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         // Construct the chips only if necessary
         if(model->getChipSize().z() > 1e-9) {
             // Create the chip box
-            auto chip_box = std::make_shared<G4Box>("chip_" + name,
-                                                    model->getChipSize().x() / 2.0,
-                                                    model->getChipSize().y() / 2.0,
-                                                    model->getChipSize().z() / 2.0);
+            auto chip_box = new G4Box("chip_" + name,
+                                                         model->getChipSize().x() / 2.0,
+                                                         model->getChipSize().y() / 2.0,
+                                                         model->getChipSize().z() / 2.0);
             solids_.push_back(chip_box);
 
             // Create the logical volume for the chip
             auto chip_log =
-                make_shared_no_delete<G4LogicalVolume>(chip_box.get(), materials_["silicon"], "chip_" + name + "_log");
+                make_shared_no_delete<G4LogicalVolume>(chip_box, materials_["silicon"], "chip_" + name + "_log");
             geo_manager_->setExternalObject("chip_log", chip_log, name);
 
             // Place the chip
@@ -183,35 +183,35 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
         }
 
         /*
-                 * SUPPORT
-                 * optional layers of support
-        */
+         * SUPPORT
+         * optional layers of support
+         */
         auto supports_log = std::make_shared<std::vector<std::shared_ptr<G4LogicalVolume>>>();
         auto supports_phys = std::make_shared<std::vector<std::shared_ptr<G4PVPlacement>>>();
         int support_idx = 0;
         for(auto& layer : model->getSupportLayers()) {
             // Create the box containing the support
-            auto support_box = std::make_shared<G4Box>("support_" + name + "_" + std::to_string(support_idx),
-                                                       layer.getSize().x() / 2.0,
-                                                       layer.getSize().y() / 2.0,
-                                                       layer.getSize().z() / 2.0);
+            auto support_box = new G4Box("support_" + name + "_" + std::to_string(support_idx),
+                                                            layer.getSize().x() / 2.0,
+                                                            layer.getSize().y() / 2.0,
+                                                            layer.getSize().z() / 2.0);
             solids_.push_back(support_box);
 
-            std::shared_ptr<G4VSolid> support_solid = support_box;
+            G4VSolid* support_solid = support_box;
             if(layer.hasHole()) {
                 // NOTE: Double the hole size in the z-direction to ensure no fake surfaces are created
-                auto hole_box = std::make_shared<G4Box>("support_" + name + "_hole_" + std::to_string(support_idx),
-                                                        layer.getHoleSize().x() / 2.0,
-                                                        layer.getHoleSize().y() / 2.0,
-                                                        layer.getHoleSize().z());
+                auto hole_box = new G4Box("support_" + name + "_hole_" + std::to_string(support_idx),
+                                                             layer.getHoleSize().x() / 2.0,
+                                                             layer.getHoleSize().y() / 2.0,
+                                                             layer.getHoleSize().z());
                 solids_.push_back(hole_box);
 
                 G4Transform3D transform(G4RotationMatrix(), toG4Vector(layer.getHoleCenter() - layer.getCenter()));
-                auto subtraction_solid =
-                    std::make_shared<G4SubtractionSolid>("support_" + name + "_subtraction_" + std::to_string(support_idx),
-                                                         support_box.get(),
-                                                         hole_box.get(),
-                                                         transform);
+                auto subtraction_solid = new G4SubtractionSolid("support_" + name + "_subtraction_" +
+                                                                                       std::to_string(support_idx),
+                                                                                   support_box,
+                                                                                   hole_box,
+                                                                                   transform);
                 solids_.push_back(subtraction_solid);
                 support_solid = subtraction_solid;
             }
@@ -222,7 +222,7 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
                 throw ModuleError("Cannot construct a support layer of material '" + layer.getMaterial() + "'");
             }
             auto support_log =
-                make_shared_no_delete<G4LogicalVolume>(support_solid.get(),
+                make_shared_no_delete<G4LogicalVolume>(support_solid,
                                                        support_material_iter->second,
                                                        "support_" + name + "_log_" + std::to_string(support_idx));
             supports_log->push_back(support_log);
@@ -260,15 +260,15 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
             auto bump_cylinder_radius = hybrid_model->getBumpCylinderRadius();
 
             // Create the volume containing the bumps
-            auto bump_box = std::make_shared<G4Box>("bump_box_" + name,
-                                                    hybrid_model->getSensorSize().x() / 2.0,
-                                                    hybrid_model->getSensorSize().y() / 2.0,
-                                                    bump_height / 2.);
+            auto bump_box = new G4Box("bump_box_" + name,
+                                                         hybrid_model->getSensorSize().x() / 2.0,
+                                                         hybrid_model->getSensorSize().y() / 2.0,
+                                                         bump_height / 2.);
             solids_.push_back(bump_box);
 
             // Create the logical wrapper volume
             auto bumps_wrapper_log = make_shared_no_delete<G4LogicalVolume>(
-                bump_box.get(), materials_["world_material"], "bumps_wrapper_" + name + "_log");
+                bump_box, materials_["world_material"], "bumps_wrapper_" + name + "_log");
             geo_manager_->setExternalObject("bumps_wrapper_log", bumps_wrapper_log, name);
 
             // Place the general bumps volume
@@ -285,18 +285,18 @@ void DetectorConstructionG4::build(std::map<std::string, G4Material*> materials_
             geo_manager_->setExternalObject("bumps_wrapper_phys", bumps_wrapper_phys, name);
 
             // Create the individual bump solid
-            auto bump_sphere = std::make_shared<G4Sphere>(
+            auto bump_sphere = new G4Sphere(
                 "bumps_" + name + "_sphere", 0, bump_sphere_radius, 0, 360 * CLHEP::deg, 0, 360 * CLHEP::deg);
             solids_.push_back(bump_sphere);
-            auto bump_tube = std::make_shared<G4Tubs>(
+            auto bump_tube = new G4Tubs(
                 "bumps_" + name + "_tube", 0., bump_cylinder_radius, bump_height / 2., 0., 360 * CLHEP::deg);
             solids_.push_back(bump_tube);
-            auto bump = std::make_shared<G4UnionSolid>("bumps_" + name, bump_sphere.get(), bump_tube.get());
+            auto bump = new G4UnionSolid("bumps_" + name, bump_sphere, bump_tube);
             solids_.push_back(bump);
 
             // Create the logical volume for the individual bumps
             auto bumps_cell_log =
-                make_shared_no_delete<G4LogicalVolume>(bump.get(), materials_["solder"], "bumps_" + name + "_log");
+                make_shared_no_delete<G4LogicalVolume>(bump, materials_["solder"], "bumps_" + name + "_log");
             geo_manager_->setExternalObject("bumps_cell_log", bumps_cell_log, name);
 
             // Place the bump bonds grid
