@@ -253,7 +253,9 @@ void DepositionGeant4Module::init() {
         // Do not add sensitive detector for detectors that have no listeners for the deposited charges
         // FIXME Probably the MCParticle has to be checked as well
         if(!messenger_->hasReceiver(this,
-                                    std::make_shared<DepositedChargeMessage>(std::vector<DepositedCharge>(), detector))) {
+                                    std::make_shared<DepositedChargeMessage>(std::vector<DepositedCharge>(), detector)) &&
+            !messenger_->hasReceiver(this,
+                                    std::make_shared<ScintillatorHitMessage>(std::vector<ScintillatorHit>(), detector))) {
             LOG(INFO) << "Not depositing charges in " << detector->getName()
                       << " because there is no listener for its output";
             continue;
@@ -290,31 +292,43 @@ void DepositionGeant4Module::init() {
         LOG(TRACE) << "Creating output plots";
 
         // Plot axis are in kilo electrons - convert from framework units!
-        int maximum = static_cast<int>(Units::convert(config_.get<int>("output_plots_scale"), "ke"));
+        auto maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge", 100), "ke"));
+        auto maximum_hits = config_.get<int>("output_scale_hits", 10000);
+        //auto maximum_wavelength = static_cast<int>(Units::convert(config_.get<double>("output_scale_wavelength", 1e-3), "nm"));
+        //auto maximum_energy = static_cast<int>(Units::convert(config_.get<double>("output_scale_energy", 1e-5), "eV"));
 
-        int nbins = 5 * maximum;
+        auto nbins_charge = 5 * maximum_charge;
+        auto nbins_hits = maximum_hits / 10;
+       // auto nbins_wavelength = maximum_wavelength;
 
         // Create histograms if needed
         for(auto& sensor : detector_sensors_) {
             std::string plot_name_detector = "deposited_charge_" + sensor->getName();
 
-            charge_per_event_[sensor->getName()] = new TH1D(
-                plot_name_detector.c_str(), "deposited charge per event;deposited charge [ke];events", nbins, 0, maximum);
+            charge_per_event_[sensor->getName()] = new TH1D(plot_name_detector.c_str(),
+                                                            "deposited charge per event;deposited charge [ke];events",
+                                                            nbins_charge,
+                                                            0,
+                                                            maximum_charge);
         }
         for(auto& sensor : scintillator_sensors_) {
             std::string plot_name_scintillator_hits = "scintillator_hits_" + sensor->getName();
             std::string plot_name_wavelenghts = "wavelengths_" + sensor->getName();
-            std::string plot_name_charges = "charges_" + sensor->getName();
+            std::string plot_name_energies = "energies_" + sensor->getName();
 
             hits_per_event_[sensor->getName()] = new TH1D(plot_name_scintillator_hits.c_str(),
                                                           "scintillator hits per event; scintillator hits ;events",
-                                                          nbins,
+                                                          nbins_hits,
                                                           0,
-                                                          maximum);
-            charges_[sensor->getName()] = new TH1D(plot_name_charges.c_str(), "charges; charges ;events", nbins, 0, 0.00001);
-            wavelengths_[sensor->getName()] =
-                new TH1D(plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts ;events", nbins, 0, 1000);
-        }
+                                                          maximum_hits);
+           /* charges_[sensor->getName()] = new TH1D(plot_name_energies.c_str(),
+                                                    "energies; energies[eV] ;photons",
+                                                    nbins_wavelength,
+                                                    0,
+                                                    maximum_energy);
+            wavelengths_[sensor->getName()] = new TH1D(
+                plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts[nm] ;photons", nbins_wavelength, 0, maximum_wavelength);
+        */}
     }
     events = 0;
 
@@ -367,12 +381,14 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
             auto hits = static_cast<double>(sensor->getScintillatorHits());
-            hits_per_event_[sensor->getName()]->Fill(hits);
-
-            for(auto& charge : sensor->getEnergies()) {
-                charges_[sensor->getName()]->Fill(charge);
-                wavelengths_[sensor->getName()]->Fill((0.0012398) / charge);
+            if(hits != 0){
+                hits_per_event_[sensor->getName()]->Fill(hits);
             }
+
+            //for(auto& charge : sensor->getEnergies()) {
+            //    charges_[sensor->getName()]->Fill(1e6*charge);
+            //    wavelengths_[sensor->getName()]->Fill((0.0012398) / charge);
+            //}
         }
     }
 
@@ -400,12 +416,12 @@ void DepositionGeant4Module::finalize() {
         for(auto& plot : hits_per_event_) {
             plot.second->Write();
         }
-        for(auto& plot : charges_) {
-            plot.second->Write();
-        }
-        for(auto& plot : wavelengths_) {
-            plot.second->Write();
-        }
+        //for(auto& plot : charges_) {
+        //    plot.second->Write();
+        //}
+        //for(auto& plot : wavelengths_) {
+        //    plot.second->Write();
+        //}
     }
 
     // Print summary or warns if module did not output any charges

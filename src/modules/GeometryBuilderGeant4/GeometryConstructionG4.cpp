@@ -150,6 +150,8 @@ void GeometryConstructionG4::init_materials() {
     G4NistManager* nistman = G4NistManager::Instance();
 
     // Build table of materials from database
+    materials_["hydrogen"] = nistman->FindOrBuildMaterial("G4_H");
+    materials_["carbon"] = nistman->FindOrBuildMaterial("G4_C");
     materials_["silicon"] = nistman->FindOrBuildMaterial("G4_Si");
     materials_["plexiglass"] = nistman->FindOrBuildMaterial("G4_PLEXIGLASS");
     materials_["kapton"] = nistman->FindOrBuildMaterial("G4_KAPTON");
@@ -166,6 +168,7 @@ void GeometryConstructionG4::init_materials() {
     // Create required elements:
     G4Element* H = new G4Element("Hydrogen", "H", 1., 1.01 * CLHEP::g / CLHEP::mole);
     G4Element* C = new G4Element("Carbon", "C", 6., 12.01 * CLHEP::g / CLHEP::mole);
+    G4Element* N = new G4Element("Nitrogen", "N", 7., 14.0 * CLHEP::g / CLHEP::mole);
     G4Element* O = new G4Element("Oxygen", "O", 8., 16.0 * CLHEP::g / CLHEP::mole);
     G4Element* Cl = new G4Element("Chlorine", "Cl", 17., 35.45 * CLHEP::g / CLHEP::mole);
     G4Element* Sn = new G4Element("Tin", "Sn", 50., 118.710 * CLHEP::g / CLHEP::mole);
@@ -175,6 +178,59 @@ void GeometryConstructionG4::init_materials() {
 
     // Add vacuum
     materials_["vacuum"] = new G4Material("Vacuum", 1, 1.008 * CLHEP::g / CLHEP::mole, CLHEP::universe_mean_density);
+   
+    // Create g4_cocaine
+    G4Material* g4_cocaine = new G4Material("g4_cocaine", 1.2 * CLHEP::g / CLHEP::cm3, 4);
+    g4_cocaine->AddElement(C, 14);
+    g4_cocaine->AddElement(H, 21);
+    g4_cocaine->AddElement(N, 1);
+    g4_cocaine->AddElement(O, 4);
+    materials_["g4_cocaine"] = g4_cocaine;    
+
+    // Create g4_tnt
+    G4Material* g4_tnt = new G4Material("g4_tnt", 1.6 * CLHEP::g / CLHEP::cm3, 4);
+    g4_tnt->AddElement(C, 7);
+    g4_tnt->AddElement(H, 5);
+    g4_tnt->AddElement(N, 3);
+    g4_tnt->AddElement(O, 6);
+    materials_["g4_tnt"] = g4_tnt;
+  
+    // Create g4_aspirin
+    G4Material* g4_aspirin = new G4Material("g4_aspirin", 1.3 * CLHEP::g / CLHEP::cm3, 3);
+    g4_aspirin->AddElement(C, 9);
+    g4_aspirin->AddElement(H, 8);
+    g4_aspirin->AddElement(O, 4);
+    materials_["g4_aspirin"] = g4_aspirin;
+
+    // Create g4_sucrose_sugar
+    G4Material* g4_sucrose_sugar = new G4Material("g4_sucrose_sugar", 1.8 * CLHEP::g / CLHEP::cm3, 3);
+    g4_sucrose_sugar->AddElement(C, 12);
+    g4_sucrose_sugar->AddElement(H, 22);
+    g4_sucrose_sugar->AddElement(O, 11);
+    materials_["g4_sucrose_sugar"] = g4_sucrose_sugar;
+
+    // Create g4_wood
+    G4Material* g4_wood = new G4Material("g4_wood", 0.62 * CLHEP::g / CLHEP::cm3, 4);
+    g4_wood->AddElement(H, 0.06);
+    g4_wood->AddElement(C, 0.47);
+    g4_wood->AddElement(O, 0.44);
+    g4_wood->AddElement(N, 0.03);
+    materials_["g4_wood"] = g4_wood;
+
+    // Dense Hydrodgen
+    G4Material* g4_hydrogen = new G4Material("g4_hydrogen", 1.0*CLHEP::g / CLHEP::cm3, 1);  
+    g4_hydrogen->AddElement(H, 1);  
+    materials_["g4_hydrogen"] = g4_hydrogen;  
+
+    // Dense Nitrogen
+    G4Material* g4_nitrogen = new G4Material("g4_hydrogen", 1.0*CLHEP::g / CLHEP::cm3, 1);  
+    g4_nitrogen->AddElement(N, 1);  
+    materials_["g4_nitrogen"] = g4_nitrogen;  
+
+    // Dense Oxygen
+    G4Material* g4_oxygen = new G4Material("g4_hydrogen", 1.0*CLHEP::g / CLHEP::cm3, 1);  
+    g4_oxygen->AddElement(O, 1);  
+    materials_["g4_oxygen"] = g4_oxygen;  
 
     // Create Epoxy material
     G4Material* Epoxy = new G4Material("Epoxy", 1.3 * CLHEP::g / CLHEP::cm3, 3);

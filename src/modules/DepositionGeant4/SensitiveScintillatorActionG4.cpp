@@ -191,6 +191,7 @@ void SensitiveScintillatorActionG4::dispatchMessages() {
 
     // Send a deposit message if we have any deposits
     unsigned long hits = 0;
+    scint_hits_ = 0;
     if(!deposits_.empty()) {
         hits = deposits_.size();
         total_scint_hits_ += deposits_.size();

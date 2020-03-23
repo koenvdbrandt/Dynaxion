@@ -41,6 +41,7 @@
 #include "CylinderModel.hpp"
 #include "PassiveMaterialModel.hpp"
 #include "SphereModel.hpp"
+#include "DynaxionModel.hpp"
 
 using namespace allpix;
 using namespace ROOT::Math;
@@ -54,6 +55,8 @@ PassiveMaterialConstructionG4::PassiveMaterialConstructionG4(Configuration& conf
         model_ = std::make_shared<CylinderModel>(config_);
     } else if(passive_material_type_ == "sphere") {
         model_ = std::make_shared<SphereModel>(config_);
+    } else if(passive_material_type_ == "dynaxion") {
+        model_ = std::make_shared<DynaxionModel>(config_);
     } else {
         throw ModuleError("Pasive Material '" + name_ + "' has an incorrect type.");
     }
@@ -113,7 +116,7 @@ void PassiveMaterialConstructionG4::build(std::map<std::string, G4Material*> mat
     // Set VisAttribute to invisible if material = world-material
     if(materials_[passive_material] == materials_["world_material"]) {
         LOG(WARNING) << "Material of passive material " << name_
-                     << "is the same as the world material! Material will not be shown in the simulation.";
+                     << " is the same as the world material! Material will not be shown in the simulation.";
         log_volume->SetVisAttributes(G4VisAttributes::GetInvisible());
     }
 
