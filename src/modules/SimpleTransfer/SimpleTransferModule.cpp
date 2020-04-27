@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of simple charge transfer module
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -97,7 +97,7 @@ void SimpleTransferModule::run(unsigned int) {
         auto ypixel = static_cast<int>(std::round(position.y() / model_->getPixelSize().y()));
 
         // Ignore if out of pixel grid
-        if(xpixel < 0 || xpixel >= model_->getNPixels().x() || ypixel < 0 || ypixel >= model_->getNPixels().y()) {
+        if(!detector_->isWithinPixelGrid(xpixel, ypixel)) {
             LOG(DEBUG) << "Skipping set of " << propagated_charge.getCharge() << " propagated charges at "
                        << Units::display(propagated_charge.getLocalPosition(), {"mm", "um"})
                        << " because their nearest pixel (" << xpixel << "," << ypixel << ") is outside the grid";

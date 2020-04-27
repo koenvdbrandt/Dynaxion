@@ -2,7 +2,7 @@
  * @file
  * @brief Base of detector implementation
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -110,6 +110,18 @@ namespace allpix {
         bool isWithinImplant(const ROOT::Math::XYZPoint& local_pos) const;
 
         /**
+         * @brief Returns if a pixel index is within the grid of pixels defined for the device
+         * @return True if pixel_index is within the pixel grid, false otherwise
+         */
+        bool isWithinPixelGrid(const Pixel::Index& pixel_index) const;
+
+        /**
+         * @brief Returns if a set of pixel coordinates is within the grid of pixels defined for the device
+         * @return True if pixel coordinates are within the pixel grid, false otherwise
+         */
+        bool isWithinPixelGrid(const int x, const int y) const;
+
+        /**
          * @brief Return a pixel object from the x- and y-index values
          * @return Pixel object
          */
@@ -145,7 +157,7 @@ namespace allpix {
          * @param scales Scaling factors for the field size, given in fractions of a pixel unit cell in x and y
          * @param thickness_domain Domain in local coordinates in the thickness direction where the field holds
          */
-        void setElectricFieldGrid(std::shared_ptr<std::vector<double>> field,
+        void setElectricFieldGrid(const std::shared_ptr<std::vector<double>>& field,
                                   std::array<size_t, 3> sizes,
                                   std::array<double, 2> scales,
                                   std::array<double, 2> offset,
@@ -186,7 +198,7 @@ namespace allpix {
          * @param sizes The dimensions of the flat weighting potential array
          * @param thickness_domain Domain in local coordinates in the thickness direction where the potential holds
          */
-        void setWeightingPotentialGrid(std::shared_ptr<std::vector<double>> potential,
+        void setWeightingPotentialGrid(const std::shared_ptr<std::vector<double>>& potential,
                                        std::array<size_t, 3> sizes,
                                        std::array<double, 2> scales,
                                        std::array<double, 2> offset,

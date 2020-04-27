@@ -118,7 +118,7 @@ void PassiveMaterialConstructionG4::build(std::map<std::string, G4Material*> mat
     }
     // Set VisAttribute to white if material = world_material
     else if(materials_[passive_material] == materials_["world_material"]) {
-        auto white_vol = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0, 0.1));
+        auto white_vol = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0, 0.4));
         log_volume->SetVisAttributes(white_vol);
     }
 

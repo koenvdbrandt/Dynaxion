@@ -42,7 +42,7 @@ namespace allpix {
 
     public:
         /**
-             * @brief Empty Build function with 2 inputs
+             * @brief Empty Build function with an input for materials
              */
 
         virtual void build(std::map<std::string, Materials*> materials_);

@@ -2,7 +2,7 @@
  * @file
  * @brief Base of detector models
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -208,14 +208,14 @@ namespace allpix {
          * @brief Get number of pixel (replicated blocks in generic sensors)
          * @return Number of two dimensional pixels
          */
-        virtual ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> getNPixels() const {
+        virtual ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<unsigned int>> getNPixels() const {
             return number_of_pixels_;
         }
         /**
          * @brief Set number of pixels (replicated blocks in generic sensors)
          * @param val Number of two dimensional pixels
          */
-        void setNPixels(ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> val) {
+        void setNPixels(ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<unsigned int>> val) {
             number_of_pixels_ = std::move(val);
         }
         /**
@@ -371,7 +371,7 @@ namespace allpix {
     protected:
         std::string type_;
 
-        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> number_of_pixels_;
+        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<unsigned int>> number_of_pixels_;
         ROOT::Math::XYVector pixel_size_;
         ROOT::Math::XYVector implant_size_;
 

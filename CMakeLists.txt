@@ -97,7 +97,7 @@ INCLUDE("cmake/AllpixMacros.cmake")
 ###################################
 
 # Set standard build flags
-SET(COMPILER_FLAGS -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wconversion -Wuseless-cast -Wctor-dtor-privacy -Wzero-as-null-pointer-constant -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Wredundant-decls -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Werror -Wshadow -Wformat-security -Wdeprecated -fdiagnostics-color=auto -Wheader-hygiene -Wno-overloaded-virtual)
+SET(COMPILER_FLAGS -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wconversion -Wuseless-cast -Wctor-dtor-privacy -Wzero-as-null-pointer-constant -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Wredundant-decls -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wshadow -Wformat-security -Wdeprecated -fdiagnostics-color=auto -Wheader-hygiene -Wno-overloaded-virtual)
 
 INCLUDE("cmake/compiler-flag-checks.cmake")
 
@@ -111,13 +111,35 @@ ENDIF()
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set some debug flags
+# Check if compiler version supports all features:
+INCLUDE("cmake/compiler-version-checks.cmake")
+
+# Options for debug builds:
+OPTION(SANITIZER "Build with sanitizer flags" OFF)
+OPTION(COVERAGE "Create code coverage report" OFF)
+
 # FIXME: not using the flag checker now because it wrongly rejects a sanitizer flag..
 IF(CMAKE_BUILD_TYPE MATCHES Debug AND ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")))
-    MESSAGE(STATUS "Running debug build, adding extra sanitizer flags")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined")
-    # FIXME: remove earlier shared linker flags, because they can break the sanitizer debug build
-    SET(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address -fsanitize=undefined")
+    # Sanitizer libraries:
+    IF(SANITIZER)
+        MESSAGE(STATUS "Running debug build, adding extra sanitizer flags")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined")
+        # FIXME: remove earlier shared linker flags, because they can break the sanitizer debug build
+        SET(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address -fsanitize=undefined")
+    ENDIF()
+
+    # Create code coverage report for central library
+    IF(COVERAGE)
+        INCLUDE("cmake/CodeCoverage.cmake")
+        APPEND_COVERAGE_COMPILER_FLAGS()
+        SET(COVERAGE_GCOVR_EXCLUDES "${PROJECT_SOURCE_DIR}/src/modules" "${PROJECT_SOURCE_DIR}/tools")
+        SETUP_TARGET_FOR_COVERAGE_GCOVR(NAME coverage_gcovr
+                                        EXECUTABLE ctest -L coverage
+                                        DEPENDENCIES allpix AllpixCore)
+        SETUP_TARGET_FOR_COVERAGE_GCOVR_HTML(NAME coverage_gcovr_html
+                                             EXECUTABLE ctest -L coverage
+                                             DEPENDENCIES allpix AllpixCore)
+    ENDIF()
 ENDIF()
 
 # Include Threads
@@ -131,15 +153,23 @@ FIND_PACKAGE(Threads REQUIRED)
 SET(ALLPIX_LIBRARIES "")
 
 # ROOT is required for vector and persistency etc
-FIND_PACKAGE(ROOT REQUIRED COMPONENTS Geom Core GenVector Hist RIO)
+FIND_PACKAGE(ROOT REQUIRED COMPONENTS Geom Core GenVector Hist RIO NO_MODULE)
 IF(NOT ROOT_FOUND)
     MESSAGE(FATAL_ERROR "Could not find ROOT, make sure to source the ROOT environment\n"
     "$ source YOUR_ROOT_DIR/bin/thisroot.sh")
 ENDIF()
 
 # Downgrade to C++14 if ROOT is not build with C++17 support
-IF(NOT ROOT_cxx17_FOUND)
+IF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[7z].*")
+    IF(NOT SUPPORT_STD_CXX17)
+        MESSAGE(FATAL_ERROR "ROOT was built with C++17 support but current compiler doesn't support it")
+    ENDIF()
+ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[14y].*")
     SET(CMAKE_CXX_STANDARD 14)
+ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+.*")
+    MESSAGE(FATAL_ERROR "ROOT was built with an unsupported C++ version: ${ROOT_CXX_FLAGS}")
+ELSE()
+    MESSAGE(FATAL_ERROR "Could not deduce ROOT's C++ version from build flags: ${ROOT_CXX_FLAGS}")
 ENDIF()
 
 # Check ROOT version
@@ -154,12 +184,20 @@ ALLPIX_SETUP_ROOT_TARGETS()
 SET(ALLPIX_DEPS_INCLUDE_DIRS ${ROOT_INCLUDE_DIRS})
 SET(ALLPIX_DEPS_LIBRARIES Threads::Threads ROOT::Core ROOT::GenVector ROOT::Geom ROOT::RIO ROOT::Hist)
 
+# Add the LCG view as dependency if set:
+IF(DEFINED ENV{LCG_VIEW})
+    ADD_RUNTIME_DEP($ENV{LCG_VIEW})
+ENDIF()
+
 # Add "thisroot.sh" as runtime dependency for setup.sh file:
 ADD_RUNTIME_DEP(thisroot.sh)
 
 ###################################
 # Load cpp format and check tools #
 ###################################
+
+# Set the clang-format version required by the CI for correct formatting:
+SET(CLANG_FORMAT_VERSION "8")
 
 # Set the source files to clang-format (FIXME: determine this better)
 FILE(GLOB_RECURSE
@@ -213,9 +251,9 @@ ADD_SUBDIRECTORY(examples)
 # Include all tests
 ADD_SUBDIRECTORY(etc/unittests)
 
-#############################
-# Create a local setup file #
-#############################
+############################
+# Create local setup files #
+############################
 
 # Add compiler if necessary:
 GET_FILENAME_COMPONENT(CMP_PATH ${CMAKE_CXX_COMPILER} DIRECTORY)
@@ -226,7 +264,10 @@ ENDIF()
 
 # Build configuration string with commands
 FOREACH(dep ${ALLPIX_RUNTIME_DEPS})
+    GET_FILENAME_COMPONENT(DEP_PATH ${dep} DIRECTORY)
+    SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}cd ${DEP_PATH}\n")
     SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}source ${dep}\n")
+    SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}cd -\n\n")
 ENDFOREACH()
 FOREACH(dep ${ALLPIX_RUNTIME_LIBS})
     SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}export LD_LIBRARY_PATH=\"${dep}:$LD_LIBRARY_PATH\"\n")
