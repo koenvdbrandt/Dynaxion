@@ -158,18 +158,24 @@ void DepositionGeant4Module::init() {
     auto optical_physics = config_.get<bool>("optical_physics", false);
     if(optical_physics) {
         physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+
+        auto wls = config_.get<std::string>("wls", "delta");
+        auto scint_yield_factor = config_.get<double>("scint_yield_factor", 1.0);
+        auto scint_ex_ratio = config_.get<double>("scint_ex_ratio", 1.0);
+        auto max_photons_per_step = config_.get<int>("max_photons_per_step", 100);
+        auto max_delta_beta_per_step = config_.get<double>("max_delta_beta_per_step", 1.0);
+        auto cherenkov_secondaries = config_.get<bool>("cherenkov_secondaries", true);
+        auto scint_secondaries = config_.get<bool>("scint_secondaries", true);
+
         G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
-        opticalPhysics->SetWLSTimeProfile("delta");
+        opticalPhysics->SetWLSTimeProfile(wls);
         opticalPhysics->SetFiniteRiseTime(true);
-
-        opticalPhysics->SetScintillationYieldFactor(1.0);
-        opticalPhysics->SetScintillationExcitationRatio(1.0);
-
-        opticalPhysics->SetMaxNumPhotonsPerStep(100);
-        opticalPhysics->SetMaxBetaChangePerStep(10.0);
-
-        opticalPhysics->SetTrackSecondariesFirst(kCerenkov, true);
-        opticalPhysics->SetTrackSecondariesFirst(kScintillation, true);
+        opticalPhysics->SetScintillationYieldFactor(scint_yield_factor);
+        opticalPhysics->SetScintillationExcitationRatio(scint_ex_ratio);
+        opticalPhysics->SetMaxNumPhotonsPerStep(max_photons_per_step);
+        opticalPhysics->SetMaxBetaChangePerStep(max_delta_beta_per_step);
+        opticalPhysics->SetTrackSecondariesFirst(kCerenkov, cherenkov_secondaries);
+        opticalPhysics->SetTrackSecondariesFirst(kScintillation, scint_secondaries);
 
         physicsList->RegisterPhysics(opticalPhysics);
     }
@@ -251,7 +257,9 @@ void DepositionGeant4Module::init() {
         // Do not add sensitive detector for detectors that have no listeners for the deposited charges
         // FIXME Probably the MCParticle has to be checked as well
         if(!messenger_->hasReceiver(this,
-                                    std::make_shared<DepositedChargeMessage>(std::vector<DepositedCharge>(), detector))) {
+                                    std::make_shared<DepositedChargeMessage>(std::vector<DepositedCharge>(), detector)) &&
+           !messenger_->hasReceiver(this,
+                                    std::make_shared<ScintillatorHitMessage>(std::vector<ScintillatorHit>(), detector))) {
             LOG(INFO) << "Not depositing charges in " << detector->getName()
                       << " because there is no listener for its output";
             continue;
@@ -291,12 +299,14 @@ void DepositionGeant4Module::init() {
         // Plot axis are in kilo electrons - convert from framework units!
         auto maximum_charge = static_cast<int>(Units::convert(config_.get<int>("output_scale_charge", 100), "ke"));
         auto maximum_hits = config_.get<int>("output_scale_hits", 10000);
-        auto maximum_wavelength = static_cast<int>(Units::convert(config_.get<int>("output_scale_wavelength", 1000), "nm"));
-        auto maximum_time = static_cast<int>(Units::convert(config_.get<int>("output_scale_time", 200), "ns"));
+        auto maximum_wavelength =
+            static_cast<int>(Units::convert(config_.get<double>("output_scale_wavelength", 1e-3), "nm"));
+        auto maximum_energy = static_cast<int>(Units::convert(config_.get<double>("output_scale_energy", 1e-5), "eV"));
+        auto maximum_time = config_.get<int>("output_scale_time", 200);
 
         auto nbins_charge = 5 * maximum_charge;
-        auto nbins_hits = 2 * maximum_hits;
-        auto nbins_wavelength = 1 * maximum_wavelength;
+        auto nbins_hits = maximum_hits / 10;
+        auto nbins_wavelength = maximum_wavelength;
         auto nbins_time = 5 * maximum_time;
 
         // Create histograms if needed
@@ -322,19 +332,22 @@ void DepositionGeant4Module::init() {
                                                           nbins_hits,
                                                           0,
                                                           maximum_hits);
-            energies_[sensor->getName()] = new TH1D(plot_name_energies.c_str(),
-                                                    "energies; energies ;photons",
-                                                    nbins_wavelength,
-                                                    0,
-                                                    1 / (100 * maximum_wavelength));
-            wavelengths_[sensor->getName()] = new TH1D(
-                plot_name_wavelenghts.c_str(), "wavelengths; wavelenghts ;photons", nbins_wavelength, 0, maximum_wavelength);
+            energies_[sensor->getName()] =
+                new TH1D(plot_name_energies.c_str(), "energies; energies[eV] ;photons", nbins_wavelength, 0, maximum_energy);
+            wavelengths_[sensor->getName()] = new TH1D(plot_name_wavelenghts.c_str(),
+                                                       "wavelengths; wavelenghts[nm] ;photons",
+                                                       nbins_wavelength,
+                                                       0,
+                                                       maximum_wavelength);
             emission_time_[sensor->getName()] = new TH1D(
-                plot_name_emission_time.c_str(), "emission_time; emission_time ;photons", nbins_time, 0, maximum_time);
-            detection_time_[sensor->getName()] = new TH1D(
-                plot_name_detection_time.c_str(), "detection_time; detection_time ;photons", nbins_time, 0, maximum_time);
-            travel_time_[sensor->getName()] =
-                new TH1D(plot_name_travel_time.c_str(), "travel_time; travel_time ;photons", nbins_time, 0, maximum_time);
+                plot_name_emission_time.c_str(), "emission_time; emission_time[ns] ;photons", nbins_time, 0, maximum_time);
+            detection_time_[sensor->getName()] = new TH1D(plot_name_detection_time.c_str(),
+                                                          "detection_time; detection_time[ns] ;photons",
+                                                          nbins_time,
+                                                          0,
+                                                          maximum_time);
+            travel_time_[sensor->getName()] = new TH1D(
+                plot_name_travel_time.c_str(), "travel_time; travel_time[ns] ;photons", nbins_time, 0, maximum_time);
         }
     }
 
@@ -390,7 +403,7 @@ void DepositionGeant4Module::run(unsigned int event_num) {
             hits_per_event_[sensor->getName()]->Fill(hits);
 
             for(auto& deposits : sensor->getDeposits()) {
-                energies_[sensor->getName()]->Fill(deposits.getEnergy());
+                energies_[sensor->getName()]->Fill(1e6 * deposits.getEnergy());
                 wavelengths_[sensor->getName()]->Fill(deposits.getWavelength());
                 emission_time_[sensor->getName()]->Fill(deposits.getEmissionTime());
                 detection_time_[sensor->getName()]->Fill(deposits.getDetectionTime());

@@ -392,10 +392,10 @@ The set of base parameters supported by every scintillator detector model is pro
 \begin{itemize}
 \item \parameter{sensor_size}: A required parameter describing the 3D size of the sensor.
 A photocathode is defined as a one-pixel sensor, which sizes will be given by the \parameter{sensor_size}.
-\item \parameter{scintillator_shape}: A required parameter describing the shape of the scintillor.
-For scintillators the shape has to be either \parameter{box} or \parameter{cylinder}.
+\item \parameter{scintillator_shape}: A parameter describing the shape of the scintillor. 
+For scintillators the shape has to be either \parameter{box} or \parameter{cylinder}. Defaults to \parameter{box}.
 \item \parameter{scintillator_size}: A required parameter describing the size of the scintillator.
-For a box-shaped scintillator, the \parameter{scintillator_size} is the 3D size of the scintillator, while for a cylinder-shaped scintillator, the \parameter{scintillator_size} is a 2D vector describing the radius and the length of the scintillator. 
+For a box-shaped scintillator, the \parameter{scintillator_size} is the 3D size of the scintillator, while for a cylinder-shaped scintillator, the \parameter{scintillator_size} is a 2D vector describing the size of the scintillator with the radius for its first, and the length for its second input.. 
 \item \parameter{scintillator_material}: A required parameter describing the material of the scintillator.
 The material is required to have the correct material properties to be a scintillator. These properties should be defined in the GeometryBuilderGeant4 module defined in Chapter~\ref{ch:modules}.
 \item \parameter{housing_thickness}: A required parameter describing the thickness of the housing around the scintillator.
@@ -406,7 +406,7 @@ This optional parameter defaults to 1 (which is perfect reflectivity) and can be
 
 In addtition to the above parameters, an optional description of the optical surface parameters of the scintillator can be given.
 Optical surfaces are required for both the interfaces between housing-scintillator and the one between scintillator-photocathode for a proper response to the scintillated photons.
-Each optical surface requires four inputs, a \parameter{surface model}, a \parameter{surface type}, a \parameter{surface finish} and a \parameter{surace value} .
+Each optical surface requires four inputs, a \parameter{surface model}, a \parameter{surface type}, a \parameter{surface finish} and a \parameter{surface value}. 
 For each input, multiple possible inputs can be given. INDEX OF REFRACTION SURFACE FOR GBackPaint AND PBackPaint!!!
 
 \begin{itemize}
@@ -420,9 +420,9 @@ For each input, multiple possible inputs can be given. INDEX OF REFRACTION SURFA
 \item \parameter{surface type}: The surface type describes the interface between the materials that are connected by the optical surface. 
     The required integer input is converted in the following way:
     \begin{itemize}
-        \item \textbf{0}: Interface between a dielectric material and a metal. ????????
-        \item \textbf{1}: Interface between two dielectric materials. ????????
-        \item \textbf{2}: Interface that allows to use a pre-defined interface from a Look-Up-Table (LUT). This interface allows the use of a number of different \parameter{surface finish} types. ????????
+        \item \textbf{0}: Interface between a dielectric material and a metal. 
+        \item \textbf{1}: Interface between two dielectric materials. 
+        \item \textbf{2}: Interface that allows to use a pre-defined interface from a Look-Up-Table (LUT). This interface allows the use of a number of different \parameter{surface finish} types.
     \end{itemize}
 \item \parameter{surface finish}: Describes the structure of the surface of the interface.
     The required integer input is converted in the following way:
@@ -435,7 +435,6 @@ For each input, multiple possible inputs can be given. INDEX OF REFRACTION SURFA
         \item \textbf{5}: \parameter{groundbackpainted}: same as 'ground' but with a layer of air inbetween. Requires a refractive index of the optical boundary.
         \item \textbf{6}: \parameter{polishedlumirrorair}: mechanically polished surface, with lumirror \& air.
         \item \textbf{7}: \parameter{polishedlumirrorglue}: mechanically polished surface, with lumirror \& meltmount.
-        \item \textbf{8}: \parameter{polishedair}: mechanically polished surface, with air.
         \item \textbf{9}: \parameter{polishedteflonair}: mechanically polished surface, with teflon \& air.
         \item \textbf{10}: \parameter{polishedtioair}: mechanically polished surface, with tio paint \& air.
         \item \textbf{11}: \parameter{polishedtyvekair}: mechanically polished surface, with tyvek \& air.
@@ -443,23 +442,30 @@ For each input, multiple possible inputs can be given. INDEX OF REFRACTION SURFA
         \item \textbf{13}: \parameter{polishedvm2000glue}: mechanically polished surface, with esr film \& meltmount.
         \item \textbf{14}: \parameter{etchedlumirrorair}: chemically etched surface, with lumirror \& air.
         \item \textbf{15}: \parameter{etchedlumirrorglue}: chemically etched surface, with lumirror \& meltmount.
-        \item \textbf{16}: \parameter{etchedair}: chemically etched surface, with air.
         \item \textbf{17}: \parameter{etchedteflonair}: chemically etched surface, with teflon \& air.
         \item \textbf{18}: \parameter{etchedtioair}: chemically etched surface, with tio paint \& air.
         \item \textbf{19}: \parameter{etchedtyvekair}: chemically etched surface, with tyvek \& air.
         \item \textbf{20}: \parameter{etchedvm2000air}: chemically etched surface, with esr film \& air.
         \item \textbf{21}: \parameter{etchedvm2000glue}: chemically etched surface, with esr film \& meltmount.
-        \item \textbf{21}: \parameter{groundlumirrorair}: rough-cut surface, with lumirror \& air.
+        \item \textbf{22}: \parameter{groundlumirrorair}: rough-cut surface, with lumirror \& air.
         \item \textbf{23}: \parameter{groundlumirrorglue}: rough-cut surface, with lumirror \& meltmount.
-        \item \textbf{24}: \parameter{groundair}: rough-cut surface, with air.
         \item \textbf{25}: \parameter{groundteflonair}: rough-cut surface, with teflon \& air.
         \item \textbf{26}: \parameter{groundtioair}: rough-cut surface, with tio paint \& air.
         \item \textbf{27}: \parameter{groundtyvekair}: rough-cut surface, with tyvek \& air.
         \item \textbf{28}: \parameter{groundvm2000air}: rough-cut surface, with esr film \& air.
-        \item \textbf{28}: \parameter{groundvm2000glue}: rough-cut surface, with esr film \& meltmount.
+        \item \textbf{29}: \parameter{groundvm2000glue}: rough-cut surface, with esr film \& meltmount.
     \end{itemize}
+    
 \item \parameter{surface value}: The value that describes the roughness of the material, as described with the \parameter{surface model}
+\item \parameter{surface refractive index}: The value that describes the refractive index of the interface of the surface between 2 materials.
+\end{itemize}
 
+Some remarks have to be given for proper use of the optical surfaces.
+\begin{itemize}
+    \item Surface finish \textbf{8}, \textbf{16} and \textbf{24} are missing from the surface type list. This is due an internal error in the Geant4 coding which makes these surfaces unusable.
+    \item For \parameter{surface type} = 2, the only surface finishes usable are \textbf{6}-\textbf{29}.
+          Vise Versa, for \parameter{surface type} = 1 or 2, the only surface finishes usable are \textbf{0}-\textbf{5}.
+    \item For surface finish \textbf{2} and \textbf{5} and for all surfaces with \parameter{surface type} = 1, a surface refractive index is required.
 \end{itemize}
 
 These parameters will be used to describe the optical surfaces inside the scintillator. These parameters can be defined from the config file.
@@ -469,9 +475,13 @@ These parameters will be used to describe the optical surfaces inside the scinti
     \item \parameter{housing_surface_model}: Sets the \parameter{surface model} for the interface between the housing and the scintillator. Defaults to 0.
     \item \parameter{housing_surface_type}:  Sets the \parameter{surface type} for the interface between the housing and the scintillator. Defaults to 0.
     \item \parameter{housing_surface_finish}:  Sets the \parameter{surface finish} for the interface between the housing and the scintillator. Defaults to 0.
+    \item \parameter{housing_surface_value}:  Sets the \parameter{surface value} for the interface between the housing and the scintillator. Defaults to 1.
+    \item \parameter{housing_surface_refractive_index}:  Sets the \parameter{surface refractive index} for the interface between the housing and the scintillator. Defaults to no refractive index.
     \item \parameter{photocathode_surface_model}:  Sets the \parameter{surface model} for the interface between the photocathode and the scintillator. Defaults to 0.
     \item \parameter{photocathode_surface_type}:  Sets the \parameter{surface type} for the interface between the photocathode and the scintillator. Defaults to 0.
     \item \parameter{photocathode_surface_finish}:  Sets the \parameter{surface finish} for the interface between the photocathode and the scintillator. Defaults to 0.
+    \item \parameter{photocathode_surface_value}:  Sets the \parameter{surface value} for the interface between the photocathode and the scintillator. Defaults to 1.
+    \item \parameter{photocathode_surface_refractive_index}:  Sets the \parameter{surface refractive index} for the interface between the photocathode and the scintillator. Defaults to no refractive index.
 
 \end{itemize}
 
