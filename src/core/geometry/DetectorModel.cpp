@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of detector model
  *
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -19,7 +19,7 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
     sensor_size_ = config.get<ROOT::Math::XYZVector>("sensor_size", ROOT::Math::XYZVector());
     if(sensor_size_ == ROOT::Math::XYZVector()) {
         // Number of pixels
-        setNPixels(config.get<DisplacementVector2D<Cartesian2D<int>>>("number_of_pixels"));
+        setNPixels(config.get<DisplacementVector2D<Cartesian2D<unsigned int>>>("number_of_pixels"));
         // Size of the pixels
         setPixelSize(config.get<XYVector>("pixel_size"));
         // Sensor thickness
@@ -27,6 +27,7 @@ DetectorModel::DetectorModel(std::string type, ConfigReader reader) : type_(std:
     }
     // Sensor material
     setSensorMaterial(config.get<std::string>("sensor_material", "silicon"));
+
     // Size of the collection diode implant on each pixels, defaults to the full pixel size when not specified
     auto implant_size = config.get<XYVector>("implant_size", pixel_size_);
     if(implant_size.x() > pixel_size_.x() || implant_size.y() > pixel_size_.y()) {

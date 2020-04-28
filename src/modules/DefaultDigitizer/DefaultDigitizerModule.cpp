@@ -1,7 +1,7 @@
 /**
  * @file
  * @brief Implementation of default digitization module
- * @copyright Copyright (c) 2017-2019 CERN and the Allpix Squared authors.
+ * @copyright Copyright (c) 2017-2020 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -44,6 +44,7 @@ DefaultDigitizerModule::DefaultDigitizerModule(Configuration& config,
     config_.setDefault<int>("adc_smearing", Units::get(300, "e"));
     config_.setDefault<double>("adc_offset", Units::get(0, "e"));
     config_.setDefault<double>("adc_slope", Units::get(10, "e"));
+    config_.setDefault<bool>("allow_zero_adc", false);
 
     config_.setDefault<bool>("output_plots", false);
     config_.setDefault<int>("output_plots_scale", Units::get(30, "ke"));
@@ -81,7 +82,7 @@ void DefaultDigitizerModule::init() {
 
         // Create final pixel charge plot with different axis, depending on whether ADC simulation is enabled or not
         if(config_.get<int>("adc_resolution") > 0) {
-            int adcbins = ((1 << config_.get<int>("adc_resolution")) - 1);
+            int adcbins = (1 << config_.get<int>("adc_resolution"));
             h_pxq_adc = new TH1D("pixelcharge_adc", "pixel charge after ADC;pixel charge [ADC];pixels", adcbins, 0, adcbins);
             h_calibration = new TH2D("charge_adc_calibration",
                                      "calibration curve of pixel charge to ADC units;pixel charge [ke];pixel charge [ADC]",
@@ -166,11 +167,11 @@ void DefaultDigitizerModule::run(unsigned int) {
             }
             LOG(DEBUG) << "Smeared for simulating limited ADC sensitivity: " << Units::display(charge, "e");
 
-            // Convert to ADC units and precision:
+            // Convert to ADC units and precision, make sure ADC count is at least 1:
             charge = static_cast<double>(std::max(
                 std::min(static_cast<int>((config_.get<double>("adc_offset") + charge) / config_.get<double>("adc_slope")),
                          (1 << config_.get<int>("adc_resolution")) - 1),
-                0));
+                (config_.get<bool>("allow_zero_adc") ? 0 : 1)));
             LOG(DEBUG) << "Charge converted to ADC units: " << charge;
 
             if(config_.get<bool>("output_plots")) {
